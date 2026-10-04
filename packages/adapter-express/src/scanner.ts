@@ -1,4 +1,5 @@
 import { promises as fs } from 'node:fs';
+import type { File } from '@babel/types';
 import path from 'node:path';
 import {
   compareStrings,
@@ -62,9 +63,8 @@ export async function scanProject(projectRoot: string, options: ScanOptions = {}
     diagnostics.push(formattedDiag);
   }
 
-  // 4. Parse each file and extract declarations
-  const fileDeclarations = new Map<string, FileDeclarations>();
-
+  // 4. Parse each file and collect ASTs
+  const astCache = new Map<string, { ast: File; code: string }>();
   for (const relFile of files) {
     const fullPath = path.join(resolvedRoot, relFile);
     let code: string;
@@ -74,25 +74,41 @@ export async function scanProject(projectRoot: string, options: ScanOptions = {}
       continue;
     }
 
-    // Relative path used for provenance
     const filePathForProvenance =
       relativeRoot && relativeRoot !== '.'
         ? path.join(relativeRoot, relFile).split(path.sep).join('/')
         : relFile;
 
-    // Parse file to AST
     const parseResult = parseFile(code, filePathForProvenance);
     if (parseResult.diagnostics.length > 0) {
       diagnostics.push(...parseResult.diagnostics);
     }
 
     if (parseResult.ast) {
-      const fileDecl = extractFileDeclarations(parseResult.ast, relFile, filePathForProvenance, code);
-      fileDeclarations.set(relFile, fileDecl);
+      astCache.set(relFile, { ast: parseResult.ast, code });
     }
   }
 
-  // 5. Cross-file resolution of routers and mounts
+  // 5. Extract declarations using moduleGraph and astCache
+  const fileDeclarations = new Map<string, FileDeclarations>();
+  for (const [relFile, { ast, code }] of astCache) {
+    const filePathForProvenance =
+      relativeRoot && relativeRoot !== '.'
+        ? path.join(relativeRoot, relFile).split(path.sep).join('/')
+        : relFile;
+        
+    const fileDecl = extractFileDeclarations(
+      ast,
+      relFile,
+      filePathForProvenance,
+      code,
+      moduleGraph,
+      astCache
+    );
+    fileDeclarations.set(relFile, fileDecl);
+  }
+
+  // 6. Cross-file resolution of routers and mounts
   const { endpoints, diagnostics: routeDiagnostics } = resolveCrossFileRoutes(
     fileDeclarations,
     moduleGraph

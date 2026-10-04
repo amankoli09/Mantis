@@ -622,7 +622,64 @@ A naive cycle detection mechanism (like a global `visited` set) would flag the s
 
 - **Step 7d: Constant propagation and dynamic path interpolation**: Resolve `const BASE = '/api'; app.use(BASE, router)` and template literals.
 
+---
 
+## Step 7d: Constant Propagation & Dynamic Paths (\`@devguard/adapter-express\`)
 
+### Overview
 
+In Step 7d, we implemented constant propagation for route paths and mount prefixes. The static analyzer now tracks \`const\` bindings across local scope and module boundaries to resolve paths like \`app.use(BASE, router)\` or \`app.get(['/a', '/b'] + '/c')\`. Paths that include purely static strings, array expressions, binary string concatenation, and template literals are now resolved properly, greatly reducing false \`DG-R003\` (uncertain path) diagnostics in real-world Express apps. Dynamic paths that cannot be statically resolved now correctly emit a placeholder (e.g. \`<getDetailSegment()>\`) and preserve the endpoint as \`uncertain\`.
 
+---
+
+### 🧠 Core Concept: Static Evaluation & Cross-file Resolution
+
+Real Express applications heavily use constants (e.g. \`const API_PREFIX = '/api/v1'\`) exported from configuration files to mount routers or define routes. To accurately track these routes without executing the code, DevGuard must:
+
+1. **Statically Evaluate AST nodes**: Recursively compute values for \`StringLiteral\`, \`ArrayExpression\`, \`BinaryExpression\` (concatenation), and \`TemplateLiteral\` nodes.
+2. **Track Local Const Bindings**: When an \`Identifier\` is encountered, DevGuard verifies if it is bound as a true \`const\` in the local scope, and evaluates its initialization expression.
+3. **Cross-file Constant Resolution**: If the \`Identifier\` originates from an import/require, DevGuard traverses the Module Graph (built in Step 6), locates the corresponding export in the target AST, and resolves it across file boundaries.
+
+A unified recursive evaluator \`resolvePathConstant\` evaluates these nodes, handling both successful resolutions and partial resolutions (injecting placeholders for dynamic portions).
+
+---
+
+### Implementation Highlights
+
+1. **\`resolvePathConstant\` Evaluator**:
+   - Computes strings for literal nodes.
+   - Computes Cartesian products for array interpolations (e.g., \`['/v1', '/v2'] + '/users'\` resolves to \`['/v1/users', '/v2/users']\`).
+   - Replaces unresolvable dynamic expressions (like function calls or mutations) with a \`<EXPRESSION>\` placeholder, while retaining any statically resolvable prefix/suffix.
+2. **AST Caching**:
+   - \`scanner.ts\` was updated to perform a two-pass extraction. In the first pass, ASTs are parsed and cached (\`astCache: Map<string, { ast: File, code: string }>\`).
+   - In the second pass, \`extractFileDeclarations\` uses the \`astCache\` and \`moduleGraph\` to evaluate constants imported from other files efficiently without re-parsing.
+3. **Array Prefix Support**:
+   - \`app.use(['/a', '/b'], router)\` is now correctly mapped to multiple prefixes, allowing DevGuard to emit routes for both mount points.
+4. **Provenance Precision**:
+   - The scanner now accurately distinguishes between \`literal\` paths (no variable substitution) and \`resolved\` paths (evaluated from constants or interpolations).
+
+---
+
+### Verification Summary
+
+- \`pnpm lint\` ✅ (0 errors, 0 warnings)
+- \`pnpm typecheck\` ✅ (0 type errors across all packages)
+- \`pnpm test\` ✅ (17 test suites passed, 138/138 tests)
+  - Evaluates cross-file path constants like \`const { API_PREFIX } = require('./config')\` ✅
+  - Evaluates array literals, template strings, and string concatenation ✅
+  - Emits \`kind: 'resolved'\` for paths evaluated from constants and \`kind: 'literal'\` for inline strings ✅
+  - Unresolvable dynamic path interpolation produces \`<EXPRESSION>\` placeholder and retains \`confidence: 'uncertain'\` ✅
+- \`pnpm build\` ✅ (Clean builds across all packages)
+
+---
+
+### Remaining Uncertainties
+
+- **Step 8 (Handler Analysis)**: Currently, the analysis only considers routing. We have not yet tackled analyzing handler bodies, validating Zod schemas, or extracting Request/Response shapes.
+- **Complex Dynamic Paths**: The current constant evaluator deliberately ignores variable reassignments (\`let\` / \`var\`), \`process.env\` lookups, and function calls.
+
+---
+
+### Next Step Preview (Per \`docs/PLAN.md\`)
+
+- **Step 8: Controller parsing & Schema extraction**: Parse route handler bodies, extract Zod/Joi schema validations, and define HTTP request/response payloads.

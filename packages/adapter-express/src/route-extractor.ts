@@ -1,4 +1,4 @@
-import _traverse, { type NodePath, type Binding, type TraverseOptions } from '@babel/traverse';
+import _traverse, { type NodePath, type Binding, type TraverseOptions, type Scope } from '@babel/traverse';
 import type {
   File,
   Node,
@@ -114,6 +114,280 @@ export interface FileDeclarations {
   diagnostics: Diagnostic[];
 }
 
+
+export interface PathResolution {
+  isResolvable: boolean;
+  values: string[];
+  rawExpr?: string;
+  partialValues?: string[];
+  capExceeded?: boolean;
+}
+
+/**
+ * Normalizes dynamic expression text for placeholders:
+ * 1. Trims and collapses multiple whitespace characters to a single space.
+ * 2. Caps length at 60 characters (including trailing "..." if truncated, max 60 chars).
+ */
+export function formatPlaceholder(expr?: string): string {
+  const collapsed = (expr || '').trim().replace(/\s+/g, ' ');
+  const MAX_LEN = 60;
+  const truncated = collapsed.length > MAX_LEN ? collapsed.slice(0, MAX_LEN - 3) + '...' : collapsed;
+  return `<${truncated}>`;
+}
+
+export function resolvePathConstant(
+  node: Node,
+  code: string,
+  scope: Scope,
+  moduleGraph: ModuleGraph | undefined,
+  astCache: Map<string, { ast: File; code: string }> | undefined,
+  relFile: string,
+  visited: Set<string>
+): PathResolution {
+  if (node.type === 'StringLiteral') {
+    return { isResolvable: true, values: [node.value] };
+  }
+
+  if (node.type === 'ArrayExpression') {
+    let allResolvable = true;
+    const values: string[] = [];
+    const partialValues: string[] = [];
+    for (const el of node.elements) {
+      if (!el) continue;
+      const res = resolvePathConstant(el as Node, code, scope, moduleGraph, astCache, relFile, visited);
+      if (!res.isResolvable) allResolvable = false;
+      values.push(...res.values);
+      if (res.partialValues?.length) partialValues.push(...res.partialValues);
+      else if (!res.isResolvable && res.rawExpr) partialValues.push(formatPlaceholder(res.rawExpr));
+    }
+    if (allResolvable) return { isResolvable: true, values };
+    return { isResolvable: false, values: [], rawExpr: getRawExpressionText(node, code), partialValues };
+  }
+
+  if (node.type === 'BinaryExpression' && node.operator === '+') {
+    const leftRes = resolvePathConstant(node.left, code, scope, moduleGraph, astCache, relFile, visited);
+    const rightRes = resolvePathConstant(node.right, code, scope, moduleGraph, astCache, relFile, visited);
+
+    const combine = (lefts: string[], rights: string[]): string[] | null => {
+      if (lefts.length === 0 && rights.length === 0) return [];
+      if (lefts.length === 0) return rights;
+      if (rights.length === 0) return lefts;
+      if (lefts.length * rights.length > 100) return null; // Cap exceeded
+      const res: string[] = [];
+      for (const l of lefts) for (const r of rights) res.push(l + r);
+      return res;
+    };
+
+    if (leftRes.capExceeded || rightRes.capExceeded) {
+      return { isResolvable: false, values: [], rawExpr: getRawExpressionText(node, code), capExceeded: true };
+    }
+
+    if (leftRes.isResolvable && rightRes.isResolvable) {
+      const combined = combine(leftRes.values, rightRes.values);
+      if (combined === null) {
+        return { isResolvable: false, values: [], rawExpr: getRawExpressionText(node, code), capExceeded: true };
+      }
+      return { isResolvable: true, values: combined };
+    }
+
+    const leftPartials = leftRes.isResolvable ? leftRes.values : (leftRes.partialValues?.length ? leftRes.partialValues : [formatPlaceholder(leftRes.rawExpr || '')]);
+    const rightPartials = rightRes.isResolvable ? rightRes.values : (rightRes.partialValues?.length ? rightRes.partialValues : [formatPlaceholder(rightRes.rawExpr || '')]);
+
+    const combinedPartials = combine(leftPartials, rightPartials);
+    if (combinedPartials === null) {
+      return { isResolvable: false, values: [], rawExpr: getRawExpressionText(node, code), capExceeded: true };
+    }
+
+    return {
+      isResolvable: false,
+      values: [],
+      rawExpr: getRawExpressionText(node, code),
+      partialValues: combinedPartials
+    };
+  }
+
+  if (node.type === 'TemplateLiteral') {
+    let isResolvable = true;
+    let values: string[] = [''];
+    let partialValues: string[] = [''];
+
+    for (let i = 0; i < node.quasis.length; i++) {
+      const str = node.quasis[i].value.cooked ?? node.quasis[i].value.raw;
+      values = values.map(v => v + str);
+      partialValues = partialValues.map(v => v + str);
+
+      if (i < node.expressions.length) {
+        const expr = node.expressions[i];
+        if (expr.type === 'TSTypeAssertion' || expr.type === 'TSAsExpression') continue;
+        const res = resolvePathConstant(expr as Node, code, scope, moduleGraph, astCache, relFile, visited);
+        if (res.capExceeded) {
+          return { isResolvable: false, values: [], rawExpr: getRawExpressionText(node, code), capExceeded: true };
+        }
+        if (!res.isResolvable) isResolvable = false;
+        
+        if (res.isResolvable) {
+          if (values.length * res.values.length > 100) {
+            return { isResolvable: false, values: [], rawExpr: getRawExpressionText(node, code), capExceeded: true };
+          }
+          const newVals: string[] = [];
+          for (const v of values) for (const rv of res.values) newVals.push(v + rv);
+          values = newVals;
+
+          const newPartials: string[] = [];
+          for (const v of partialValues) for (const rv of res.values) newPartials.push(v + rv);
+          partialValues = newPartials;
+        } else {
+          values = [];
+          const newPartials: string[] = [];
+          const exprPartials = res.partialValues?.length ? res.partialValues : [formatPlaceholder(res.rawExpr || '')];
+          if (partialValues.length * exprPartials.length > 100) {
+            return { isResolvable: false, values: [], rawExpr: getRawExpressionText(node, code), capExceeded: true };
+          }
+          for (const v of partialValues) for (const ev of exprPartials) newPartials.push(v + ev);
+          partialValues = newPartials;
+        }
+      }
+    }
+    if (isResolvable) return { isResolvable: true, values };
+    return { isResolvable: false, values: [], rawExpr: getRawExpressionText(node, code), partialValues };
+  }
+
+  if (node.type === 'MemberExpression' && node.object.type === 'Identifier' && node.property.type === 'Identifier') {
+    const objName = node.object.name;
+    const propName = node.property.name;
+
+    if (moduleGraph && astCache) {
+      const modNode = moduleGraph.nodes.get(relFile);
+      if (modNode) {
+        const imp = modNode.imports.find(i => i.localName === objName);
+        if (imp && imp.sourcePath && !imp.isExternal) {
+          const targetNode = moduleGraph.nodes.get(imp.sourcePath);
+          if (targetNode) {
+            const exp = targetNode.exports.find(e => e.exportedName === propName);
+            if (exp) {
+              const visitKey = `${imp.sourcePath}:export:${exp.exportedName}`;
+              if (!visited.has(visitKey)) {
+                visited.add(visitKey);
+                const targetEntry = astCache.get(imp.sourcePath);
+                if (targetEntry) {
+                  let targetInit: Node | undefined;
+                  let targetScope: Scope | undefined;
+
+                  traverse(targetEntry.ast, {
+                    enter(path) {
+                      if (path.node.loc?.start.line === exp.line) {
+                        if (exp.localName) {
+                          const b = path.scope.getBinding(exp.localName);
+                          if (b && b.kind === 'const' && b.constant && b.path.node.type === 'VariableDeclarator') {
+                            targetInit = b.path.node.init ?? undefined;
+                            targetScope = b.path.scope;
+                          }
+                        }
+                        if (!targetInit && path.node.type === 'ObjectProperty' && path.node.value) {
+                          targetInit = path.node.value as Node;
+                          targetScope = path.scope;
+                        }
+                        if (!targetInit && path.node.type === 'AssignmentExpression') {
+                          targetInit = path.node.right;
+                          targetScope = path.scope;
+                        }
+                        if (targetInit) {
+                          path.stop();
+                        }
+                      }
+                    }
+                  });
+
+                  if (targetInit && targetScope) {
+                    const res = resolvePathConstant(targetInit, targetEntry.code, targetScope, moduleGraph, astCache, imp.sourcePath, visited);
+                    visited.delete(visitKey);
+                    return res;
+                  }
+                }
+                visited.delete(visitKey);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (node.type === 'Identifier') {
+    const binding = scope.getBinding(node.name);
+    if (binding && binding.kind === 'const' && binding.constant && binding.path.node.type === 'VariableDeclarator') {
+      const init = binding.path.node.init;
+      if (init) {
+        const visitKey = `${relFile}:${node.name}`;
+        if (!visited.has(visitKey)) {
+          visited.add(visitKey);
+          const res = resolvePathConstant(init, code, binding.path.scope, moduleGraph, astCache, relFile, visited);
+          visited.delete(visitKey);
+          return res;
+        }
+      }
+    }
+
+    if (moduleGraph && astCache) {
+      const modNode = moduleGraph.nodes.get(relFile);
+      if (modNode) {
+        const imp = modNode.imports.find(i => i.localName === node.name);
+        if (imp && imp.sourcePath && !imp.isExternal) {
+          const targetNode = moduleGraph.nodes.get(imp.sourcePath);
+          if (targetNode) {
+            const exp = targetNode.exports.find(e => e.exportedName === imp.importedName || (imp.importedName !== 'default' && e.exportedName === '*'));
+            if (exp) {
+              const visitKey = `${imp.sourcePath}:export:${exp.exportedName}`;
+              if (!visited.has(visitKey)) {
+                visited.add(visitKey);
+                const targetEntry = astCache.get(imp.sourcePath);
+                if (targetEntry) {
+                  let targetInit: Node | undefined;
+                  let targetScope: Scope | undefined;
+                  
+                  traverse(targetEntry.ast, {
+                    enter(path) {
+                      if (path.node.loc?.start.line === exp.line) {
+                         if (exp.localName) {
+                            const b = path.scope.getBinding(exp.localName);
+                            if (b && b.kind === 'const' && b.constant && b.path.node.type === 'VariableDeclarator') {
+                               targetInit = b.path.node.init ?? undefined;
+                               targetScope = b.path.scope;
+                            }
+                         }
+                         if (!targetInit && path.node.type === 'AssignmentExpression') {
+                            targetInit = path.node.right;
+                            targetScope = path.scope;
+                         }
+                         if (!targetInit && path.node.type === 'ExportDefaultDeclaration') {
+                            targetInit = path.node.declaration as Node;
+                            targetScope = path.scope;
+                         }
+                         if (targetInit) {
+                            path.stop();
+                         }
+                      }
+                    }
+                  });
+
+                  if (targetInit && targetScope) {
+                     const res = resolvePathConstant(targetInit, targetEntry.code, targetScope, moduleGraph, astCache, imp.sourcePath, visited);
+                     visited.delete(visitKey);
+                     return res;
+                  }
+                }
+                visited.delete(visitKey);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return { isResolvable: false, values: [], rawExpr: getRawExpressionText(node, code) };
+}
+
 function getRawExpressionText(node: Node, code: string): string {
   if (typeof node.start === 'number' && typeof node.end === 'number') {
     return code.slice(node.start, node.end);
@@ -129,7 +403,9 @@ export function extractFileDeclarations(
   ast: File,
   relFile: string,
   filePathForProvenance: string,
-  code: string
+  code: string,
+  moduleGraph?: ModuleGraph,
+  astCache?: Map<string, { ast: File; code: string }>
 ): FileDeclarations {
   const directEndpoints: Endpoint[] = [];
   const diagnostics: Diagnostic[] = [];
@@ -340,12 +616,31 @@ export function extractFileDeclarations(
       // 1. Check for app.use('/prefix', ...) or router.use(...) mounts
       if ((appBinding || routerRecord) && methodName === 'use' && node.arguments.length > 0) {
         const firstArg = node.arguments[0];
-        let prefix = '/';
         let candidateArgs = node.arguments;
 
-        if (firstArg && firstArg.type === 'StringLiteral') {
-          prefix = firstArg.value;
-          candidateArgs = node.arguments.slice(1);
+        let prefixes = ['/'];
+        
+        if (firstArg) {
+           const res = resolvePathConstant(firstArg as Node, code, pathNode.scope, moduleGraph, astCache, relFile, new Set());
+           if (res.capExceeded) {
+             diagnostics.push(
+               createDiagnostic(
+                 'DG-R003',
+                 { rawExpression: `Array product cap exceeded (>100 combinations): ${res.rawExpr || 'expression'}` },
+                 { file: filePathForProvenance, line: node.loc?.start.line ?? 1, column: node.loc?.start.column }
+               )
+             );
+           }
+           const isPathExpression = firstArg.type === 'StringLiteral' || firstArg.type === 'TemplateLiteral' || firstArg.type === 'BinaryExpression' || firstArg.type === 'ArrayExpression';
+           
+           if (res.isResolvable || isPathExpression || (firstArg.type === 'Identifier' && (res.isResolvable || res.rawExpr === firstArg.name && res.partialValues?.length))) {
+              if (res.isResolvable) {
+                prefixes = res.values;
+              } else {
+                prefixes = res.partialValues?.length ? res.partialValues : [formatPlaceholder(res.rawExpr || 'expression')];
+              }
+              candidateArgs = node.arguments.slice(1);
+           }
         }
 
         for (const arg of candidateArgs) {
@@ -353,47 +648,49 @@ export function extractFileDeclarations(
           const column = arg.loc?.start.column ?? node.loc?.start.column;
           const sourceRouterId = routerRecord ? routerRecord.id : undefined;
 
-          if (arg.type === 'Identifier') {
-            mounts.push({
-              prefix,
-              line,
-              column,
-              mountFilePath: relFile,
-              sourceRouterId,
-              target: { type: 'identifier', name: arg.name },
-            });
-          } else if (arg.type === 'MemberExpression' && arg.object.type === 'Identifier') {
-            const propName =
-              arg.property.type === 'Identifier'
-                ? arg.property.name
-                : arg.property.type === 'StringLiteral'
-                  ? arg.property.value
-                  : null;
-            if (propName) {
+          for (const prefix of prefixes) {
+            if (arg.type === 'Identifier') {
               mounts.push({
                 prefix,
                 line,
                 column,
                 mountFilePath: relFile,
                 sourceRouterId,
-                target: { type: 'member', objectName: arg.object.name, propertyName: propName },
+                target: { type: 'identifier', name: arg.name },
+              });
+            } else if (arg.type === 'MemberExpression' && arg.object.type === 'Identifier') {
+              const propName =
+                arg.property.type === 'Identifier'
+                  ? arg.property.name
+                  : arg.property.type === 'StringLiteral'
+                    ? arg.property.value
+                    : null;
+              if (propName) {
+                mounts.push({
+                  prefix,
+                  line,
+                  column,
+                  mountFilePath: relFile,
+                  sourceRouterId,
+                  target: { type: 'member', objectName: arg.object.name, propertyName: propName },
+                });
+              }
+            } else if (
+              arg.type === 'CallExpression' &&
+              arg.callee.type === 'Identifier' &&
+              arg.callee.name === 'require' &&
+              arg.arguments.length > 0 &&
+              arg.arguments[0]?.type === 'StringLiteral'
+            ) {
+              mounts.push({
+                prefix,
+                line,
+                column,
+                mountFilePath: relFile,
+                sourceRouterId,
+                target: { type: 'require', specifier: arg.arguments[0].value },
               });
             }
-          } else if (
-            arg.type === 'CallExpression' &&
-            arg.callee.type === 'Identifier' &&
-            arg.callee.name === 'require' &&
-            arg.arguments.length > 0 &&
-            arg.arguments[0]?.type === 'StringLiteral'
-          ) {
-            mounts.push({
-              prefix,
-              line,
-              column,
-              mountFilePath: relFile,
-              sourceRouterId,
-              target: { type: 'require', specifier: arg.arguments[0].value },
-            });
           }
         }
         return;
@@ -447,17 +744,21 @@ export function extractFileDeclarations(
         break;
       }
 
-      let firstArg: Node | undefined = undefined;
+      let res: PathResolution | undefined = undefined;
+      let isLiteralKind = false;
+      
       if (!isChainedRoute) {
         if (node.arguments.length === 0) return;
-        firstArg = node.arguments[0];
-        if (firstArg && firstArg.type === 'StringLiteral') {
-          isLiteralPath = true;
-          routePath = firstArg.value;
-        } else if (firstArg) {
-          isLiteralPath = false;
-          rawExpr = getRawExpressionText(firstArg, code);
+        const firstArg = node.arguments[0];
+        if (firstArg) {
+           res = resolvePathConstant(firstArg as Node, code, pathNode.scope, moduleGraph, astCache, relFile, new Set());
+           if (firstArg.type === 'StringLiteral' || (firstArg.type === 'ArrayExpression' && (firstArg as { elements: Array<{ type: string } | null> }).elements.every(e => e && e.type === 'StringLiteral'))) {
+               isLiteralKind = true;
+           }
         }
+      } else {
+        res = { isResolvable: isLiteralPath, values: isLiteralPath ? [routePath] : [], rawExpr, partialValues: isLiteralPath ? undefined : [formatPlaceholder(rawExpr)] };
+        isLiteralKind = isLiteralPath;
       }
 
       if (!effectiveAppBinding && !effectiveRouterRecord) return;
@@ -466,87 +767,99 @@ export function extractFileDeclarations(
       const startCol = memberExpr.property.loc?.start.column ?? node.loc?.start.column;
       const snippet = codeLines[startLine - 1]?.trim();
 
-      // Direct app route
-      if (effectiveAppBinding) {
-        const methodUpper = methodName.toUpperCase() as HttpMethod;
-        const effect = getEffectForMethod(methodName);
+      if (res) {
+        const paths = res.isResolvable ? res.values : (res.partialValues?.length ? res.partialValues : [formatPlaceholder(res.rawExpr || 'expression')]);
 
-        if (isLiteralPath) {
-          const paramMatches = [...routePath.matchAll(/:([a-zA-Z0-9_]+)/g)];
-          const params = paramMatches.map((match) => ({
-            name: match[1] ?? '',
-            in: 'path' as const,
-            required: true,
-            description: `User identifier extracted from path segment :${match[1]}.`,
-            provenance: {
-              kind: 'literal' as const,
-              filePath: filePathForProvenance,
-              line: startLine,
-            },
-          }));
+        for (const p of paths) {
+          // Direct app route
+          if (effectiveAppBinding) {
+            const methodUpper = methodName.toUpperCase() as HttpMethod;
+            const effect = getEffectForMethod(methodName);
 
-          directEndpoints.push({
-            id: generateEndpointId(methodUpper, routePath),
-            method: methodUpper,
-            path: routePath,
-            auth: { type: 'unknown' },
-            effect,
-            params,
-            responses: [],
-            middleware: [],
-            provenance: {
-              kind: 'literal',
-              filePath: filePathForProvenance,
-              line: startLine,
-              ...(startCol !== undefined ? { column: startCol } : {}),
-              ...(snippet ? { snippet } : {}),
-            },
-            confidence: 'confirmed',
-            confidenceReason: null,
-          });
-        } else if (firstArg) {
-          diagnostics.push(
-            createDiagnostic(
-              'DG-R003',
-              { rawExpression: rawExpr },
-              { file: filePathForProvenance, line: startLine, column: startCol }
-            )
-          );
+            if (res.isResolvable) {
+              const paramMatches = [...p.matchAll(/:([a-zA-Z0-9_]+)/g)];
+              const params = paramMatches.map((match) => ({
+                name: match[1] ?? '',
+                in: 'path' as const,
+                required: true,
+                description: `User identifier extracted from path segment :${match[1]}.`,
+                provenance: {
+                  kind: 'literal' as const,
+                  filePath: filePathForProvenance,
+                  line: startLine,
+                },
+              }));
 
-          const placeholderPath = `/<uncertain:${rawExpr}>`;
-          directEndpoints.push({
-            id: generateEndpointId(methodUpper, placeholderPath),
-            method: methodUpper,
-            path: placeholderPath,
-            auth: { type: 'unknown' },
-            effect,
-            params: [],
-            responses: [],
-            middleware: [],
-            provenance: {
-              kind: 'unresolved',
-              filePath: filePathForProvenance,
-              line: startLine,
-              ...(startCol !== undefined ? { column: startCol } : {}),
-              ...(snippet ? { snippet } : {}),
-            },
-            confidence: 'uncertain',
-            confidenceReason: 'DG-R003',
-          });
+              directEndpoints.push({
+                id: generateEndpointId(methodUpper, p),
+                method: methodUpper,
+                path: p,
+                auth: { type: 'unknown' },
+                effect,
+                params,
+                responses: [],
+                middleware: [],
+                provenance: {
+                  kind: isLiteralKind ? 'literal' : 'resolved',
+                  filePath: filePathForProvenance,
+                  line: startLine,
+                  ...(startCol !== undefined ? { column: startCol } : {}),
+                  ...(snippet ? { snippet } : {}),
+                },
+                confidence: 'confirmed',
+                confidenceReason: null,
+              });
+            } else {
+              const diagExpr = res.capExceeded
+                ? `Array product cap exceeded (>100 combinations): ${res.rawExpr || p}`
+                : (res.rawExpr || p);
+              diagnostics.push(
+                createDiagnostic(
+                  'DG-R003',
+                  { rawExpression: diagExpr },
+                  { file: filePathForProvenance, line: startLine, column: startCol }
+                )
+              );
+
+              const placeholderPath = p.startsWith('/') ? p : '/' + p;
+              directEndpoints.push({
+                id: generateEndpointId(methodUpper, placeholderPath),
+                method: methodUpper,
+                path: placeholderPath,
+                auth: { type: 'unknown' },
+                effect,
+                params: [],
+                responses: [],
+                middleware: [],
+                provenance: {
+                  kind: 'unresolved',
+                  filePath: filePathForProvenance,
+                  line: startLine,
+                  ...(startCol !== undefined ? { column: startCol } : {}),
+                  ...(snippet ? { snippet } : {}),
+                },
+                confidence: 'uncertain',
+                confidenceReason: 'DG-R003',
+              });
+            }
+          }
+
+          // Route defined on router instance
+          if (effectiveRouterRecord) {
+            const diagExpr = res.capExceeded
+              ? `Array product cap exceeded (>100 combinations): ${res.rawExpr || p}`
+              : (res.rawExpr || p);
+            effectiveRouterRecord.routes.push({
+              method: methodName,
+              routePath: p,
+              startLine,
+              startCol,
+              snippet,
+              isDynamic: !res.isResolvable,
+              rawExpr: diagExpr,
+            });
+          }
         }
-      }
-
-      // Route defined on router instance (to be resolved with mount prefix)
-      if (effectiveRouterRecord) {
-        effectiveRouterRecord.routes.push({
-          method: methodName,
-          routePath,
-          startLine,
-          startCol,
-          snippet,
-          isDynamic: !isLiteralPath,
-          rawExpr,
-        });
       }
     },
   });
@@ -944,7 +1257,11 @@ export function resolveCrossFileRoutes(
       for (const route of router.routes) {
         const methodUpper = route.method.toUpperCase() as HttpMethod;
         const effect = getEffectForMethod(route.method);
-        const finalPath = route.isDynamic ? `/<uncertain:${route.rawExpr}>` : normalizePath(route.routePath);
+        const finalPath = route.isDynamic
+          ? (route.routePath
+              ? (route.routePath.startsWith('/') ? route.routePath : '/' + route.routePath)
+              : '/' + formatPlaceholder(route.rawExpr))
+          : normalizePath(route.routePath);
 
         endpoints.push({
           id: generateEndpointId(methodUpper, finalPath),
@@ -982,7 +1299,7 @@ export function resolveCrossFileRoutes(
               )
             );
 
-            const placeholderPath = joinPaths(prefix, `<uncertain:${route.rawExpr}>`);
+            const placeholderPath = joinPaths(prefix, route.routePath);
             endpoints.push({
               id: generateEndpointId(methodUpper, placeholderPath),
               method: methodUpper,

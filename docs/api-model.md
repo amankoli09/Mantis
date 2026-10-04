@@ -66,11 +66,18 @@ Every fact in the model records where it came from and how it was determined:
   - `'literal'`: Declared as a constant or literal string in code (e.g., `app.get('/users', ...)`).
   - `'resolved'`: Derived by static resolution (e.g., constant variable propagation or router mount prefix concatenation).
   - `'inferred'`: Inferred from handler code usage (e.g., reading `req.body.email`).
-  - `'unresolved'`: Extracted with incomplete or ambiguous static information.
+  - `'unresolved'`: Extracted with incomplete or ambiguous static information. Placeholder (uncertain) routes with `<EXPRESSION>` placeholders always receive `kind: 'unresolved'`.
 - `filePath`: Relative or absolute path to the source file (e.g., `"src/routes/users.js"`).
 - `line`: Line number in the source file.
 - `column`: (Optional) Column number.
 - `snippet`: (Optional) Source code snippet.
+
+### Placeholder Normalization Rules (`<EXPRESSION>`)
+
+When a route path contains dynamic expressions that cannot be statically resolved, the unresolvable portion is preserved using an `<EXPRESSION>` placeholder:
+- **Whitespace Collapsing**: All consecutive whitespace characters (including newlines and tabs) are collapsed into a single space, and leading/trailing whitespace is trimmed.
+- **Length Cap**: The inner expression text is capped at 60 characters. If the collapsed text exceeds 60 characters, it is truncated with `...` (57 characters + `...`).
+- **Provenance & Confidence**: Any route containing a dynamic placeholder receives `provenance.kind = 'unresolved'`, `confidence = 'uncertain'`, and `confidenceReason = 'DG-R003'`.
 
 ### Confidence (`confidence` & `confidenceReason`)
 
@@ -88,7 +95,7 @@ Diagnostics capture issues or ambiguities encountered during analysis without cr
 | `DG-P001` |  `error`  | **Parse Error**: File syntax error preventing AST generation.                       |
 | `DG-R001` | `warning` | **Unresolved Import**: An imported router or controller file could not be resolved. |
 | `DG-R002` | `warning` | **Unresolved Router Mount**: A router was mounted but its definition was missing.   |
-| `DG-R003` |  `info`   | **Dynamic Path**: Route path uses a runtime dynamic expression.                     |
+| `DG-R003` |  `info`   | **Dynamic Path**: Route uses a runtime dynamic expression. Unresolvable segments are replaced with normalized `<EXPRESSION>` placeholders. |
 
 Each diagnostic records:
 

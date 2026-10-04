@@ -46,10 +46,10 @@
       "confidenceReason": null
     },
     {
-      "id": "GET /api/products/<PRODUCT_DETAIL_PATH>",
+      "id": "GET /api/products/<getDetailSegment()>",
       "method": "GET",
-      "path": "/api/products/<PRODUCT_DETAIL_PATH>",
-      "description": "Product detail route. Full path cannot be statically determined: router.get() receives a runtime variable PRODUCT_DETAIL_PATH.",
+      "path": "/api/products/<getDetailSegment()>",
+      "description": "Product detail route. Partial static path '/api/products' resolved; dynamic segment getDetailSegment() replaced with placeholder.",
       "auth": { "type": "unknown" },
       "effect": "read",
       "params": [],

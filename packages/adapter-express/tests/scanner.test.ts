@@ -199,6 +199,22 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
     expect(adminMetrics!.confidence).toBe('confirmed');
     expect(adminMetrics!.provenance.filePath).toContain('admin.js');
     expect(adminMetrics!.provenance.line).toBe(5);
+
+    // 6. Uncertain dynamic route from routes/products.js line 17 matching expected.model.json
+    const goldenModelRaw = readFileSync(path.join(repoRoot, 'fixtures/nested-routers/expected.model.json'), 'utf8');
+    const goldenModel = JSON.parse(goldenModelRaw) as ApiModel;
+    const goldenUncertain = goldenModel.endpoints.find((e) => e.confidence === 'uncertain');
+    expect(goldenUncertain).toBeDefined();
+
+    const actualUncertain = model.endpoints.find((e) => e.confidence === 'uncertain');
+    expect(actualUncertain).toBeDefined();
+    expect(actualUncertain!.id).toBe(goldenUncertain!.id);
+    expect(actualUncertain!.path).toBe(goldenUncertain!.path);
+    expect(actualUncertain!.confidence).toBe(goldenUncertain!.confidence);
+    expect(actualUncertain!.confidenceReason).toBe(goldenUncertain!.confidenceReason);
+    expect(actualUncertain!.provenance.kind).toBe(goldenUncertain!.provenance.kind);
+    expect(actualUncertain!.provenance.filePath).toBe(goldenUncertain!.provenance.filePath);
+    expect(actualUncertain!.provenance.line).toBe(goldenUncertain!.provenance.line);
   });
 
   it('emits DG-R002 and confirms nothing when an imported router cannot be resolved', async () => {
@@ -420,6 +436,38 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   });
+  it('scans fixtures/constant-propagation/app and matches its golden model, verifying static evaluation, uncertain forms, array combinations, partial interpolation, and cycle protection', async () => {
+    const cpFixturePath = path.join(repoRoot, 'fixtures/constant-propagation/app');
+    const goldenModelPath = path.join(repoRoot, 'fixtures/constant-propagation/expected.model.json');
+
+    const model = await scanProject(cpFixturePath);
+
+    const validation = validateModel(model);
+    expect(validation.success).toBe(true);
+
+    const expectedGoldenRaw = readFileSync(goldenModelPath, 'utf8');
+    const goldenModel = JSON.parse(expectedGoldenRaw) as ApiModel;
+
+    // Check endpoints length
+    expect(model.endpoints).toHaveLength(goldenModel.endpoints.length);
+
+    for (let i = 0; i < goldenModel.endpoints.length; i++) {
+      const expected = goldenModel.endpoints[i]!;
+      const actual = model.endpoints[i]!;
+
+      expect(actual.id).toBe(expected.id);
+      expect(actual.method).toBe(expected.method);
+      expect(actual.path).toBe(expected.path);
+      expect(actual.effect).toBe(expected.effect);
+      expect(actual.confidence).toBe(expected.confidence);
+      expect(actual.confidenceReason).toBe(expected.confidenceReason);
+
+      expect(actual.provenance.kind).toBe(expected.provenance.kind);
+      expect(actual.provenance.filePath).toBe(expected.provenance.filePath);
+      expect(actual.provenance.line).toBe(expected.provenance.line);
+    }
+  });
+
 
   it('ExpressAdapter.scan() wraps scanProject and produces identical output', async () => {
     const adapter = new ExpressAdapter();
