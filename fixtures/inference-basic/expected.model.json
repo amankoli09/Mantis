@@ -1,0 +1,382 @@
+{
+  "modelVersion": "1.1.0",
+  "project": {
+    "name": "inference-basic-fixture",
+    "framework": "express",
+    "language": "javascript",
+    "root": "fixtures/inference-basic/app"
+  },
+  "endpoints": [
+    {
+      "id": "POST /articles",
+      "method": "POST",
+      "path": "/articles",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "params": [
+        {
+          "name": "slug",
+          "in": "body",
+          "required": "unknown",
+          "type": "unknown",
+          "provenance": {
+            "kind": "inferred",
+            "filePath": "fixtures/inference-basic/app/app.js",
+            "line": 48,
+            "snippet": "const { slug } = req.body;"
+          }
+        }
+      ],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/inference-basic/app/app.js",
+        "line": 47,
+        "snippet": "app.post('/articles', [middlewareA, middlewareB, (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "POST /bracket",
+      "method": "POST",
+      "path": "/bracket",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "params": [
+        {
+          "name": "sort",
+          "in": "query",
+          "required": "unknown",
+          "type": "unknown",
+          "provenance": {
+            "kind": "inferred",
+            "filePath": "fixtures/inference-basic/app/app.js",
+            "line": 18,
+            "snippet": "const sort = req['query']['sort'];"
+          }
+        },
+        {
+          "name": "content",
+          "in": "body",
+          "required": "unknown",
+          "type": "unknown",
+          "provenance": {
+            "kind": "inferred",
+            "filePath": "fixtures/inference-basic/app/app.js",
+            "line": 19,
+            "snippet": "const content = req.body['content'];"
+          }
+        }
+      ],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/inference-basic/app/app.js",
+        "line": 17,
+        "snippet": "app.post('/bracket', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "POST /destructure",
+      "method": "POST",
+      "path": "/destructure",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "params": [
+        {
+          "name": "author",
+          "in": "body",
+          "required": "unknown",
+          "type": "unknown",
+          "provenance": {
+            "kind": "inferred",
+            "filePath": "fixtures/inference-basic/app/app.js",
+            "line": 25,
+            "snippet": "const { author, category: cat } = req.body;"
+          }
+        },
+        {
+          "name": "category",
+          "in": "body",
+          "required": "unknown",
+          "type": "unknown",
+          "provenance": {
+            "kind": "inferred",
+            "filePath": "fixtures/inference-basic/app/app.js",
+            "line": 25,
+            "snippet": "const { author, category: cat } = req.body;"
+          }
+        }
+      ],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/inference-basic/app/app.js",
+        "line": 24,
+        "snippet": "app.post('/destructure', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /dynamic",
+      "method": "GET",
+      "path": "/dynamic",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "read",
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/inference-basic/app/app.js",
+        "line": 61,
+        "snippet": "app.get('/dynamic', getDynamicHandler());"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /items",
+      "method": "GET",
+      "path": "/items",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "read",
+      "params": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": "unknown",
+          "type": "unknown",
+          "provenance": {
+            "kind": "inferred",
+            "filePath": "fixtures/inference-basic/app/controllers/items.js",
+            "line": 4,
+            "snippet": "const limit = req.query.limit;"
+          }
+        }
+      ],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/inference-basic/app/app.js",
+        "line": 42,
+        "snippet": "app.get('/items', listItems);"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "POST /posts/:id",
+      "method": "POST",
+      "path": "/posts/:id",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "params": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "description": "User identifier extracted from path segment :id.",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/inference-basic/app/app.js",
+            "line": 8
+          }
+        },
+        {
+          "name": "search",
+          "in": "query",
+          "required": "unknown",
+          "type": "unknown",
+          "provenance": {
+            "kind": "inferred",
+            "filePath": "fixtures/inference-basic/app/app.js",
+            "line": 10,
+            "snippet": "const search = req.query.search;"
+          }
+        },
+        {
+          "name": "title",
+          "in": "body",
+          "required": "unknown",
+          "type": "unknown",
+          "provenance": {
+            "kind": "inferred",
+            "filePath": "fixtures/inference-basic/app/app.js",
+            "line": 11,
+            "snippet": "const title1 = req.body.title;"
+          }
+        }
+      ],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/inference-basic/app/app.js",
+        "line": 8,
+        "snippet": "app.post('/posts/:id', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "POST /r-param",
+      "method": "POST",
+      "path": "/r-param",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "params": [
+        {
+          "name": "data",
+          "in": "body",
+          "required": "unknown",
+          "type": "unknown",
+          "provenance": {
+            "kind": "inferred",
+            "filePath": "fixtures/inference-basic/app/app.js",
+            "line": 37,
+            "snippet": "const { data } = r.body;"
+          }
+        }
+      ],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/inference-basic/app/app.js",
+        "line": 36,
+        "snippet": "app.post('/r-param', (r, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "POST /raw",
+      "method": "POST",
+      "path": "/raw",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/inference-basic/app/app.js",
+        "line": 54,
+        "snippet": "app.post('/raw', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /request-param",
+      "method": "GET",
+      "path": "/request-param",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "read",
+      "params": [
+        {
+          "name": "tag",
+          "in": "query",
+          "required": "unknown",
+          "type": "unknown",
+          "provenance": {
+            "kind": "inferred",
+            "filePath": "fixtures/inference-basic/app/app.js",
+            "line": 31,
+            "snippet": "const tag = request.query.tag;"
+          }
+        }
+      ],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/inference-basic/app/app.js",
+        "line": 30,
+        "snippet": "app.get('/request-param', (request, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /shadow",
+      "method": "GET",
+      "path": "/shadow",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "read",
+      "params": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": "unknown",
+          "type": "unknown",
+          "provenance": {
+            "kind": "inferred",
+            "filePath": "fixtures/inference-basic/app/app.js",
+            "line": 65,
+            "snippet": "const page = req.query.page;"
+          }
+        }
+      ],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/inference-basic/app/app.js",
+        "line": 64,
+        "snippet": "app.get('/shadow', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "DG-I001",
+      "severity": "info",
+      "message": "Route handler could not be statically resolved: getDynamicHandler()",
+      "file": "fixtures/inference-basic/app/app.js",
+      "line": 61
+    }
+  ]
+}

@@ -95,6 +95,7 @@ const GOLDEN_FILES = [
   'fixtures/router-single-file/expected.model.json',
   'fixtures/router-cross-file/expected.model.json',
   'fixtures/constant-propagation/expected.model.json',
+  'fixtures/inference-basic/expected.model.json',
 ] as const;
 
 describe('Provenance line integrity — all golden files', () => {
