@@ -6,7 +6,11 @@
       "properties": {
         "modelVersion": {
           "type": "string",
-          "const": "1.0.0"
+          "enum": [
+            "1.0.0",
+            "1.1.0"
+          ],
+          "default": "1.1.0"
         },
         "project": {
           "type": "object",
@@ -27,7 +31,9 @@
               "minLength": 1
             }
           },
-          "required": ["root"],
+          "required": [
+            "root"
+          ],
           "additionalProperties": false
         },
         "metadata": {
@@ -58,7 +64,15 @@
               },
               "method": {
                 "type": "string",
-                "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]
+                "enum": [
+                  "GET",
+                  "POST",
+                  "PUT",
+                  "PATCH",
+                  "DELETE",
+                  "OPTIONS",
+                  "HEAD"
+                ]
               },
               "path": {
                 "type": "string",
@@ -72,13 +86,22 @@
                 "properties": {
                   "type": {
                     "type": "string",
-                    "enum": ["none", "bearer", "apiKey", "cookie", "custom", "unknown"]
+                    "enum": [
+                      "none",
+                      "bearer",
+                      "apiKey",
+                      "cookie",
+                      "custom",
+                      "unknown"
+                    ]
                   },
                   "details": {
                     "type": "string"
                   }
                 },
-                "required": ["type"],
+                "required": [
+                  "type"
+                ],
                 "additionalProperties": false,
                 "default": {
                   "type": "unknown"
@@ -86,7 +109,12 @@
               },
               "effect": {
                 "type": "string",
-                "enum": ["read", "write", "destructive", "unknown"],
+                "enum": [
+                  "read",
+                  "write",
+                  "destructive",
+                  "unknown"
+                ],
                 "default": "unknown"
               },
               "params": {
@@ -100,11 +128,27 @@
                     },
                     "in": {
                       "type": "string",
-                      "enum": ["path", "query", "header"]
+                      "enum": [
+                        "path",
+                        "query",
+                        "header",
+                        "body"
+                      ]
                     },
                     "required": {
-                      "type": "boolean",
-                      "default": false
+                      "anyOf": [
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "string",
+                          "const": "unknown"
+                        }
+                      ],
+                      "default": "unknown"
+                    },
+                    "type": {
+                      "type": "string"
                     },
                     "schema": {
                       "type": "object",
@@ -118,7 +162,12 @@
                       "properties": {
                         "kind": {
                           "type": "string",
-                          "enum": ["literal", "resolved", "inferred", "unresolved"]
+                          "enum": [
+                            "literal",
+                            "resolved",
+                            "inferred",
+                            "unresolved"
+                          ]
                         },
                         "filePath": {
                           "type": "string",
@@ -136,11 +185,18 @@
                           "type": "string"
                         }
                       },
-                      "required": ["kind", "filePath", "line"],
+                      "required": [
+                        "kind",
+                        "filePath",
+                        "line"
+                      ],
                       "additionalProperties": false
                     }
                   },
-                  "required": ["name", "in"],
+                  "required": [
+                    "name",
+                    "in"
+                  ],
                   "additionalProperties": false
                 },
                 "default": []
@@ -168,7 +224,12 @@
                     "properties": {
                       "kind": {
                         "type": "string",
-                        "enum": ["literal", "resolved", "inferred", "unresolved"]
+                        "enum": [
+                          "literal",
+                          "resolved",
+                          "inferred",
+                          "unresolved"
+                        ]
                       },
                       "filePath": {
                         "type": "string",
@@ -186,7 +247,11 @@
                         "type": "string"
                       }
                     },
-                    "required": ["kind", "filePath", "line"],
+                    "required": [
+                      "kind",
+                      "filePath",
+                      "line"
+                    ],
                     "additionalProperties": false
                   }
                 },
@@ -213,7 +278,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["statusCode"],
+                  "required": [
+                    "statusCode"
+                  ],
                   "additionalProperties": false
                 },
                 "default": []
@@ -225,12 +292,37 @@
                 },
                 "default": []
               },
+              "mountChain": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "filePath": {
+                      "type": "string"
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "filePath",
+                    "line"
+                  ],
+                  "additionalProperties": false
+                }
+              },
               "provenance": {
                 "type": "object",
                 "properties": {
                   "kind": {
                     "type": "string",
-                    "enum": ["literal", "resolved", "inferred", "unresolved"]
+                    "enum": [
+                      "literal",
+                      "resolved",
+                      "inferred",
+                      "unresolved"
+                    ]
                   },
                   "filePath": {
                     "type": "string",
@@ -248,19 +340,32 @@
                     "type": "string"
                   }
                 },
-                "required": ["kind", "filePath", "line"],
+                "required": [
+                  "kind",
+                  "filePath",
+                  "line"
+                ],
                 "additionalProperties": false
               },
               "confidence": {
                 "type": "string",
-                "enum": ["confirmed", "uncertain"],
+                "enum": [
+                  "confirmed",
+                  "uncertain"
+                ],
                 "default": "confirmed"
               },
               "confidenceReason": {
                 "anyOf": [
                   {
                     "type": "string",
-                    "enum": ["DG-P001", "DG-R001", "DG-R002", "DG-R003"]
+                    "enum": [
+                      "DG-P001",
+                      "DG-R001",
+                      "DG-R002",
+                      "DG-R003",
+                      "DG-I001"
+                    ]
                   },
                   {
                     "type": "null"
@@ -268,7 +373,12 @@
                 ]
               }
             },
-            "required": ["id", "method", "path", "provenance"],
+            "required": [
+              "id",
+              "method",
+              "path",
+              "provenance"
+            ],
             "additionalProperties": false
           }
         },
@@ -279,11 +389,21 @@
             "properties": {
               "code": {
                 "type": "string",
-                "enum": ["DG-P001", "DG-R001", "DG-R002", "DG-R003"]
+                "enum": [
+                  "DG-P001",
+                  "DG-R001",
+                  "DG-R002",
+                  "DG-R003",
+                  "DG-I001"
+                ]
               },
               "severity": {
                 "type": "string",
-                "enum": ["error", "warning", "info"]
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
               },
               "message": {
                 "type": "string",
@@ -305,7 +425,12 @@
                 "properties": {
                   "kind": {
                     "type": "string",
-                    "enum": ["literal", "resolved", "inferred", "unresolved"]
+                    "enum": [
+                      "literal",
+                      "resolved",
+                      "inferred",
+                      "unresolved"
+                    ]
                   },
                   "filePath": {
                     "type": "string",
@@ -323,7 +448,11 @@
                     "type": "string"
                   }
                 },
-                "required": ["kind", "filePath", "line"],
+                "required": [
+                  "kind",
+                  "filePath",
+                  "line"
+                ],
                 "additionalProperties": false
               },
               "details": {
@@ -331,13 +460,19 @@
                 "additionalProperties": {}
               }
             },
-            "required": ["code", "severity", "message"],
+            "required": [
+              "code",
+              "severity",
+              "message"
+            ],
             "additionalProperties": false
           },
           "default": []
         }
       },
-      "required": ["modelVersion", "endpoints"],
+      "required": [
+        "endpoints"
+      ],
       "additionalProperties": false
     }
   },

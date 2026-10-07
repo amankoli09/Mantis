@@ -324,5 +324,61 @@ describe('ApiModel Validation', () => {
         expect(result.errors.some((e) => e.path.includes('diagnostics.0.code'))).toBe(true);
       }
     });
+
+    it('Sample 3: validates modelVersion 1.1.0 with mountChain and in: body parameters', () => {
+      const v11Model: ApiModel = {
+        modelVersion: '1.1.0',
+        project: {
+          name: 'v1.1.0-app',
+          framework: 'express',
+          language: 'javascript',
+          root: './backend',
+        },
+        endpoints: [
+          {
+            id: 'POST /api/users',
+            method: 'POST',
+            path: '/api/users',
+            auth: { type: 'unknown' },
+            effect: 'write',
+            params: [
+              {
+                name: 'email',
+                in: 'body',
+                required: 'unknown',
+                type: 'unknown',
+                provenance: {
+                  kind: 'inferred',
+                  filePath: 'routes/users.js',
+                  line: 25,
+                },
+              },
+            ],
+            responses: [],
+            middleware: [],
+            mountChain: [
+              { filePath: 'app.js', line: 12 },
+              { filePath: 'routes/api.js', line: 5 },
+            ],
+            provenance: {
+              kind: 'resolved',
+              filePath: 'routes/users.js',
+              line: 20,
+            },
+            confidence: 'confirmed',
+            confidenceReason: null,
+          },
+        ],
+        diagnostics: [],
+      };
+
+      const result = validateModel(v11Model);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.modelVersion).toBe('1.1.0');
+        expect(result.data.endpoints[0].params[0].in).toBe('body');
+        expect(result.data.endpoints[0].mountChain).toHaveLength(2);
+      }
+    });
   });
 });

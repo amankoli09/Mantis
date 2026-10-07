@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { createDiagnostic, DIAGNOSTICS_REGISTRY, DiagnosticCodeSchema } from '../src/index.js';
 
 describe('Diagnostics Registry & Factory', () => {
-  it('contains exactly the 4 required Step 2 diagnostic codes', () => {
+  it('contains the registered diagnostic codes', () => {
     const codes = DiagnosticCodeSchema.options;
-    expect(codes).toEqual(['DG-P001', 'DG-R001', 'DG-R002', 'DG-R003']);
-    expect(Object.keys(DIAGNOSTICS_REGISTRY)).toEqual(['DG-P001', 'DG-R001', 'DG-R002', 'DG-R003']);
+    expect(codes).toEqual(['DG-P001', 'DG-R001', 'DG-R002', 'DG-R003', 'DG-I001']);
+    expect(Object.keys(DIAGNOSTICS_REGISTRY)).toEqual(['DG-P001', 'DG-R001', 'DG-R002', 'DG-R003', 'DG-I001']);
   });
 
   it('creates DG-P001 parse error diagnostic with default severity', () => {
@@ -80,5 +80,25 @@ describe('Diagnostics Registry & Factory', () => {
     expect(diag.file).toBe('routes/dynamic.js');
     expect(diag.line).toBe(15);
     expect(diag.message).toBe('Route path uses dynamic runtime expression: prefix + "/items"');
+  });
+
+  it('creates DG-I001 unresolved handler diagnostic with handlerName', () => {
+    const diag = createDiagnostic(
+      'DG-I001',
+      {
+        handlerName: 'customHandler',
+        reason: 'external package',
+      },
+      {
+        file: 'routes/users.js',
+        line: 12,
+      },
+    );
+
+    expect(diag.code).toBe('DG-I001');
+    expect(diag.severity).toBe('info');
+    expect(diag.file).toBe('routes/users.js');
+    expect(diag.line).toBe(12);
+    expect(diag.message).toBe('Route handler could not be statically resolved: customHandler (external package)');
   });
 });

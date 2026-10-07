@@ -25,18 +25,25 @@ export const AuthDefinitionSchema = z.object({
 });
 export type AuthDefinition = z.infer<typeof AuthDefinitionSchema>;
 
-export const ParamLocationSchema = z.enum(['path', 'query', 'header']);
+export const ParamLocationSchema = z.enum(['path', 'query', 'header', 'body']);
 export type ParamLocation = z.infer<typeof ParamLocationSchema>;
 
 export const ParamDefinitionSchema = z.object({
   name: z.string().min(1, 'Parameter name cannot be empty'),
   in: ParamLocationSchema,
-  required: z.boolean().default(false),
+  required: z.union([z.boolean(), z.literal('unknown')]).default('unknown'),
+  type: z.string().optional(),
   schema: z.record(z.unknown()).optional(),
   description: z.string().optional(),
   provenance: ProvenanceSchema.optional(),
 });
 export type ParamDefinition = z.infer<typeof ParamDefinitionSchema>;
+
+export const MountEntrySchema = z.object({
+  filePath: z.string(),
+  line: z.number().int().nonnegative(),
+});
+export type MountEntry = z.infer<typeof MountEntrySchema>;
 
 export const RequestBodyDefinitionSchema = z.object({
   contentType: z.string().default('application/json'),
@@ -67,6 +74,7 @@ export const EndpointSchema = z
     requestBody: RequestBodyDefinitionSchema.optional(),
     responses: z.array(ResponseDefinitionSchema).default([]),
     middleware: z.array(z.string()).default([]),
+    mountChain: z.array(MountEntrySchema).optional(),
     provenance: ProvenanceSchema,
     confidence: ConfidenceSchema.default('confirmed'),
     confidenceReason: DiagnosticCodeSchema.nullable().optional(),
