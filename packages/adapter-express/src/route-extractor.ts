@@ -15,6 +15,8 @@ import {
   type Endpoint,
   type Effect,
   type HttpMethod,
+  type ParamDefinition,
+  type MountEntry,
 } from '@devguard/core';
 import type { ModuleGraph } from './module-graph.js';
 
@@ -80,6 +82,7 @@ export interface PendingRouterRoute {
   snippet?: string;
   isDynamic: boolean;
   rawExpr?: string;
+  inferredParams?: ParamDefinition[];
 }
 
 export interface ExtractedMount {
@@ -393,6 +396,613 @@ function getRawExpressionText(node: Node, code: string): string {
     return code.slice(node.start, node.end);
   }
   return node.type;
+}
+
+export interface ResolvedHandler {
+  resolved: boolean;
+  fnNode?: Node;
+  fnAst?: File;
+  handlerFile?: string;
+  handlerFilePathForProvenance?: string;
+  handlerCode?: string;
+  handlerExprString?: string;
+  line?: number;
+  column?: number;
+}
+
+export function findHandler(
+  candidate: Node | undefined,
+  scope: Scope,
+  ast: File,
+  relFile: string,
+  filePathForProvenance: string,
+  code: string,
+  moduleGraph?: ModuleGraph,
+  astCache?: Map<string, { ast: File; code: string }>
+): ResolvedHandler {
+  if (!candidate) {
+    return { resolved: false, handlerExprString: '<none>' };
+  }
+
+  // 1. Inline function expression / arrow function expression
+  if (candidate.type === 'FunctionExpression' || candidate.type === 'ArrowFunctionExpression') {
+    return {
+      resolved: true,
+      fnNode: candidate,
+      fnAst: ast,
+      handlerFile: relFile,
+      handlerFilePathForProvenance: filePathForProvenance,
+      handlerCode: code,
+    };
+  }
+
+  // 2. Identifier: local function or imported identifier
+  if (candidate.type === 'Identifier') {
+    const idName = candidate.name;
+
+    // Check local binding in scope
+    const binding = scope.getBinding(idName);
+    if (binding) {
+      if (binding.path.node.type === 'FunctionDeclaration') {
+        return {
+          resolved: true,
+          fnNode: binding.path.node,
+          fnAst: ast,
+          handlerFile: relFile,
+          handlerFilePathForProvenance: filePathForProvenance,
+          handlerCode: code,
+        };
+      }
+      if (binding.path.node.type === 'VariableDeclarator' && binding.path.node.init) {
+        const init = binding.path.node.init;
+        if (init.type === 'FunctionExpression' || init.type === 'ArrowFunctionExpression') {
+          return {
+            resolved: true,
+            fnNode: init,
+            fnAst: ast,
+            handlerFile: relFile,
+            handlerFilePathForProvenance: filePathForProvenance,
+            handlerCode: code,
+          };
+        }
+      }
+    }
+
+    // Check 1-hop import via moduleGraph and astCache
+    if (moduleGraph && astCache) {
+      const modNode = moduleGraph.nodes.get(relFile);
+      if (modNode) {
+        const imp = modNode.imports.find((i) => i.localName === idName);
+        if (imp && imp.sourcePath && !imp.isExternal) {
+          const targetEntry = astCache.get(imp.sourcePath);
+          if (targetEntry) {
+            let targetProvenance = imp.sourcePath;
+            if (filePathForProvenance.endsWith(relFile)) {
+              const rootPrefix = filePathForProvenance.slice(0, filePathForProvenance.length - relFile.length);
+              targetProvenance = rootPrefix + imp.sourcePath;
+            }
+
+            let foundFn: Node | undefined;
+            traverse(targetEntry.ast, {
+              enter(p) {
+                if (foundFn) return;
+
+                // ESM: Named export
+                if (p.node.type === 'ExportNamedDeclaration') {
+                  if (p.node.declaration) {
+                    if (
+                      p.node.declaration.type === 'FunctionDeclaration' &&
+                      p.node.declaration.id?.name === imp.importedName
+                    ) {
+                      foundFn = p.node.declaration;
+                      p.stop();
+                      return;
+                    }
+                    if (p.node.declaration.type === 'VariableDeclaration') {
+                      for (const decl of p.node.declaration.declarations) {
+                        if (
+                          decl.id.type === 'Identifier' &&
+                          decl.id.name === imp.importedName &&
+                          decl.init &&
+                          (decl.init.type === 'FunctionExpression' || decl.init.type === 'ArrowFunctionExpression')
+                        ) {
+                          foundFn = decl.init;
+                          p.stop();
+                          return;
+                        }
+                      }
+                    }
+                  }
+                  if (p.node.specifiers) {
+                    for (const spec of p.node.specifiers) {
+                      if (spec.type === 'ExportSpecifier') {
+                        const exportedName = spec.exported.type === 'Identifier' ? spec.exported.name : spec.exported.value;
+                        if (exportedName === imp.importedName) {
+                          const localBinding = p.scope.getBinding(spec.local.name);
+                          if (localBinding) {
+                            if (localBinding.path.node.type === 'FunctionDeclaration') {
+                              foundFn = localBinding.path.node;
+                              p.stop();
+                              return;
+                            }
+                            if (
+                              localBinding.path.node.type === 'VariableDeclarator' &&
+                              localBinding.path.node.init &&
+                              (localBinding.path.node.init.type === 'FunctionExpression' || localBinding.path.node.init.type === 'ArrowFunctionExpression')
+                            ) {
+                              foundFn = localBinding.path.node.init;
+                              p.stop();
+                              return;
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+
+                // ESM: Default export
+                if (imp.importedName === 'default' && p.node.type === 'ExportDefaultDeclaration') {
+                  const decl = p.node.declaration;
+                  if (decl.type === 'FunctionDeclaration' || decl.type === 'FunctionExpression' || decl.type === 'ArrowFunctionExpression') {
+                    foundFn = decl;
+                    p.stop();
+                    return;
+                  }
+                  if (decl.type === 'Identifier') {
+                    const b = p.scope.getBinding(decl.name);
+                    if (b?.path.node.type === 'FunctionDeclaration') {
+                      foundFn = b.path.node;
+                      p.stop();
+                      return;
+                    }
+                    if (
+                      b?.path.node.type === 'VariableDeclarator' &&
+                      b.path.node.init &&
+                      (b.path.node.init.type === 'FunctionExpression' || b.path.node.init.type === 'ArrowFunctionExpression')
+                    ) {
+                      foundFn = b.path.node.init;
+                      p.stop();
+                      return;
+                    }
+                  }
+                }
+
+                // CJS: Assignment expressions
+                if (p.node.type === 'AssignmentExpression') {
+                  const left = p.node.left;
+                  if (left.type === 'MemberExpression') {
+                    if (
+                      left.object.type === 'Identifier' &&
+                      left.object.name === 'exports' &&
+                      left.property.type === 'Identifier' &&
+                      left.property.name === imp.importedName
+                    ) {
+                      if (p.node.right.type === 'FunctionExpression' || p.node.right.type === 'ArrowFunctionExpression') {
+                        foundFn = p.node.right;
+                        p.stop();
+                        return;
+                      }
+                    }
+                    if (
+                      left.object.type === 'Identifier' &&
+                      left.object.name === 'module' &&
+                      left.property.type === 'Identifier' &&
+                      left.property.name === 'exports'
+                    ) {
+                      if (
+                        imp.importedName === 'default' &&
+                        (p.node.right.type === 'FunctionExpression' || p.node.right.type === 'ArrowFunctionExpression')
+                      ) {
+                        foundFn = p.node.right;
+                        p.stop();
+                        return;
+                      }
+                      if (p.node.right.type === 'ObjectExpression') {
+                        for (const prop of p.node.right.properties) {
+                          if (prop.type === 'ObjectProperty') {
+                            const propName = prop.key.type === 'Identifier' ? prop.key.name : (prop.key.type === 'StringLiteral' ? prop.key.value : null);
+                            if (propName === imp.importedName) {
+                              if (prop.value.type === 'FunctionExpression' || prop.value.type === 'ArrowFunctionExpression') {
+                                foundFn = prop.value;
+                                p.stop();
+                                return;
+                              }
+                              if (prop.value.type === 'Identifier') {
+                                const b = p.scope.getBinding(prop.value.name);
+                                if (b?.path.node.type === 'FunctionDeclaration') {
+                                  foundFn = b.path.node;
+                                  p.stop();
+                                  return;
+                                }
+                                if (
+                                  b?.path.node.type === 'VariableDeclarator' &&
+                                  b.path.node.init &&
+                                  (b.path.node.init.type === 'FunctionExpression' || b.path.node.init.type === 'ArrowFunctionExpression')
+                                ) {
+                                  foundFn = b.path.node.init;
+                                  p.stop();
+                                  return;
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+            });
+
+            if (foundFn) {
+              return {
+                resolved: true,
+                fnNode: foundFn,
+                fnAst: targetEntry.ast,
+                handlerFile: imp.sourcePath,
+                handlerFilePathForProvenance: targetProvenance,
+                handlerCode: targetEntry.code,
+              };
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Anything else is unresolvable
+  const handlerExprString =
+    typeof candidate.start === 'number' && typeof candidate.end === 'number'
+      ? code.slice(candidate.start, candidate.end)
+      : candidate.type === 'Identifier'
+        ? candidate.name
+        : 'handler';
+
+  return {
+    resolved: false,
+    handlerExprString,
+    line: candidate.loc?.start.line,
+    column: candidate.loc?.start.column,
+  };
+}
+
+interface RawAccess {
+  name: string;
+  in: 'path' | 'query' | 'header' | 'body';
+  line: number;
+  column?: number;
+  snippet?: string;
+}
+
+export function inferParamsFromHandler(
+  fnNode: Node,
+  fnAst: File,
+  handlerFilePathForProvenance: string,
+  handlerCode: string
+): ParamDefinition[] {
+  const fnParams =
+    fnNode.type === 'FunctionDeclaration' ||
+    fnNode.type === 'FunctionExpression' ||
+    fnNode.type === 'ArrowFunctionExpression'
+      ? fnNode.params
+      : [];
+
+  if (fnParams.length === 0) {
+    return [];
+  }
+
+  const codeLines = handlerCode.split('\n');
+  const getSnippet = (line: number): string | undefined => codeLines[line - 1]?.trim();
+
+  const accesses: RawAccess[] = [];
+  const firstParam = fnParams[0];
+  if (!firstParam) return [];
+
+  traverse(fnAst, {
+    Function(fnPath) {
+      if (fnPath.node !== fnNode) return;
+
+      const aliasMap = new Map<Binding, 'path' | 'query' | 'header' | 'body'>();
+
+      // Check if firstParam is an ObjectPattern directly
+      if (firstParam.type === 'ObjectPattern') {
+        for (const prop of firstParam.properties) {
+          if (prop.type === 'ObjectProperty' && !prop.computed) {
+            const locName = prop.key.type === 'Identifier' ? prop.key.name : (prop.key.type === 'StringLiteral' ? prop.key.value : null);
+            let loc: 'path' | 'query' | 'header' | 'body' | null = null;
+            if (locName === 'params') loc = 'path';
+            else if (locName === 'query') loc = 'query';
+            else if (locName === 'body') loc = 'body';
+            else if (locName === 'headers') loc = 'header';
+
+            if (loc) {
+              if (prop.value.type === 'Identifier') {
+                const b = fnPath.scope.getBinding(prop.value.name);
+                if (b) aliasMap.set(b, loc);
+              } else if (prop.value.type === 'ObjectPattern') {
+                for (const sub of prop.value.properties) {
+                  if (sub.type === 'ObjectProperty' && !sub.computed) {
+                    const name = sub.key.type === 'Identifier' ? sub.key.name : (sub.key.type === 'StringLiteral' ? sub.key.value : null);
+                    if (name) {
+                      const line = sub.loc?.start.line ?? fnNode.loc?.start.line ?? 1;
+                      accesses.push({
+                        name,
+                        in: loc,
+                        line,
+                        column: sub.loc?.start.column,
+                        snippet: getSnippet(line),
+                      });
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      const reqParamBindingNode = firstParam.type === 'Identifier' ? firstParam : null;
+
+      fnPath.traverse({
+        VariableDeclarator(vPath) {
+          const init = vPath.node.init;
+          if (!init) return;
+
+          // 1. const body = req.body; or const { a, b: c } = req.body;
+          if (init.type === 'MemberExpression') {
+            let innerProp: string | null = null;
+            let isReq = false;
+
+            if (init.object.type === 'Identifier' && reqParamBindingNode) {
+              const b = vPath.scope.getBinding(init.object.name);
+              if (b?.identifier === reqParamBindingNode) {
+                isReq = true;
+              }
+            }
+
+            if (isReq) {
+              if (!init.computed && init.property.type === 'Identifier') {
+                innerProp = init.property.name;
+              } else if (init.computed && init.property.type === 'StringLiteral') {
+                innerProp = init.property.value;
+              }
+
+              let loc: 'path' | 'query' | 'header' | 'body' | null = null;
+              if (innerProp === 'params') loc = 'path';
+              else if (innerProp === 'query') loc = 'query';
+              else if (innerProp === 'body') loc = 'body';
+              else if (innerProp === 'headers') loc = 'header';
+
+              if (loc) {
+                if (vPath.node.id.type === 'Identifier') {
+                  const b = vPath.scope.getBinding(vPath.node.id.name);
+                  if (b) aliasMap.set(b, loc);
+                } else if (vPath.node.id.type === 'ObjectPattern') {
+                  for (const prop of vPath.node.id.properties) {
+                    if (prop.type === 'ObjectProperty' && !prop.computed) {
+                      const name = prop.key.type === 'Identifier' ? prop.key.name : (prop.key.type === 'StringLiteral' ? prop.key.value : null);
+                      if (name) {
+                        const line = prop.loc?.start.line ?? vPath.node.loc?.start.line ?? 1;
+                        accesses.push({
+                          name,
+                          in: loc,
+                          line,
+                          column: prop.loc?.start.column,
+                          snippet: getSnippet(line),
+                        });
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          // 2. const { body, query } = req; or const { body: { author } } = req;
+          if (init.type === 'Identifier' && reqParamBindingNode) {
+            const b = vPath.scope.getBinding(init.name);
+            if (b?.identifier === reqParamBindingNode && vPath.node.id.type === 'ObjectPattern') {
+              for (const prop of vPath.node.id.properties) {
+                if (prop.type === 'ObjectProperty' && !prop.computed) {
+                  const locPropName = prop.key.type === 'Identifier' ? prop.key.name : (prop.key.type === 'StringLiteral' ? prop.key.value : null);
+                  let loc: 'path' | 'query' | 'header' | 'body' | null = null;
+                  if (locPropName === 'params') loc = 'path';
+                  else if (locPropName === 'query') loc = 'query';
+                  else if (locPropName === 'body') loc = 'body';
+                  else if (locPropName === 'headers') loc = 'header';
+
+                  if (loc) {
+                    if (prop.value.type === 'Identifier') {
+                      const aliasB = vPath.scope.getBinding(prop.value.name);
+                      if (aliasB) aliasMap.set(aliasB, loc);
+                    } else if (prop.value.type === 'ObjectPattern') {
+                      for (const sub of prop.value.properties) {
+                        if (sub.type === 'ObjectProperty' && !sub.computed) {
+                          const name = sub.key.type === 'Identifier' ? sub.key.name : (sub.key.type === 'StringLiteral' ? sub.key.value : null);
+                          if (name) {
+                            const line = sub.loc?.start.line ?? vPath.node.loc?.start.line ?? 1;
+                            accesses.push({
+                              name,
+                              in: loc,
+                              line,
+                              column: sub.loc?.start.column,
+                              snippet: getSnippet(line),
+                            });
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          // 3. const { title } = body; where body is an alias in aliasMap
+          if (init.type === 'Identifier') {
+            const b = vPath.scope.getBinding(init.name);
+            if (b && aliasMap.has(b) && vPath.node.id.type === 'ObjectPattern') {
+              const loc = aliasMap.get(b)!;
+              for (const prop of vPath.node.id.properties) {
+                if (prop.type === 'ObjectProperty' && !prop.computed) {
+                  const name = prop.key.type === 'Identifier' ? prop.key.name : (prop.key.type === 'StringLiteral' ? prop.key.value : null);
+                  if (name) {
+                    const line = prop.loc?.start.line ?? vPath.node.loc?.start.line ?? 1;
+                    accesses.push({
+                      name,
+                      in: loc,
+                      line,
+                      column: prop.loc?.start.column,
+                      snippet: getSnippet(line),
+                    });
+                  }
+                }
+              }
+            }
+          }
+        },
+
+        MemberExpression(mPath) {
+          const outer = mPath.node;
+
+          // Form A: Direct member access on req: req.query.search or req['query']['search']
+          if (outer.object.type === 'MemberExpression') {
+            const inner = outer.object;
+            let isReq = false;
+            if (inner.object.type === 'Identifier' && reqParamBindingNode) {
+              const b = mPath.scope.getBinding(inner.object.name);
+              if (b?.identifier === reqParamBindingNode) {
+                isReq = true;
+              }
+            }
+
+            if (isReq) {
+              const innerProp =
+                !inner.computed && inner.property.type === 'Identifier'
+                  ? inner.property.name
+                  : inner.computed && inner.property.type === 'StringLiteral'
+                    ? inner.property.value
+                    : null;
+
+              let loc: 'path' | 'query' | 'header' | 'body' | null = null;
+              if (innerProp === 'params') loc = 'path';
+              else if (innerProp === 'query') loc = 'query';
+              else if (innerProp === 'body') loc = 'body';
+              else if (innerProp === 'headers') loc = 'header';
+
+              if (loc) {
+                const name =
+                  !outer.computed && outer.property.type === 'Identifier'
+                    ? outer.property.name
+                    : outer.computed && outer.property.type === 'StringLiteral'
+                      ? outer.property.value
+                      : null;
+
+                if (name) {
+                  const line = outer.loc?.start.line ?? 1;
+                  accesses.push({
+                    name,
+                    in: loc,
+                    line,
+                    column: outer.loc?.start.column,
+                    snippet: getSnippet(line),
+                  });
+                }
+              }
+            }
+          }
+
+          // Form B: Member access on an alias: body.email or body['email']
+          if (outer.object.type === 'Identifier') {
+            const b = mPath.scope.getBinding(outer.object.name);
+            if (b && aliasMap.has(b)) {
+              const loc = aliasMap.get(b)!;
+              const name =
+                !outer.computed && outer.property.type === 'Identifier'
+                  ? outer.property.name
+                  : outer.computed && outer.property.type === 'StringLiteral'
+                    ? outer.property.value
+                    : null;
+
+              if (name) {
+                const line = outer.loc?.start.line ?? 1;
+                accesses.push({
+                  name,
+                  in: loc,
+                  line,
+                  column: outer.loc?.start.column,
+                  snippet: getSnippet(line),
+                });
+              }
+            }
+          }
+        },
+      });
+    },
+  });
+
+  // Sort by line, then column to preserve first access
+  accesses.sort((a, b) => a.line - b.line || (a.column ?? 0) - (b.column ?? 0));
+
+  // Deduplicate by location and name
+  const seen = new Set<string>();
+  const deduped: RawAccess[] = [];
+  for (const acc of accesses) {
+    const key = `${acc.in}:${acc.name}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduped.push(acc);
+    }
+  }
+
+  return deduped.map((acc) => ({
+    name: acc.name,
+    in: acc.in,
+    required: 'unknown' as const,
+    type: 'unknown',
+    provenance: {
+      kind: 'inferred' as const,
+      filePath: handlerFilePathForProvenance,
+      line: acc.line,
+      ...(acc.snippet ? { snippet: acc.snippet } : {}),
+    },
+  }));
+}
+
+export function mergeAndSortParams(
+  routePathParams: ParamDefinition[],
+  inferredParams: ParamDefinition[]
+): ParamDefinition[] {
+  const LOCATION_ORDER: Record<string, number> = {
+    path: 1,
+    query: 2,
+    header: 3,
+    body: 4,
+    cookie: 5,
+    unknown: 6,
+  };
+
+  const existingPathParams = new Set(routePathParams.map((p) => p.name));
+  const result: ParamDefinition[] = [...routePathParams];
+
+  for (const inf of inferredParams) {
+    if (inf.in === 'path' && existingPathParams.has(inf.name)) {
+      continue;
+    }
+    result.push(inf);
+  }
+
+  result.sort((a, b) => {
+    const orderA = LOCATION_ORDER[a.in] ?? 99;
+    const orderB = LOCATION_ORDER[b.in] ?? 99;
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+    return a.name.localeCompare(b.name);
+  });
+
+  return result;
 }
 
 /**
@@ -763,6 +1373,58 @@ export function extractFileDeclarations(
 
       if (!effectiveAppBinding && !effectiveRouterRecord) return;
 
+      const handlerArgs = isChainedRoute ? node.arguments : node.arguments.slice(1);
+      let candidate: Node | undefined = undefined;
+      if (handlerArgs.length > 0) {
+        const lastArg = handlerArgs[handlerArgs.length - 1];
+        if (lastArg?.type === 'ArrayExpression') {
+          if (lastArg.elements.length > 0) {
+            candidate = (lastArg.elements[lastArg.elements.length - 1] as Node) ?? undefined;
+          }
+        } else {
+          candidate = lastArg as Node;
+        }
+      }
+
+      const handlerResult = findHandler(
+        candidate,
+        pathNode.scope,
+        ast,
+        relFile,
+        filePathForProvenance,
+        code,
+        moduleGraph,
+        astCache
+      );
+
+      let inferredParams: ParamDefinition[] = [];
+      if (
+        handlerResult.resolved &&
+        handlerResult.fnNode &&
+        handlerResult.fnAst &&
+        handlerResult.handlerFilePathForProvenance &&
+        handlerResult.handlerCode
+      ) {
+        inferredParams = inferParamsFromHandler(
+          handlerResult.fnNode,
+          handlerResult.fnAst,
+          handlerResult.handlerFilePathForProvenance,
+          handlerResult.handlerCode
+        );
+      } else {
+        // Unresolvable handler: emit DG-I001
+        diagnostics.push(
+          createDiagnostic(
+            'DG-I001',
+            { handlerName: handlerResult.handlerExprString },
+            {
+              file: filePathForProvenance,
+              line: handlerResult.line ?? memberExpr.property.loc?.start.line ?? node.loc?.start.line ?? 1,
+            }
+          )
+        );
+      }
+
       const startLine = memberExpr.property.loc?.start.line ?? node.loc?.start.line ?? 1;
       const startCol = memberExpr.property.loc?.start.column ?? node.loc?.start.column;
       const snippet = codeLines[startLine - 1]?.trim();
@@ -782,6 +1444,7 @@ export function extractFileDeclarations(
                 name: match[1] ?? '',
                 in: 'path' as const,
                 required: true,
+                type: 'string',
                 description: `User identifier extracted from path segment :${match[1]}.`,
                 provenance: {
                   kind: 'literal' as const,
@@ -790,15 +1453,18 @@ export function extractFileDeclarations(
                 },
               }));
 
+              const mergedParams = mergeAndSortParams(params, inferredParams);
+
               directEndpoints.push({
                 id: generateEndpointId(methodUpper, p),
                 method: methodUpper,
                 path: p,
                 auth: { type: 'unknown' },
                 effect,
-                params,
+                params: mergedParams,
                 responses: [],
                 middleware: [],
+                mountChain: [],
                 provenance: {
                   kind: isLiteralKind ? 'literal' : 'resolved',
                   filePath: filePathForProvenance,
@@ -831,6 +1497,7 @@ export function extractFileDeclarations(
                 params: [],
                 responses: [],
                 middleware: [],
+                mountChain: [],
                 provenance: {
                   kind: 'unresolved',
                   filePath: filePathForProvenance,
@@ -857,6 +1524,7 @@ export function extractFileDeclarations(
               snippet,
               isDynamic: !res.isResolvable,
               rawExpr: diagExpr,
+              inferredParams,
             });
           }
         }
@@ -1199,12 +1867,17 @@ export function resolveCrossFileRoutes(
     }
   }
 
-  // 4. DFS from app mounts to generate full prefixes for each router
-  const resolvedPrefixes = new Map<string, string[]>();
+  // 4. DFS from app mounts to generate full prefixes and mount chains for each router
+  interface RouterMountInfo {
+    prefix: string;
+    mountChain: MountEntry[];
+  }
+  const resolvedRouterMounts = new Map<string, RouterMountInfo[]>();
   
   function dfs(
     currentRouter: ExtractedRouter, 
     currentPrefix: string, 
+    currentChain: MountEntry[],
     visitedPath: Set<string>, 
     mountLine: number, 
     mountCol: number | undefined, 
@@ -1221,10 +1894,13 @@ export function resolveCrossFileRoutes(
       return;
     }
 
-    if (!resolvedPrefixes.has(currentRouter.id)) {
-      resolvedPrefixes.set(currentRouter.id, []);
+    if (!resolvedRouterMounts.has(currentRouter.id)) {
+      resolvedRouterMounts.set(currentRouter.id, []);
     }
-    resolvedPrefixes.get(currentRouter.id)!.push(currentPrefix);
+    resolvedRouterMounts.get(currentRouter.id)!.push({
+      prefix: currentPrefix,
+      mountChain: currentChain,
+    });
 
     const nextVisited = new Set(visitedPath);
     nextVisited.add(currentRouter.id);
@@ -1232,19 +1908,39 @@ export function resolveCrossFileRoutes(
     const children = routerMounts.get(currentRouter.id) || [];
     for (const childMount of children) {
       const nextPrefix = joinPaths(currentPrefix, childMount.prefix);
-      dfs(childMount.targetRouter, nextPrefix, nextVisited, childMount.line, childMount.column, childMount.mountFilePath);
+      const nextChain: MountEntry[] = [
+        ...currentChain,
+        { filePath: childMount.mountFilePath, line: childMount.line },
+      ];
+      dfs(
+        childMount.targetRouter,
+        nextPrefix,
+        nextChain,
+        nextVisited,
+        childMount.line,
+        childMount.column,
+        childMount.mountFilePath
+      );
     }
   }
 
   for (const am of appMounts) {
-    dfs(am.targetRouter, am.prefix, new Set(), am.line, am.column, am.mountFilePath);
+    dfs(
+      am.targetRouter,
+      am.prefix,
+      [{ filePath: am.mountFilePath, line: am.line }],
+      new Set(),
+      am.line,
+      am.column,
+      am.mountFilePath
+    );
   }
 
   // 5. Generate endpoints for all routers
   for (const router of allRouters.values()) {
-    const prefixes = resolvedPrefixes.get(router.id);
+    const mountInfos = resolvedRouterMounts.get(router.id);
     
-    if (!prefixes || prefixes.length === 0) {
+    if (!mountInfos || mountInfos.length === 0) {
       // Unmounted router: emit DG-R002 and mark all its routes as uncertain
       diagnostics.push(
         createDiagnostic(
@@ -1272,6 +1968,7 @@ export function resolveCrossFileRoutes(
           params: [],
           responses: [],
           middleware: [],
+          mountChain: [],
           provenance: {
             kind: 'unresolved',
             filePath: router.filePathForProvenance,
@@ -1284,8 +1981,8 @@ export function resolveCrossFileRoutes(
         });
       }
     } else {
-      // Mounted router: emit resolved endpoints for each mount prefix
-      for (const prefix of prefixes) {
+      // Mounted router: emit resolved endpoints for each mount prefix and mount chain
+      for (const { prefix, mountChain } of mountInfos) {
         for (const route of router.routes) {
           const methodUpper = route.method.toUpperCase() as HttpMethod;
           const effect = getEffectForMethod(route.method);
@@ -1309,6 +2006,7 @@ export function resolveCrossFileRoutes(
               params: [],
               responses: [],
               middleware: [],
+              mountChain,
               provenance: {
                 kind: 'unresolved',
                 filePath: router.filePathForProvenance,
@@ -1322,10 +2020,11 @@ export function resolveCrossFileRoutes(
           } else {
             const finalPath = joinPaths(prefix, route.routePath);
             const paramMatches = [...finalPath.matchAll(/:([a-zA-Z0-9_]+)/g)];
-            const params = paramMatches.map((match) => ({
+            const pathParams = paramMatches.map((match) => ({
               name: match[1] ?? '',
               in: 'path' as const,
               required: true,
+              type: 'string',
               description: `User identifier extracted from path segment :${match[1]}.`,
               provenance: {
                 kind: 'literal' as const,
@@ -1334,15 +2033,18 @@ export function resolveCrossFileRoutes(
               },
             }));
 
+            const mergedParams = mergeAndSortParams(pathParams, route.inferredParams ?? []);
+
             endpoints.push({
               id: generateEndpointId(methodUpper, finalPath),
               method: methodUpper,
               path: finalPath,
               auth: { type: 'unknown' },
               effect,
-              params,
+              params: mergedParams,
               responses: [],
               middleware: [],
+              mountChain,
               provenance: {
                 kind: 'resolved',
                 filePath: router.filePathForProvenance,
