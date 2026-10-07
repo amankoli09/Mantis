@@ -263,4 +263,160 @@ describe('Parameter & Body-Field Inference (Step 8a)', () => {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   });
+
+  it('extracts req.query.x and req.params.x correctly', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-inference-query-param-'));
+    try {
+      await fs.writeFile(
+        path.join(tempDir, 'app.js'),
+        `
+        const express = require('express');
+        const app = express();
+        app.get('/users/:userId', (req, res) => {
+          const uId = req.params.userId;
+          const filter = req.query.filter;
+          const sort = req.query.sort;
+          res.json({ uId, filter, sort });
+        });
+        `
+      );
+
+      const model = await scanProject(tempDir);
+      expect(model.endpoints).toHaveLength(1);
+      const ep = model.endpoints[0]!;
+      expect(ep.params).toHaveLength(3);
+      expect(ep.params[0]!.name).toBe('userId');
+      expect(ep.params[0]!.in).toBe('path');
+      expect(ep.params[0]!.required).toBe(true);
+      expect(ep.params[1]!.name).toBe('filter');
+      expect(ep.params[1]!.in).toBe('query');
+      expect(ep.params[1]!.required).toBe('unknown');
+      expect(ep.params[2]!.name).toBe('sort');
+      expect(ep.params[2]!.in).toBe('query');
+      expect(ep.params[2]!.required).toBe('unknown');
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolves one-hop imported controller function from another file', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-inference-controller-'));
+    try {
+      await fs.mkdir(path.join(tempDir, 'controllers'), { recursive: true });
+      await fs.writeFile(
+        path.join(tempDir, 'controllers', 'orders.js'),
+        `
+        function listOrders(req, res) {
+          const status = req.query.status;
+          res.json({ status });
+        }
+        module.exports = { listOrders };
+        `
+      );
+      await fs.writeFile(
+        path.join(tempDir, 'app.js'),
+        `
+        const express = require('express');
+        const { listOrders } = require('./controllers/orders');
+        const app = express();
+        app.get('/orders', listOrders);
+        `
+      );
+
+      const model = await scanProject(tempDir);
+      expect(model.endpoints).toHaveLength(1);
+      const ep = model.endpoints[0]!;
+      expect(ep.params).toHaveLength(1);
+      expect(ep.params[0]!.name).toBe('status');
+      expect(ep.params[0]!.in).toBe('query');
+      expect(ep.params[0]!.provenance?.filePath).toContain('controllers/orders.js');
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('resolves handler array picking the last function element', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-inference-handler-array-'));
+    try {
+      await fs.writeFile(
+        path.join(tempDir, 'app.js'),
+        `
+        const express = require('express');
+        const app = express();
+        const m1 = (req, res, next) => next();
+        const m2 = (req, res, next) => next();
+        app.post('/submit', [m1, m2, (req, res) => {
+          const token = req.body.token;
+          res.json({ token });
+        }]);
+        `
+      );
+
+      const model = await scanProject(tempDir);
+      expect(model.endpoints).toHaveLength(1);
+      const ep = model.endpoints[0]!;
+      expect(ep.params).toHaveLength(1);
+      expect(ep.params[0]!.name).toBe('token');
+      expect(ep.params[0]!.in).toBe('body');
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('ignores shadowed req parameter in nested callbacks', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-inference-shadow-'));
+    try {
+      await fs.writeFile(
+        path.join(tempDir, 'app.js'),
+        `
+        const express = require('express');
+        const app = express();
+        app.get('/shadow', (req, res) => {
+          const q = req.query.activeQuery;
+          const list = [1, 2].map((req) => req.shadowProp);
+          res.json({ q, list });
+        });
+        `
+      );
+
+      const model = await scanProject(tempDir);
+      expect(model.endpoints).toHaveLength(1);
+      const ep = model.endpoints[0]!;
+      // activeQuery is inferred; shadowProp from the inner map callback parameter is ignored
+      expect(ep.params).toHaveLength(1);
+      expect(ep.params[0]!.name).toBe('activeQuery');
+      expect(ep.params[0]!.in).toBe('query');
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('detects header parameters from req.headers', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-inference-headers-'));
+    try {
+      await fs.writeFile(
+        path.join(tempDir, 'app.js'),
+        `
+        const express = require('express');
+        const app = express();
+        app.get('/protected', (req, res) => {
+          const auth = req.headers['authorization'];
+          const apiKey = req.headers.apiKey;
+          res.json({ auth, apiKey });
+        });
+        `
+      );
+
+      const model = await scanProject(tempDir);
+      expect(model.endpoints).toHaveLength(1);
+      const ep = model.endpoints[0]!;
+      expect(ep.params).toHaveLength(2);
+      expect(ep.params.map(p => `${p.in}:${p.name}`)).toEqual([
+        'header:apiKey',
+        'header:authorization',
+      ]);
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  });
 });

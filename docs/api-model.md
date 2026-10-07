@@ -96,10 +96,11 @@ Diagnostics capture issues or ambiguities encountered during analysis without cr
 | `DG-R001` | `warning` | **Unresolved Import**: An imported router or controller file could not be resolved. |
 | `DG-R002` | `warning` | **Unresolved Router Mount**: A router was mounted but its definition was missing.   |
 | `DG-R003` |  `info`   | **Dynamic Path**: Route uses a runtime dynamic expression. Unresolvable segments are replaced with normalized `<EXPRESSION>` placeholders. |
+| `DG-I001` |  `info`   | **Unresolved Handler**: Route handler could not be statically resolved. Inferred fields remain empty. |
 
 Each diagnostic records:
 
-- `code`: Diagnostic code enum (`DG-P001`, `DG-R001`, `DG-R002`, `DG-R003`).
+- `code`: Diagnostic code enum (`DG-P001`, `DG-R001`, `DG-R002`, `DG-R003`, `DG-I001`).
 - `severity`: `'error' | 'warning' | 'info'`.
 - `message`: Formatted human-readable explanation.
 - `file` & `line`: Source location (optional only for project-wide diagnostics).
