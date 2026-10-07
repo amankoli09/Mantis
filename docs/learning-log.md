@@ -683,3 +683,74 @@ A unified recursive evaluator \`resolvePathConstant\` evaluates these nodes, han
 ### Next Step Preview (Per \`docs/PLAN.md\`)
 
 - **Step 8: Controller parsing & Schema extraction**: Parse route handler bodies, extract Zod/Joi schema validations, and define HTTP request/response payloads.
+
+---
+
+## Step 8a: Parameter & Body-Field Inference (@devguard/adapter-express)
+
+### Overview
+
+In Step 8a, we implemented parameter and body-field inference in `@devguard/adapter-express`. The scanner now resolves route handlers (inline functions, 1-hop imported controller identifiers via the module graph, and handler arrays where the last element is the handler). It identifies the request object binding (`fnNode.params[0]`, regardless of identifier name such as `req`, `request`, or `r`), tracks parameter accesses (`req.params`, `req.query`, `req.body`, bracket string literals, and destructuring with renames), records inferred parameters with provenance, and emits `DG-I001` (Unresolved Handler) when a handler expression cannot be statically resolved.
+
+---
+
+### 🧠 Core Concept: Why Static Inference Uses `required: 'unknown'` Instead of Guessing
+
+A central architectural decision in DevGuard is that static AST extraction must report **truthful ground truth, not speculative guesses**:
+
+1. **Member Access Does Not Imply Requirement**:
+   When JavaScript code contains `const email = req.body.email;`, the runtime will evaluate `req.body.email` to `undefined` if `email` was omitted by the caller (assuming body parsing middleware initialized `req.body` to an object). Without an explicit guard (e.g. `if (!req.body.email) return res.status(400)`) or a validation schema like Zod/Joi, the static analyzer cannot know whether `email` is optional or required.
+2. **False Precision is Harmful**:
+   Marking an inferred field as `required: true` would produce false-positive API contract violations for optional query parameters (such as `req.query.search` or `req.query.page`). Marking it `required: false` could mislead client generators into treating mandatory parameters as optional.
+3. **Explicit Unknown State**:
+   By typing inferred parameters as `required: 'unknown'` and `type: 'unknown'` with `provenance.kind: 'inferred'`, the API model cleanly communicates:
+   - We know with static certainty that the handler code reads this property from the request.
+   - We know exactly which line and file accessed it.
+   - Contractual guarantees (types, required vs optional) are deferred until validation library analysis (e.g., Zod, Joi, express-validator in Step 8d).
+   - In contrast, path parameters declared in the route path string (`:id`) have `required: true` and `type: 'string'` with `provenance.kind: 'literal'` because the Express routing engine will strictly not match the route if that path segment is absent.
+
+---
+
+### Implementation Highlights
+
+1. **ADR 0001 & ApiModel v1.1.0 Bump**:
+   - Upgraded core API schema to `modelVersion: '1.1.0'` while maintaining 100% backward compatibility with `1.0.0`.
+   - Added `'body'` to `ParamLocation`.
+   - Added `required: z.union([z.boolean(), z.literal('unknown')])`.
+   - Added `mountChain?: MountEntry[]` to endpoints tracking the exact sequence of router mounts from the root application.
+   - Added diagnostic code `DG-I001` (Unresolved Handler).
+2. **Handler Identification**:
+   - Resolves inline functions (`FunctionExpression`, `ArrowFunctionExpression`).
+   - Resolves local function declarations / variable declarators.
+   - Resolves 1-hop imported functions via `moduleGraph` and `astCache` (ESM named/default exports and CJS exports).
+   - Handles arrays of handlers by picking the last handler element.
+   - Emits `DG-I001` when the handler candidate is dynamic or unresolvable (e.g. `getDynamicHandler()`).
+3. **Scope-Aware Request Object Binding**:
+   - Binds the handler's first parameter (`fnNode.params[0]`) regardless of name (`req`, `request`, `r`).
+   - Verifies identifier references via Babel scope binding equality (`scope.getBinding(id.name)?.identifier === reqParamNode`).
+   - Correctly ignores shadowed variables in nested callbacks (e.g., `items.map(req => req.name)`).
+4. **Access Detection & Deliberate Skips**:
+   - Supported forms: `req.params.x`, `req.query.x`, `req.body.x`, bracket access with string literals (`req['query']['x']`), direct destructuring with renames (`const { author, category: cat } = req.body` extracts `category`, not `cat`), and aliases (`const body = req.body; body.x`).
+   - Deliberately skipped: computed property keys (`req.body[computedKey]`), whole-object passing (`save(req.body)` extracts 0 fields without guessing), and object rest/spread.
+5. **Deduplication & Deterministic Ordering**:
+   - Preserves the earliest line/column for duplicate accesses to the same field.
+   - Sorts parameters deterministically: `path` (1) -> `query` (2) -> `header` (3) -> `body` (4) -> `cookie` (5) -> `unknown` (6), breaking ties alphabetically by parameter name.
+
+---
+
+### Verification Summary
+
+- `pnpm lint` ✅ (0 errors, 0 warnings)
+- `pnpm typecheck` ✅ (0 type errors across all packages)
+- `pnpm test` ✅ (18 test suites passed, 173/173 tests)
+  - 8 new unit/integration tests in `packages/adapter-express/tests/inference.test.ts`
+  - Validates full `fixtures/inference-basic` golden model and diagnostics
+- `pnpm build` ✅ (Clean builds across all packages)
+
+---
+
+### Remaining Uncertainties
+
+- **Step 8b–8d (Auth detection, middleware semantics, effects, validation libraries)**: Left untouched as planned. Handler effects remain mapped by HTTP method convention until body effects analysis in 8c.
+- **Transitive (2+ hop) Controller Exports**: Currently handles 1-hop imported controllers (`app.get('/items', controller)`). Multi-hop re-exports (`controllers/index.js` re-exporting `items.js`) are not resolved in 8a.
+
