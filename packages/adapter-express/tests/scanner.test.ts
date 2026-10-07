@@ -42,8 +42,10 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
       expect(actual.provenance.line).toBe(expected.provenance.line);
       expect(actual.provenance.filePath).toBe(expected.provenance.filePath);
 
-      // Path parameters comparison
-      expect(actual.params.length).toBe(expected.params.length);
+      expect(actual.mountChain).toEqual(expected.mountChain);
+
+      // Parameters comparison
+      expect(actual.params).toHaveLength(expected.params.length);
       for (let p = 0; p < expected.params.length; p++) {
         expect(actual.params[p]!.name).toBe(expected.params[p]!.name);
         expect(actual.params[p]!.in).toBe(expected.params[p]!.in);
