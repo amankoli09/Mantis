@@ -1,0 +1,9 @@
+{
+  "name": "auth-middleware-fixture",
+  "version": "1.0.0",
+  "private": true,
+  "main": "app/app.js",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

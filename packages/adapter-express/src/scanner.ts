@@ -130,7 +130,7 @@ export async function scanProject(projectRoot: string, options: ScanOptions = {}
 
   // 8. Construct final ApiModel
   const model: ApiModel = {
-    modelVersion: '1.1.0',
+    modelVersion: '1.2.0',
     project: {
       name: projectName,
       framework: 'express',

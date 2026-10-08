@@ -19,7 +19,9 @@ import type {
   ExtractedMount,
   FileDeclarations,
   ExtractRoutesResult,
+  ExtractedMiddleware,
 } from './types.js';
+import { classifyAuthFromMiddlewares } from './middleware-inference.js';
 
 interface MountLocationInfo {
   file: string;
@@ -308,6 +310,8 @@ export function resolveCrossFileRoutes(
     line: number;
     column?: number;
     mountFilePath: string;
+    mountRelFile: string;
+    mountMiddlewares?: ExtractedMiddleware[];
   }
 
   const appMounts: ResolvedMount[] = [];
@@ -332,6 +336,8 @@ export function resolveCrossFileRoutes(
           line: mount.line,
           column: mount.column,
           mountFilePath: decl.filePathForProvenance,
+          mountRelFile: decl.relFile,
+          mountMiddlewares: mount.mountMiddlewares,
         };
 
         if (mount.sourceRouterId) {
@@ -346,10 +352,11 @@ export function resolveCrossFileRoutes(
     }
   }
 
-  // 4. DFS from app mounts to generate full prefixes and mount chains for each router
+  // 4. DFS from app mounts to generate full prefixes, mount chains, and accumulated middlewares for each router
   interface RouterMountInfo {
     prefix: string;
     mountChain: MountEntry[];
+    accumulatedMiddlewares: ExtractedMiddleware[];
   }
   const resolvedRouterMounts = new Map<string, RouterMountInfo[]>();
 
@@ -357,6 +364,7 @@ export function resolveCrossFileRoutes(
     currentRouter: ExtractedRouter,
     currentPrefix: string,
     currentChain: MountEntry[],
+    currentMiddlewares: ExtractedMiddleware[],
     visitedPath: Set<string>,
     mountLine: number,
     mountCol: number | undefined,
@@ -379,6 +387,7 @@ export function resolveCrossFileRoutes(
     resolvedRouterMounts.get(currentRouter.id)!.push({
       prefix: currentPrefix,
       mountChain: currentChain,
+      accumulatedMiddlewares: currentMiddlewares,
     });
 
     const nextVisited = new Set(visitedPath);
@@ -391,10 +400,15 @@ export function resolveCrossFileRoutes(
         ...currentChain,
         { filePath: childMount.mountFilePath, line: childMount.line },
       ];
+      const nextMiddlewares = [
+        ...currentMiddlewares,
+        ...(childMount.mountMiddlewares ?? []),
+      ];
       dfs(
         childMount.targetRouter,
         nextPrefix,
         nextChain,
+        nextMiddlewares,
         nextVisited,
         childMount.line,
         childMount.column,
@@ -404,10 +418,20 @@ export function resolveCrossFileRoutes(
   }
 
   for (const am of appMounts) {
+    const parentDecl = fileDeclarations.get(am.mountRelFile);
+    const parentUses = (parentDecl?.appUses ?? [])
+      .filter((u) => u.line < am.line)
+      .map((u) => u.middleware);
+    const initialMiddlewares = [
+      ...parentUses,
+      ...(am.mountMiddlewares ?? []),
+    ];
+
     dfs(
       am.targetRouter,
       am.prefix,
       [{ filePath: am.mountFilePath, line: am.line }],
+      initialMiddlewares,
       new Set(),
       am.line,
       am.column,
@@ -440,15 +464,28 @@ export function resolveCrossFileRoutes(
             : '/' + formatPlaceholder(route.rawExpr)
           : normalizePath(route.routePath);
 
+        const routerUsesBefore = (router.uses ?? [])
+          .filter((u) => u.line < route.startLine)
+          .map((u) => u.middleware);
+        const allMiddlewares = [
+          ...routerUsesBefore,
+          ...(route.routeMiddlewares ?? []),
+        ];
+        const endpointMiddleware = allMiddlewares.map((m) => ({
+          name: m.name,
+          provenance: m.provenance,
+        }));
+        const endpointAuth = classifyAuthFromMiddlewares(allMiddlewares);
+
         endpoints.push({
           id: generateEndpointId(methodUpper, finalPath),
           method: methodUpper,
           path: finalPath,
-          auth: { type: 'unknown' },
+          auth: endpointAuth,
           effect,
           params: [],
           responses: [],
-          middleware: [],
+          middleware: endpointMiddleware,
           mountChain: [],
           provenance: {
             kind: 'unresolved',
@@ -463,10 +500,24 @@ export function resolveCrossFileRoutes(
       }
     } else {
       // Mounted router: emit resolved endpoints for each mount prefix and mount chain
-      for (const { prefix, mountChain } of mountInfos) {
+      for (const info of mountInfos) {
         for (const route of router.routes) {
           const methodUpper = route.method.toUpperCase() as HttpMethod;
           const effect = getEffectForMethod(route.method);
+
+          const routerUsesBefore = (router.uses ?? [])
+            .filter((u) => u.line < route.startLine)
+            .map((u) => u.middleware);
+          const allMiddlewares = [
+            ...info.accumulatedMiddlewares,
+            ...routerUsesBefore,
+            ...(route.routeMiddlewares ?? []),
+          ];
+          const endpointMiddleware = allMiddlewares.map((m) => ({
+            name: m.name,
+            provenance: m.provenance,
+          }));
+          const endpointAuth = classifyAuthFromMiddlewares(allMiddlewares);
 
           if (route.isDynamic) {
             diagnostics.push(
@@ -477,17 +528,17 @@ export function resolveCrossFileRoutes(
               )
             );
 
-            const placeholderPath = joinPaths(prefix, route.routePath);
+            const placeholderPath = joinPaths(info.prefix, route.routePath);
             endpoints.push({
               id: generateEndpointId(methodUpper, placeholderPath),
               method: methodUpper,
               path: placeholderPath,
-              auth: { type: 'unknown' },
+              auth: endpointAuth,
               effect,
               params: [],
               responses: [],
-              middleware: [],
-              mountChain,
+              middleware: endpointMiddleware,
+              mountChain: info.mountChain,
               provenance: {
                 kind: 'unresolved',
                 filePath: router.filePathForProvenance,
@@ -499,7 +550,7 @@ export function resolveCrossFileRoutes(
               confidenceReason: 'DG-R003',
             });
           } else {
-            const finalPath = joinPaths(prefix, route.routePath);
+            const finalPath = joinPaths(info.prefix, route.routePath);
             const paramMatches = [...finalPath.matchAll(/:([a-zA-Z0-9_]+)/g)];
             const pathParams = paramMatches.map((match) => ({
               name: match[1] ?? '',
@@ -520,12 +571,12 @@ export function resolveCrossFileRoutes(
               id: generateEndpointId(methodUpper, finalPath),
               method: methodUpper,
               path: finalPath,
-              auth: { type: 'unknown' },
+              auth: endpointAuth,
               effect,
               params: mergedParams,
               responses: [],
-              middleware: [],
-              mountChain,
+              middleware: endpointMiddleware,
+              mountChain: info.mountChain,
               provenance: {
                 kind: 'resolved',
                 filePath: router.filePathForProvenance,

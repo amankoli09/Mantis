@@ -26,6 +26,7 @@ const GOLDEN_FILES = [
   'fixtures/router-cross-file/expected.model.json',
   'fixtures/constant-propagation/expected.model.json',
   'fixtures/inference-basic/expected.model.json',
+  'fixtures/auth-middleware/expected.model.json',
 ] as const;
 
 describe('Golden model files — schema validation', () => {

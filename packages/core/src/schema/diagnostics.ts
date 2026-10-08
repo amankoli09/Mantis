@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { ProvenanceSchema } from './provenance.js';
 
-export const DiagnosticCodeSchema = z.enum(['DG-P001', 'DG-R001', 'DG-R002', 'DG-R003', 'DG-I001']);
+export const DiagnosticCodeSchema = z.enum(['DG-P001', 'DG-R001', 'DG-R002', 'DG-R003', 'DG-I001', 'DG-I002']);
 export type DiagnosticCode = z.infer<typeof DiagnosticCodeSchema>;
 
 export const DiagnosticSeveritySchema = z.enum(['error', 'warning', 'info']);
@@ -33,6 +33,7 @@ export type DiagnosticParamsMap = {
   'DG-R002': { mountPath: string; routerIdentifier?: string };
   'DG-R003': { rawExpression: string };
   'DG-I001': { handlerName?: string; reason?: string };
+  'DG-I002': { middlewareName?: string; reason?: string };
 };
 
 export const DIAGNOSTICS_REGISTRY = {
@@ -70,6 +71,13 @@ export const DIAGNOSTICS_REGISTRY = {
     title: 'Unresolved Handler',
     template: (params: { handlerName?: string; reason?: string }) =>
       `Route handler could not be statically resolved${params.handlerName ? `: ${params.handlerName}` : ''}${params.reason ? ` (${params.reason})` : ''}`,
+  },
+  'DG-I002': {
+    code: 'DG-I002',
+    defaultSeverity: 'info',
+    title: 'Unresolved Middleware',
+    template: (params: { middlewareName?: string; reason?: string }) =>
+      `Middleware could not be statically resolved${params.middlewareName ? `: ${params.middlewareName}` : ''}${params.reason ? ` (${params.reason})` : ''}`,
   },
 } as const satisfies { [K in DiagnosticCode]: DiagnosticDefinition<DiagnosticParamsMap[K]> };
 

@@ -4,8 +4,8 @@ import { createDiagnostic, DIAGNOSTICS_REGISTRY, DiagnosticCodeSchema } from '..
 describe('Diagnostics Registry & Factory', () => {
   it('contains the registered diagnostic codes', () => {
     const codes = DiagnosticCodeSchema.options;
-    expect(codes).toEqual(['DG-P001', 'DG-R001', 'DG-R002', 'DG-R003', 'DG-I001']);
-    expect(Object.keys(DIAGNOSTICS_REGISTRY)).toEqual(['DG-P001', 'DG-R001', 'DG-R002', 'DG-R003', 'DG-I001']);
+    expect(codes).toEqual(['DG-P001', 'DG-R001', 'DG-R002', 'DG-R003', 'DG-I001', 'DG-I002']);
+    expect(Object.keys(DIAGNOSTICS_REGISTRY)).toEqual(['DG-P001', 'DG-R001', 'DG-R002', 'DG-R003', 'DG-I001', 'DG-I002']);
   });
 
   it('creates DG-P001 parse error diagnostic with default severity', () => {
@@ -100,5 +100,25 @@ describe('Diagnostics Registry & Factory', () => {
     expect(diag.file).toBe('routes/users.js');
     expect(diag.line).toBe(12);
     expect(diag.message).toBe('Route handler could not be statically resolved: customHandler (external package)');
+  });
+
+  it('creates DG-I002 unresolved middleware diagnostic with middlewareName', () => {
+    const diag = createDiagnostic(
+      'DG-I002',
+      {
+        middlewareName: 'dynamicMw',
+        reason: 'dynamic require',
+      },
+      {
+        file: 'src/app.js',
+        line: 25,
+      },
+    );
+
+    expect(diag.code).toBe('DG-I002');
+    expect(diag.severity).toBe('info');
+    expect(diag.file).toBe('src/app.js');
+    expect(diag.line).toBe(25);
+    expect(diag.message).toBe('Middleware could not be statically resolved: dynamicMw (dynamic require)');
   });
 });

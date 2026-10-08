@@ -1,0 +1,409 @@
+{
+  "modelVersion": "1.2.0",
+  "project": {
+    "name": "auth-middleware-fixture",
+    "framework": "express",
+    "language": "javascript",
+    "root": "fixtures/auth-middleware/app"
+  },
+  "endpoints": [
+    {
+      "id": "GET /admin/dashboard",
+      "method": "GET",
+      "path": "/admin/dashboard",
+      "auth": {
+        "type": "bearer",
+        "evidence": {
+          "filePath": "fixtures/auth-middleware/app/middleware/auth.js",
+          "line": 4,
+          "signal": "header:authorization:Bearer"
+        }
+      },
+      "effect": "read",
+      "params": [],
+      "responses": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 12,
+            "column": 8
+          }
+        },
+        {
+          "name": "requestLogger",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 15,
+            "column": 8
+          }
+        },
+        {
+          "name": "<unresolved>",
+          "provenance": {
+            "kind": "unresolved",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 21,
+            "column": 8
+          }
+        },
+        {
+          "name": "sessionGuard",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 37,
+            "column": 8
+          }
+        },
+        {
+          "name": "verifyBearerToken",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 45,
+            "column": 18
+          }
+        }
+      ],
+      "mountChain": [
+        {
+          "filePath": "fixtures/auth-middleware/app/app.js",
+          "line": 45
+        }
+      ],
+      "provenance": {
+        "kind": "resolved",
+        "filePath": "fixtures/auth-middleware/app/routes/admin.js",
+        "line": 7,
+        "column": 7,
+        "snippet": "router.get('/dashboard', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /custom-auth",
+      "method": "GET",
+      "path": "/custom-auth",
+      "auth": {
+        "type": "custom",
+        "evidence": {
+          "filePath": "fixtures/auth-middleware/app/middleware/auth.js",
+          "line": 30,
+          "signal": "name:requireAuth"
+        }
+      },
+      "effect": "read",
+      "params": [],
+      "responses": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 12,
+            "column": 8
+          }
+        },
+        {
+          "name": "requestLogger",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 15,
+            "column": 8
+          }
+        },
+        {
+          "name": "<unresolved>",
+          "provenance": {
+            "kind": "unresolved",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 21,
+            "column": 8
+          }
+        },
+        {
+          "name": "requireAuth",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 29,
+            "column": 24
+          }
+        }
+      ],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/auth-middleware/app/app.js",
+        "line": 29,
+        "column": 4,
+        "snippet": "app.get('/custom-auth', requireAuth, (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /items/public-items",
+      "method": "GET",
+      "path": "/items/public-items",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "read",
+      "params": [],
+      "responses": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 12,
+            "column": 8
+          }
+        },
+        {
+          "name": "requestLogger",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 15,
+            "column": 8
+          }
+        },
+        {
+          "name": "<unresolved>",
+          "provenance": {
+            "kind": "unresolved",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 21,
+            "column": 8
+          }
+        }
+      ],
+      "mountChain": [
+        {
+          "filePath": "fixtures/auth-middleware/app/app.js",
+          "line": 34
+        }
+      ],
+      "provenance": {
+        "kind": "resolved",
+        "filePath": "fixtures/auth-middleware/app/routes/items.js",
+        "line": 8,
+        "column": 7,
+        "snippet": "router.get('/public-items', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /items/secret-items",
+      "method": "GET",
+      "path": "/items/secret-items",
+      "auth": {
+        "type": "apiKey",
+        "evidence": {
+          "filePath": "fixtures/auth-middleware/app/middleware/auth.js",
+          "line": 13,
+          "signal": "header:x-api-key"
+        }
+      },
+      "effect": "read",
+      "params": [],
+      "responses": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 12,
+            "column": 8
+          }
+        },
+        {
+          "name": "requestLogger",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 15,
+            "column": 8
+          }
+        },
+        {
+          "name": "<unresolved>",
+          "provenance": {
+            "kind": "unresolved",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 21,
+            "column": 8
+          }
+        },
+        {
+          "name": "checkApiKey",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/auth-middleware/app/routes/items.js",
+            "line": 13,
+            "column": 11
+          }
+        }
+      ],
+      "mountChain": [
+        {
+          "filePath": "fixtures/auth-middleware/app/app.js",
+          "line": 34
+        }
+      ],
+      "provenance": {
+        "kind": "resolved",
+        "filePath": "fixtures/auth-middleware/app/routes/items.js",
+        "line": 16,
+        "column": 7,
+        "snippet": "router.get('/secret-items', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /profile",
+      "method": "GET",
+      "path": "/profile",
+      "auth": {
+        "type": "cookie",
+        "evidence": {
+          "filePath": "fixtures/auth-middleware/app/middleware/auth.js",
+          "line": 22,
+          "signal": "session:user"
+        }
+      },
+      "effect": "read",
+      "params": [],
+      "responses": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 12,
+            "column": 8
+          }
+        },
+        {
+          "name": "requestLogger",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 15,
+            "column": 8
+          }
+        },
+        {
+          "name": "<unresolved>",
+          "provenance": {
+            "kind": "unresolved",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 21,
+            "column": 8
+          }
+        },
+        {
+          "name": "sessionGuard",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 37,
+            "column": 8
+          }
+        }
+      ],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/auth-middleware/app/app.js",
+        "line": 40,
+        "column": 4,
+        "snippet": "app.get('/profile', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /public",
+      "method": "GET",
+      "path": "/public",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "read",
+      "params": [],
+      "responses": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 12,
+            "column": 8
+          }
+        },
+        {
+          "name": "requestLogger",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 15,
+            "column": 8
+          }
+        },
+        {
+          "name": "<unresolved>",
+          "provenance": {
+            "kind": "unresolved",
+            "filePath": "fixtures/auth-middleware/app/app.js",
+            "line": 21,
+            "column": 8
+          }
+        }
+      ],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/auth-middleware/app/app.js",
+        "line": 24,
+        "column": 4,
+        "snippet": "app.get('/public', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "DG-R001",
+      "severity": "warning",
+      "message": "Could not resolve import \"<dynamic>\" from \"app.js\"",
+      "file": "fixtures/auth-middleware/app/app.js",
+      "line": 20,
+      "column": 6
+    },
+    {
+      "code": "DG-I002",
+      "severity": "info",
+      "message": "Middleware could not be statically resolved: dynamicMw (unresolved identifier)",
+      "file": "fixtures/auth-middleware/app/app.js",
+      "line": 21,
+      "column": 8
+    }
+  ]
+}

@@ -15,6 +15,7 @@ Diagnostics report non-fatal syntax problems, unresolved module references, dyna
 | `DG-R002` | Unresolved Router Mount   | `warning` | An `app.use()` or `router.use()` mounts an unresolved identifier or a cyclic mount is detected. | Sub-routes attached to that router cannot be confirmed.                     |
 | `DG-R003` | Dynamic Path              |  `info`   | A route path uses a runtime dynamic expression (variable, function call, template, or regex).    | Endpoint is marked `confidence: "uncertain"`; dynamic segments use `<EXPRESSION>`. |
 | `DG-I001` | Unresolved Handler        |  `info`   | A route handler cannot be statically resolved (e.g., dynamic factory, multi-hop re-export).       | Route is still extracted with confirmed path/method; inferred params remain empty. |
+| `DG-I002` | Unresolved Middleware     |  `info`   | A middleware expression cannot be statically resolved (e.g., dynamic require, unknown factory).   | Middleware is recorded as `<unresolved>`; endpoint authentication remains `unknown`. |
 
 ---
 
@@ -82,3 +83,19 @@ Diagnostics report non-fatal syntax problems, unresolved module references, dyna
   - The endpoint's HTTP method and path remain **confirmed** (if statically resolved).
   - The diagnostic is appended to `diagnostics[]` with the route's file and line number.
   - Parameter inference and effect inference cannot inspect the handler body, so `params` remain path-only (or empty) and `effect` defaults to `'unknown'`.
+
+---
+
+### `DG-I002`: Unresolved Middleware
+- **Default Severity**: `info`
+- **Template**: `Middleware could not be statically resolved[: <middlewareName>] [(<reason>)]`
+- **When Emitted**:
+  Emitted by middleware inference (Step 8b) when a middleware expression passed to `app.use()`, `router.use()`, or route arguments cannot be statically resolved:
+  1. Dynamic require statements (e.g., `const dyn = require(dynamicVar); app.use(dyn)`).
+  2. Unknown dynamic middleware factories (e.g., `app.use(createCustomMiddleware())`).
+  3. External unresolvable imports.
+- **Handling**:
+  - The middleware is recorded in the endpoint's `middleware` array with `name: "<unresolved>"` and `provenance.kind = "unresolved"`.
+  - The diagnostic is appended to `diagnostics[]` with the middleware registration file and line number.
+  - Scan continues safely; the endpoint's authentication classification remains `'unknown'` unless other positive auth evidence exists.
+

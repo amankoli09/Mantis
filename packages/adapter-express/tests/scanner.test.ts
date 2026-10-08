@@ -347,6 +347,21 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
     expect(model).toStrictEqual(goldenModel);
   });
 
+  it('scans fixtures/auth-middleware/app and matches its golden model, verifying middleware order and auth inference with strict equality', async () => {
+    const authFixturePath = path.join(repoRoot, 'fixtures/auth-middleware/app');
+    const goldenModelPath = path.join(repoRoot, 'fixtures/auth-middleware/expected.model.json');
+
+    const model = await scanProject(authFixturePath);
+
+    const validation = validateModel(model);
+    expect(validation.success).toBe(true);
+
+    const expectedGoldenRaw = readFileSync(goldenModelPath, 'utf8');
+    const goldenModel = JSON.parse(expectedGoldenRaw) as ApiModel;
+
+    // Strict deep equality against complete golden model
+    expect(model).toStrictEqual(goldenModel);
+  });
 
   it('ExpressAdapter.scan() wraps scanProject and produces identical output', async () => {
     const adapter = new ExpressAdapter();

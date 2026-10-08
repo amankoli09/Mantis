@@ -32,7 +32,14 @@ import type {
   ExtractedRouter,
   ExtractedMount,
   FileDeclarations,
+  ExtractedMiddleware,
+  MiddlewareUsage,
 } from './types.js';
+import {
+  isLikelyRouter,
+  resolveMiddleware,
+  classifyAuthFromMiddlewares,
+} from './middleware-inference.js';
 
 type TraverseFn = (parent: Node | Node[], opts?: TraverseOptions) => void;
 
@@ -76,6 +83,7 @@ export function extractFileDeclarations(
   const diagnostics: Diagnostic[] = [];
   const routers = new Map<string, ExtractedRouter>();
   const mounts: ExtractedMount[] = [];
+  const appUses: MiddlewareUsage[] = [];
 
   const codeLines = code.split('\n');
 
@@ -243,6 +251,7 @@ export function extractFileDeclarations(
             declCol,
             routes: [],
             mounts: [],
+            uses: [],
           };
           expressRouterBindings.set(routerBinding, routerRecord);
           routers.set(varName, routerRecord);
@@ -278,13 +287,14 @@ export function extractFileDeclarations(
         }
       }
 
-      // 1. Check for app.use('/prefix', ...) or router.use(...) mounts
+      // 1. Check for app.use('/prefix', ...) or router.use(...) mounts & middlewares
       if ((appBinding || routerRecord) && methodName === 'use' && node.arguments.length > 0) {
         const firstArg = node.arguments[0];
         let candidateArgs = node.arguments;
 
         let prefixes = ['/'];
 
+        let hasPathPrefix = false;
         if (firstArg) {
           const res = resolvePathConstant(firstArg as Node, code, pathNode.scope, moduleGraph, astCache, relFile, new Set());
           if (res.capExceeded) {
@@ -308,6 +318,7 @@ export function extractFileDeclarations(
             (firstArg.type === 'Identifier' &&
               (res.isResolvable || (res.rawExpr === firstArg.name && res.partialValues?.length)))
           ) {
+            hasPathPrefix = true;
             if (res.isResolvable) {
               prefixes = res.values;
             } else {
@@ -317,27 +328,54 @@ export function extractFileDeclarations(
           }
         }
 
-        for (const arg of candidateArgs) {
-          const line = arg.loc?.start.line ?? node.loc?.start.line ?? 1;
-          const column = arg.loc?.start.column ?? node.loc?.start.column;
+        // Check if candidateArgs contains a router argument
+        let routerArgIndex = -1;
+        for (let i = candidateArgs.length - 1; i >= 0; i--) {
+          const arg = candidateArgs[i];
+          if (arg && isLikelyRouter(arg as Node, pathNode.scope, expressRouterBindings, relFile, moduleGraph, astCache)) {
+            routerArgIndex = i;
+            break;
+          }
+        }
+
+        if (routerArgIndex === -1 && hasPathPrefix && candidateArgs.length > 0) {
+          routerArgIndex = candidateArgs.length - 1;
+        }
+
+        if (routerArgIndex >= 0) {
+          // Mount-level middleware arguments before the router
+          const mountMwArgs = candidateArgs.slice(0, routerArgIndex);
+          const mountMiddlewares: ExtractedMiddleware[] = [];
+          for (const mwArg of mountMwArgs) {
+            const res = resolveMiddleware(mwArg as Node, pathNode.scope, filePathForProvenance, relFile, code, moduleGraph, astCache);
+            mountMiddlewares.push(res.middleware);
+            if (res.diagnostic) {
+              diagnostics.push(res.diagnostic);
+            }
+          }
+
+          const routerArg = candidateArgs[routerArgIndex]!;
+          const line = routerArg.loc?.start.line ?? node.loc?.start.line ?? 1;
+          const column = routerArg.loc?.start.column ?? node.loc?.start.column;
           const sourceRouterId = routerRecord ? routerRecord.id : undefined;
 
           for (const prefix of prefixes) {
-            if (arg.type === 'Identifier') {
+            if (routerArg.type === 'Identifier') {
               mounts.push({
                 prefix,
                 line,
                 column,
                 mountFilePath: relFile,
                 sourceRouterId,
-                target: { type: 'identifier', name: arg.name },
+                target: { type: 'identifier', name: routerArg.name },
+                mountMiddlewares: mountMiddlewares.length > 0 ? mountMiddlewares : undefined,
               });
-            } else if (arg.type === 'MemberExpression' && arg.object.type === 'Identifier') {
+            } else if (routerArg.type === 'MemberExpression' && routerArg.object.type === 'Identifier') {
               const propName =
-                arg.property.type === 'Identifier'
-                  ? arg.property.name
-                  : arg.property.type === 'StringLiteral'
-                    ? arg.property.value
+                routerArg.property.type === 'Identifier'
+                  ? routerArg.property.name
+                  : routerArg.property.type === 'StringLiteral'
+                    ? routerArg.property.value
                     : null;
               if (propName) {
                 mounts.push({
@@ -346,15 +384,16 @@ export function extractFileDeclarations(
                   column,
                   mountFilePath: relFile,
                   sourceRouterId,
-                  target: { type: 'member', objectName: arg.object.name, propertyName: propName },
+                  target: { type: 'member', objectName: routerArg.object.name, propertyName: propName },
+                  mountMiddlewares: mountMiddlewares.length > 0 ? mountMiddlewares : undefined,
                 });
               }
             } else if (
-              arg.type === 'CallExpression' &&
-              arg.callee.type === 'Identifier' &&
-              arg.callee.name === 'require' &&
-              arg.arguments.length > 0 &&
-              arg.arguments[0]?.type === 'StringLiteral'
+              routerArg.type === 'CallExpression' &&
+              routerArg.callee.type === 'Identifier' &&
+              routerArg.callee.name === 'require' &&
+              routerArg.arguments.length > 0 &&
+              routerArg.arguments[0]?.type === 'StringLiteral'
             ) {
               mounts.push({
                 prefix,
@@ -362,8 +401,31 @@ export function extractFileDeclarations(
                 column,
                 mountFilePath: relFile,
                 sourceRouterId,
-                target: { type: 'require', specifier: arg.arguments[0].value },
+                target: { type: 'require', specifier: routerArg.arguments[0].value },
+                mountMiddlewares: mountMiddlewares.length > 0 ? mountMiddlewares : undefined,
               });
+            }
+          }
+        } else {
+          // No router in candidateArgs: all arguments are middleware!
+          for (const arg of candidateArgs) {
+            const line = arg.loc?.start.line ?? node.loc?.start.line ?? 1;
+            const column = arg.loc?.start.column ?? node.loc?.start.column;
+            const res = resolveMiddleware(arg as Node, pathNode.scope, filePathForProvenance, relFile, code, moduleGraph, astCache);
+            if (res.diagnostic) {
+              diagnostics.push(res.diagnostic);
+            }
+            const mwUsage: MiddlewareUsage = {
+              line,
+              column,
+              middleware: res.middleware,
+            };
+            if (appBinding) {
+              appUses.push(mwUsage);
+            }
+            if (routerRecord) {
+              if (!routerRecord.uses) routerRecord.uses = [];
+              routerRecord.uses.push(mwUsage);
             }
           }
         }
@@ -450,14 +512,36 @@ export function extractFileDeclarations(
 
       const handlerArgs = isChainedRoute ? node.arguments : node.arguments.slice(1);
       let candidate: Node | undefined = undefined;
+      const routeMiddlewares: ExtractedMiddleware[] = [];
+
       if (handlerArgs.length > 0) {
         const lastArg = handlerArgs[handlerArgs.length - 1];
         if (lastArg?.type === 'ArrayExpression') {
-          if (lastArg.elements.length > 0) {
-            candidate = (lastArg.elements[lastArg.elements.length - 1] as Node) ?? undefined;
+          // If the last argument is an array: e.g. [mwA, mwB, handler]
+          const elements = lastArg.elements.filter((e): e is Exclude<typeof e, null> => e !== null);
+          if (elements.length > 0) {
+            candidate = elements[elements.length - 1] as Node | undefined;
+            // Elements before the last element in array are middlewares
+            for (let i = 0; i < elements.length - 1; i++) {
+              const res = resolveMiddleware(elements[i] as Node, pathNode.scope, filePathForProvenance, relFile, code, moduleGraph, astCache);
+              routeMiddlewares.push(res.middleware);
+              if (res.diagnostic) diagnostics.push(res.diagnostic);
+            }
+          }
+          // Arguments before the array are also middlewares
+          for (let i = 0; i < handlerArgs.length - 1; i++) {
+            const res = resolveMiddleware(handlerArgs[i] as Node, pathNode.scope, filePathForProvenance, relFile, code, moduleGraph, astCache);
+            routeMiddlewares.push(res.middleware);
+            if (res.diagnostic) diagnostics.push(res.diagnostic);
           }
         } else {
           candidate = lastArg as Node;
+          // All arguments before the last argument are route-level middlewares
+          for (let i = 0; i < handlerArgs.length - 1; i++) {
+            const res = resolveMiddleware(handlerArgs[i] as Node, pathNode.scope, filePathForProvenance, relFile, code, moduleGraph, astCache);
+            routeMiddlewares.push(res.middleware);
+            if (res.diagnostic) diagnostics.push(res.diagnostic);
+          }
         }
       }
 
@@ -517,6 +601,16 @@ export function extractFileDeclarations(
             const methodUpper = methodName.toUpperCase() as HttpMethod;
             const effect = getEffectForMethod(methodName);
 
+            const activeAppMiddlewares = appUses
+              .filter((u) => u.line < startLine)
+              .map((u) => u.middleware);
+            const allMiddlewares = [...activeAppMiddlewares, ...routeMiddlewares];
+            const endpointMiddleware = allMiddlewares.map((m) => ({
+              name: m.name,
+              provenance: m.provenance,
+            }));
+            const endpointAuth = classifyAuthFromMiddlewares(allMiddlewares);
+
             if (res.isResolvable) {
               const paramMatches = [...p.matchAll(/:([a-zA-Z0-9_]+)/g)];
               const params = paramMatches.map((match) => ({
@@ -538,11 +632,11 @@ export function extractFileDeclarations(
                 id: generateEndpointId(methodUpper, p),
                 method: methodUpper,
                 path: p,
-                auth: { type: 'unknown' },
+                auth: endpointAuth,
                 effect,
                 params: mergedParams,
                 responses: [],
-                middleware: [],
+                middleware: endpointMiddleware,
                 mountChain: [],
                 provenance: {
                   kind: isLiteralKind ? 'literal' : 'resolved',
@@ -571,11 +665,11 @@ export function extractFileDeclarations(
                 id: generateEndpointId(methodUpper, placeholderPath),
                 method: methodUpper,
                 path: placeholderPath,
-                auth: { type: 'unknown' },
+                auth: endpointAuth,
                 effect,
                 params: [],
                 responses: [],
-                middleware: [],
+                middleware: endpointMiddleware,
                 mountChain: [],
                 provenance: {
                   kind: 'unresolved',
@@ -604,6 +698,7 @@ export function extractFileDeclarations(
               isDynamic: !res.isResolvable,
               rawExpr: diagExpr,
               inferredParams,
+              routeMiddlewares: routeMiddlewares.length > 0 ? routeMiddlewares : undefined,
             });
           }
         }
@@ -618,5 +713,6 @@ export function extractFileDeclarations(
     routers,
     mounts,
     diagnostics,
+    appUses,
   };
 }

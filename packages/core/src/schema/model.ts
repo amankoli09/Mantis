@@ -19,7 +19,7 @@ export type ApiModelMetadata = z.infer<typeof ApiModelMetadataSchema>;
 
 export const ApiModelSchema = z
   .object({
-    modelVersion: z.enum(['1.0.0', '1.1.0']).default('1.1.0'),
+    modelVersion: z.enum(['1.0.0', '1.1.0', '1.2.0']).default('1.2.0'),
     project: ProjectSchema.optional(),
     metadata: ApiModelMetadataSchema.optional(),
     endpoints: z.array(EndpointSchema),

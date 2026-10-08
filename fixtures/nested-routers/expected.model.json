@@ -1,5 +1,5 @@
 {
-  "modelVersion": "1.1.0",
+  "modelVersion": "1.2.0",
   "project": {
     "name": "nested-routers-fixture",
     "framework": "express",
@@ -17,7 +17,17 @@
       "effect": "read",
       "params": [],
       "responses": [],
-      "middleware": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/nested-routers/app/app.js",
+            "line": 9,
+            "column": 8
+          }
+        }
+      ],
       "mountChain": [
         {
           "filePath": "fixtures/nested-routers/app/app.js",
@@ -48,7 +58,17 @@
       "effect": "read",
       "params": [],
       "responses": [],
-      "middleware": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/nested-routers/app/app.js",
+            "line": 9,
+            "column": 8
+          }
+        }
+      ],
       "mountChain": [
         {
           "filePath": "fixtures/nested-routers/app/app.js",
@@ -75,7 +95,17 @@
       "effect": "read",
       "params": [],
       "responses": [],
-      "middleware": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/nested-routers/app/app.js",
+            "line": 9,
+            "column": 8
+          }
+        }
+      ],
       "mountChain": [
         {
           "filePath": "fixtures/nested-routers/app/app.js",
@@ -102,7 +132,17 @@
       "effect": "read",
       "params": [],
       "responses": [],
-      "middleware": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/nested-routers/app/app.js",
+            "line": 9,
+            "column": 8
+          }
+        }
+      ],
       "mountChain": [
         {
           "filePath": "fixtures/nested-routers/app/app.js",
@@ -142,7 +182,17 @@
         }
       ],
       "responses": [],
-      "middleware": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/nested-routers/app/app.js",
+            "line": 9,
+            "column": 8
+          }
+        }
+      ],
       "mountChain": [
         {
           "filePath": "fixtures/nested-routers/app/app.js",
@@ -182,7 +232,17 @@
         }
       ],
       "responses": [],
-      "middleware": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/nested-routers/app/app.js",
+            "line": 9,
+            "column": 8
+          }
+        }
+      ],
       "mountChain": [
         {
           "filePath": "fixtures/nested-routers/app/app.js",
