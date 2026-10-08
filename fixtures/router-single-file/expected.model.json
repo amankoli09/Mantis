@@ -1,5 +1,5 @@
 {
-  "modelVersion": "1.0.0",
+  "modelVersion": "1.1.0",
   "project": {
     "name": "router-single-file-fixture",
     "framework": "express",
@@ -18,10 +18,17 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [
+        {
+          "filePath": "fixtures/router-single-file/app/app.js",
+          "line": 20
+        }
+      ],
       "provenance": {
         "kind": "resolved",
         "filePath": "fixtures/router-single-file/app/app.js",
         "line": 7,
+        "column": 10,
         "snippet": "apiRouter.get('/users', (req, res) => {"
       },
       "confidence": "confirmed",
@@ -38,10 +45,17 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [
+        {
+          "filePath": "fixtures/router-single-file/app/app.js",
+          "line": 20
+        }
+      ],
       "provenance": {
         "kind": "resolved",
         "filePath": "fixtures/router-single-file/app/app.js",
         "line": 10,
+        "column": 10,
         "snippet": "apiRouter.post('/users', (req, res) => {"
       },
       "confidence": "confirmed",
@@ -60,6 +74,7 @@
           "name": "id",
           "in": "path",
           "required": true,
+          "type": "string",
           "description": "User identifier extracted from path segment :id.",
           "provenance": {
             "kind": "literal",
@@ -70,10 +85,17 @@
       ],
       "responses": [],
       "middleware": [],
+      "mountChain": [
+        {
+          "filePath": "fixtures/router-single-file/app/app.js",
+          "line": 23
+        }
+      ],
       "provenance": {
         "kind": "resolved",
         "filePath": "fixtures/router-single-file/app/app.js",
         "line": 15,
+        "column": 9,
         "snippet": "v1Router.get('/items/:id', (req, res) => {"
       },
       "confidence": "confirmed",
@@ -90,10 +112,12 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [],
       "provenance": {
         "kind": "unresolved",
         "filePath": "fixtures/router-single-file/app/app.js",
         "line": 27,
+        "column": 13,
         "snippet": "orphanRouter.get('/orphan', (req, res) => {"
       },
       "confidence": "uncertain",
@@ -106,7 +130,8 @@
       "severity": "warning",
       "message": "Could not resolve router mounted at \"<unmounted>\" for identifier \"orphanRouter\"",
       "file": "fixtures/router-single-file/app/app.js",
-      "line": 26
+      "line": 26,
+      "column": 6
     }
   ]
 }

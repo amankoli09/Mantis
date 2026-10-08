@@ -1,5 +1,5 @@
 {
-  "modelVersion": "1.0.0",
+  "modelVersion": "1.1.0",
   "project": {
     "name": "nested-routers-fixture",
     "framework": "express",
@@ -11,16 +11,28 @@
       "id": "GET /api/admin/metrics",
       "method": "GET",
       "path": "/api/admin/metrics",
-      "description": "Admin metrics route. Path resolved from nested mounts '/api' + '/admin' + '/metrics'.",
-      "auth": { "type": "unknown" },
+      "auth": {
+        "type": "unknown"
+      },
       "effect": "read",
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [
+        {
+          "filePath": "fixtures/nested-routers/app/app.js",
+          "line": 12
+        },
+        {
+          "filePath": "fixtures/nested-routers/app/routes/users.js",
+          "line": 25
+        }
+      ],
       "provenance": {
         "kind": "resolved",
         "filePath": "fixtures/nested-routers/app/routes/admin.js",
         "line": 5,
+        "column": 7,
         "snippet": "router.get('/metrics', (req, res) => {"
       },
       "confidence": "confirmed",
@@ -30,16 +42,24 @@
       "id": "GET /api/products",
       "method": "GET",
       "path": "/api/products",
-      "description": "List all products. Path resolved from mount prefix '/api' + literal '/products'.",
-      "auth": { "type": "unknown" },
+      "auth": {
+        "type": "unknown"
+      },
       "effect": "read",
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [
+        {
+          "filePath": "fixtures/nested-routers/app/app.js",
+          "line": 13
+        }
+      ],
       "provenance": {
         "kind": "resolved",
         "filePath": "fixtures/nested-routers/app/routes/products.js",
         "line": 8,
+        "column": 7,
         "snippet": "router.get('/products', (req, res) => {"
       },
       "confidence": "confirmed",
@@ -49,16 +69,24 @@
       "id": "GET /api/products/<getDetailSegment()>",
       "method": "GET",
       "path": "/api/products/<getDetailSegment()>",
-      "description": "Product detail route. Partial static path '/api/products' resolved; dynamic segment getDetailSegment() replaced with placeholder.",
-      "auth": { "type": "unknown" },
+      "auth": {
+        "type": "unknown"
+      },
       "effect": "read",
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [
+        {
+          "filePath": "fixtures/nested-routers/app/app.js",
+          "line": 13
+        }
+      ],
       "provenance": {
         "kind": "unresolved",
         "filePath": "fixtures/nested-routers/app/routes/products.js",
         "line": 17,
+        "column": 7,
         "snippet": "router.get(PRODUCT_DETAIL_PATH, (req, res) => {"
       },
       "confidence": "uncertain",
@@ -68,17 +96,25 @@
       "id": "GET /api/users",
       "method": "GET",
       "path": "/api/users",
-      "description": "List all users. Registered via router.route('/users').get(...) chain. Path resolved from mount prefix '/api' + '/users'.",
-      "auth": { "type": "unknown" },
+      "auth": {
+        "type": "unknown"
+      },
       "effect": "read",
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [
+        {
+          "filePath": "fixtures/nested-routers/app/app.js",
+          "line": 12
+        }
+      ],
       "provenance": {
         "kind": "resolved",
         "filePath": "fixtures/nested-routers/app/routes/users.js",
         "line": 10,
-        "snippet": "  .get((req, res) => {"
+        "column": 3,
+        "snippet": ".get((req, res) => {"
       },
       "confidence": "confirmed",
       "confidenceReason": null
@@ -87,28 +123,38 @@
       "id": "POST /api/users",
       "method": "POST",
       "path": "/api/users",
-      "description": "Create a new user. Registered via router.route('/users').post(...) chain. Reads req.body.email.",
-      "auth": { "type": "unknown" },
-      "effect": "write",
-      "params": [],
-      "requestBody": {
-        "contentType": "application/json",
-        "required": false,
-        "description": "Inferred from req.body.email access on line 14.",
-        "provenance": {
-          "kind": "inferred",
-          "filePath": "fixtures/nested-routers/app/routes/users.js",
-          "line": 14,
-          "snippet": "    const email = req.body.email;"
-        }
+      "auth": {
+        "type": "unknown"
       },
+      "effect": "write",
+      "params": [
+        {
+          "name": "email",
+          "in": "body",
+          "required": "unknown",
+          "type": "unknown",
+          "provenance": {
+            "kind": "inferred",
+            "filePath": "fixtures/nested-routers/app/routes/users.js",
+            "line": 14,
+            "snippet": "const email = req.body.email;"
+          }
+        }
+      ],
       "responses": [],
       "middleware": [],
+      "mountChain": [
+        {
+          "filePath": "fixtures/nested-routers/app/app.js",
+          "line": 12
+        }
+      ],
       "provenance": {
         "kind": "resolved",
         "filePath": "fixtures/nested-routers/app/routes/users.js",
         "line": 13,
-        "snippet": "  .post((req, res) => {"
+        "column": 3,
+        "snippet": ".post((req, res) => {"
       },
       "confidence": "confirmed",
       "confidenceReason": null
@@ -117,29 +163,37 @@
       "id": "GET /api/users/:id",
       "method": "GET",
       "path": "/api/users/:id",
-      "description": "Fetch a single user by id. Path resolved from mount prefix '/api' + '/users/:id'.",
-      "auth": { "type": "unknown" },
+      "auth": {
+        "type": "unknown"
+      },
       "effect": "read",
       "params": [
         {
           "name": "id",
           "in": "path",
           "required": true,
+          "type": "string",
           "description": "User identifier extracted from path segment :id.",
           "provenance": {
-            "kind": "resolved",
+            "kind": "literal",
             "filePath": "fixtures/nested-routers/app/routes/users.js",
-            "line": 19,
-            "snippet": "router.get('/users/:id', (req, res) => {"
+            "line": 19
           }
         }
       ],
       "responses": [],
       "middleware": [],
+      "mountChain": [
+        {
+          "filePath": "fixtures/nested-routers/app/app.js",
+          "line": 12
+        }
+      ],
       "provenance": {
         "kind": "resolved",
         "filePath": "fixtures/nested-routers/app/routes/users.js",
         "line": 19,
+        "column": 7,
         "snippet": "router.get('/users/:id', (req, res) => {"
       },
       "confidence": "confirmed",
@@ -150,9 +204,10 @@
     {
       "code": "DG-R003",
       "severity": "info",
-      "message": "Route path uses dynamic runtime expression: PRODUCT_DETAIL_PATH",
+      "message": "Route path uses dynamic runtime expression: '/products/' + getDetailSegment()",
       "file": "fixtures/nested-routers/app/routes/products.js",
-      "line": 17
+      "line": 17,
+      "column": 7
     }
   ]
 }

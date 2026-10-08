@@ -36,6 +36,7 @@
         "kind": "literal",
         "filePath": "fixtures/inference-basic/app/app.js",
         "line": 47,
+        "column": 4,
         "snippet": "app.post('/articles', [middlewareA, middlewareB, (req, res) => {"
       },
       "confidence": "confirmed",
@@ -82,6 +83,7 @@
         "kind": "literal",
         "filePath": "fixtures/inference-basic/app/app.js",
         "line": 17,
+        "column": 4,
         "snippet": "app.post('/bracket', (req, res) => {"
       },
       "confidence": "confirmed",
@@ -128,6 +130,7 @@
         "kind": "literal",
         "filePath": "fixtures/inference-basic/app/app.js",
         "line": 24,
+        "column": 4,
         "snippet": "app.post('/destructure', (req, res) => {"
       },
       "confidence": "confirmed",
@@ -149,6 +152,7 @@
         "kind": "literal",
         "filePath": "fixtures/inference-basic/app/app.js",
         "line": 61,
+        "column": 4,
         "snippet": "app.get('/dynamic', getDynamicHandler());"
       },
       "confidence": "confirmed",
@@ -183,6 +187,7 @@
         "kind": "literal",
         "filePath": "fixtures/inference-basic/app/app.js",
         "line": 42,
+        "column": 4,
         "snippet": "app.get('/items', listItems);"
       },
       "confidence": "confirmed",
@@ -241,6 +246,7 @@
         "kind": "literal",
         "filePath": "fixtures/inference-basic/app/app.js",
         "line": 8,
+        "column": 4,
         "snippet": "app.post('/posts/:id', (req, res) => {"
       },
       "confidence": "confirmed",
@@ -275,6 +281,7 @@
         "kind": "literal",
         "filePath": "fixtures/inference-basic/app/app.js",
         "line": 36,
+        "column": 4,
         "snippet": "app.post('/r-param', (r, res) => {"
       },
       "confidence": "confirmed",
@@ -296,6 +303,7 @@
         "kind": "literal",
         "filePath": "fixtures/inference-basic/app/app.js",
         "line": 54,
+        "column": 4,
         "snippet": "app.post('/raw', (req, res) => {"
       },
       "confidence": "confirmed",
@@ -330,6 +338,7 @@
         "kind": "literal",
         "filePath": "fixtures/inference-basic/app/app.js",
         "line": 30,
+        "column": 4,
         "snippet": "app.get('/request-param', (request, res) => {"
       },
       "confidence": "confirmed",
@@ -364,6 +373,7 @@
         "kind": "literal",
         "filePath": "fixtures/inference-basic/app/app.js",
         "line": 64,
+        "column": 4,
         "snippet": "app.get('/shadow', (req, res) => {"
       },
       "confidence": "confirmed",

@@ -17,60 +17,11 @@ describe('Parameter & Body-Field Inference (Step 8a)', () => {
     const validation = validateModel(model);
     expect(validation.success).toBe(true);
 
-    // 2. Exactly 10 endpoints extracted
-    expect(model.endpoints).toHaveLength(10);
-
     const expectedGoldenRaw = readFileSync(goldenModelPath, 'utf8');
     const goldenModel = JSON.parse(expectedGoldenRaw) as ApiModel;
 
-    expect(model.modelVersion).toBe(goldenModel.modelVersion);
-
-    // 3. Verify each endpoint matches golden model
-    for (let i = 0; i < goldenModel.endpoints.length; i++) {
-      const expected = goldenModel.endpoints[i]!;
-      const actual = model.endpoints[i]!;
-
-      expect(actual.id).toBe(expected.id);
-      expect(actual.method).toBe(expected.method);
-      expect(actual.path).toBe(expected.path);
-      expect(actual.effect).toBe(expected.effect);
-      expect(actual.confidence).toBe(expected.confidence);
-      expect(actual.confidenceReason).toBe(expected.confidenceReason);
-      expect(actual.mountChain).toEqual(expected.mountChain);
-
-      // Provenance comparison
-      expect(actual.provenance.kind).toBe(expected.provenance.kind);
-      expect(actual.provenance.filePath).toBe(expected.provenance.filePath);
-      expect(actual.provenance.line).toBe(expected.provenance.line);
-      expect(actual.provenance.snippet).toBe(expected.provenance.snippet);
-
-      // Inferred & path params comparison
-      expect(actual.params).toHaveLength(expected.params.length);
-      for (let p = 0; p < expected.params.length; p++) {
-        const expParam = expected.params[p]!;
-        const actParam = actual.params[p]!;
-
-        expect(actParam.name).toBe(expParam.name);
-        expect(actParam.in).toBe(expParam.in);
-        expect(actParam.required).toBe(expParam.required);
-        expect(actParam.type).toBe(expParam.type);
-        expect(actParam.provenance?.kind).toBe(expParam.provenance?.kind);
-        expect(actParam.provenance?.filePath).toBe(expParam.provenance?.filePath);
-        expect(actParam.provenance?.line).toBe(expParam.provenance?.line);
-        if (expParam.provenance?.snippet) {
-          expect(actParam.provenance?.snippet).toBe(expParam.provenance?.snippet);
-        }
-      }
-    }
-
-    // 4. Diagnostic comparison: DG-I001 emitted for unresolvable handler on line 61
-    expect(model.diagnostics).toHaveLength(1);
-    const diag = model.diagnostics[0]!;
-    expect(diag.code).toBe('DG-I001');
-    expect(diag.severity).toBe('info');
-    expect(diag.message).toBe('Route handler could not be statically resolved: getDynamicHandler()');
-    expect(diag.file).toBe('fixtures/inference-basic/app/app.js');
-    expect(diag.line).toBe(61);
+    // 2. Strict deep equality against complete golden model
+    expect(model).toStrictEqual(goldenModel);
   });
 
   it('destructuring with rename extracts original request property key, not the local variable name', async () => {
