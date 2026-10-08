@@ -1,5 +1,5 @@
 {
-  "modelVersion": "1.1.0",
+  "modelVersion": "1.2.0",
   "project": {
     "name": "simple-fixture",
     "framework": "express",
@@ -17,7 +17,17 @@
       "effect": "read",
       "params": [],
       "responses": [],
-      "middleware": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/simple/app/app.js",
+            "line": 7,
+            "column": 8
+          }
+        }
+      ],
       "mountChain": [],
       "provenance": {
         "kind": "literal",
@@ -39,7 +49,17 @@
       "effect": "read",
       "params": [],
       "responses": [],
-      "middleware": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/simple/app/app.js",
+            "line": 7,
+            "column": 8
+          }
+        }
+      ],
       "mountChain": [],
       "provenance": {
         "kind": "literal",
@@ -74,7 +94,17 @@
         }
       ],
       "responses": [],
-      "middleware": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/simple/app/app.js",
+            "line": 7,
+            "column": 8
+          }
+        }
+      ],
       "mountChain": [],
       "provenance": {
         "kind": "literal",
@@ -109,7 +139,17 @@
         }
       ],
       "responses": [],
-      "middleware": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/simple/app/app.js",
+            "line": 7,
+            "column": 8
+          }
+        }
+      ],
       "mountChain": [],
       "provenance": {
         "kind": "literal",
@@ -156,7 +196,17 @@
         }
       ],
       "responses": [],
-      "middleware": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/simple/app/app.js",
+            "line": 7,
+            "column": 8
+          }
+        }
+      ],
       "mountChain": [],
       "provenance": {
         "kind": "literal",
@@ -191,7 +241,17 @@
         }
       ],
       "responses": [],
-      "middleware": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/simple/app/app.js",
+            "line": 7,
+            "column": 8
+          }
+        }
+      ],
       "mountChain": [],
       "provenance": {
         "kind": "literal",

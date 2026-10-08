@@ -1,4 +1,21 @@
-import type { Diagnostic, Endpoint, ParamDefinition } from '@devguard/core';
+import type { Node } from '@babel/types';
+import type { Diagnostic, Endpoint, ParamDefinition, Provenance } from '@devguard/core';
+
+export interface ExtractedMiddleware {
+  name: string;
+  provenance: Provenance;
+  resolved: boolean;
+  fnNode?: Node;
+  fnFilePath?: string;
+  fnLine?: number;
+  fnCode?: string;
+}
+
+export interface MiddlewareUsage {
+  line: number;
+  column?: number;
+  middleware: ExtractedMiddleware;
+}
 
 export interface PendingRouterRoute {
   method: string;
@@ -9,6 +26,7 @@ export interface PendingRouterRoute {
   isDynamic: boolean;
   rawExpr?: string;
   inferredParams?: ParamDefinition[];
+  routeMiddlewares?: ExtractedMiddleware[];
 }
 
 export interface ExtractedMount {
@@ -21,6 +39,7 @@ export interface ExtractedMount {
     | { type: 'identifier'; name: string }
     | { type: 'member'; objectName: string; propertyName: string }
     | { type: 'require'; specifier: string };
+  mountMiddlewares?: ExtractedMiddleware[];
 }
 
 export interface ExtractedRouter {
@@ -32,6 +51,7 @@ export interface ExtractedRouter {
   declCol?: number;
   routes: PendingRouterRoute[];
   mounts: Array<{ prefix: string; line: number; mountFilePath: string }>;
+  uses?: MiddlewareUsage[];
 }
 
 export interface FileDeclarations {
@@ -41,6 +61,7 @@ export interface FileDeclarations {
   routers: Map<string, ExtractedRouter>;
   mounts: ExtractedMount[];
   diagnostics: Diagnostic[];
+  appUses?: MiddlewareUsage[];
 }
 
 export interface ExtractRoutesResult {

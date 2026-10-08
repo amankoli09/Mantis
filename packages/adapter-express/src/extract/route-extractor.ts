@@ -28,3 +28,4 @@ export * from './handler-resolver.js';
 export * from './param-inference.js';
 export * from './declarations.js';
 export * from './mount-resolver.js';
+export * from './middleware-inference.js';

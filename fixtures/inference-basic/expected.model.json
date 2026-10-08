@@ -1,5 +1,5 @@
 {
-  "modelVersion": "1.1.0",
+  "modelVersion": "1.2.0",
   "project": {
     "name": "inference-basic-fixture",
     "framework": "express",
@@ -30,7 +30,26 @@
         }
       ],
       "responses": [],
-      "middleware": [],
+      "middleware": [
+        {
+          "name": "middlewareA",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/inference-basic/app/app.js",
+            "line": 47,
+            "column": 23
+          }
+        },
+        {
+          "name": "middlewareB",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/inference-basic/app/app.js",
+            "line": 47,
+            "column": 36
+          }
+        }
+      ],
       "mountChain": [],
       "provenance": {
         "kind": "literal",

@@ -785,4 +785,69 @@ When refactoring complex static analysis engines, splitting files without tests 
 2. **No Global State**: All module functions accept pure data structures (`File`, `Scope`, `ModuleGraph`) and return immutable records.
 3. **Verified Zero Circularity**: Validated using `madge` with zero cycles across all internal modules.
 
+---
+
+## Step 8b: Middleware & Authentication Detection per Endpoint
+
+### Overview
+
+In Step 8b, we implemented static detection of middleware chains and authentication requirements per endpoint.
+In Express, middleware executes in strict registration order:
+```javascript
+app.use(logger);       // Applies to all routes registered after this line
+app.get('/health', h); // logger applies; auth does NOT
+app.use(sessionGuard); // Applies to all routes registered after this line
+app.get('/users', h);  // BOTH logger and sessionGuard apply
+```
+DevGuard captures this registration sequence across 4 tiers:
+1. Application-level: `app.use(mw)`
+2. Mount-level: `app.use('/prefix', mw, router)`
+3. Router-level: `router.use(mw)`
+4. Route-level: `app.get('/path', mw, handler)` or handler arrays `[mw1, mw2, handler]`
+
+---
+
+### 🧠 Core Concept to Understand: Why "No Auth Middleware Found" != "No Auth"
+
+A fundamental principle of DevGuard static analysis is the **honesty rule**:
+*Never claim an endpoint is unauthenticated (`auth: 'none'`) without concrete proof.*
+
+1. **Absence of Evidence is Not Evidence of Absence**:
+   In backend frameworks, authentication may be enforced in numerous ways outside recognizable middleware:
+   - Within the route handler body itself (`if (!req.user) return res.status(401)`).
+   - In a custom database session check inside an unanalyzed utility.
+   - At the API gateway level (e.g. AWS API Gateway, Cloudflare Access, Envoy proxy, Kubernetes Ingress) before traffic even hits Node.js.
+   - Inside third-party framework wrappers or custom decorators.
+   Therefore, if the static analyzer does not find explicit authentication signals, the endpoint must be labeled as `auth: 'unknown'`. Claiming `auth: 'none'` would risk false negatives and tell security engineers that a route is public when it might actually be secured.
+
+2. **Express Registration Order Dictates Active Middleware**:
+   Unlike declarative frameworks (such as NestJS or Spring) where middleware/guards are bound to classes or methods via annotations regardless of line order, Express is purely imperative and order-dependent. A middleware registered at line 50 does *not* apply to a route registered at line 40, even within the same file. To model this faithfully:
+   - DevGuard tracks source line numbers of every `.use()` call and route registration.
+   - Routes inherit only those application- and router-level middlewares that were registered *before* the route or mount in code order.
+   - Unresolvable middleware expressions (e.g. `app.use(dynamicRequire())`) emit informational diagnostic `DG-I002` and appear in the chain as `<unresolved>`, preserving the accurate count and ordering of the pipeline.
+
+---
+
+### Auth Rule Set & Positive Evidence Table
+
+| Auth Type | Evidence Signal | Detection Mechanism |
+| :--- | :--- | :--- |
+| `bearer` | `header:authorization:Bearer` | Inspects middleware AST for checks on `req.headers.authorization` or `req.headers['authorization']` matching `Bearer` string token pattern. |
+| `apiKey` | `header:x-api-key` | Inspects middleware AST for checks on `req.headers['x-api-key']` or `req.headers['apikey']`. |
+| `cookie` | `session:user` | Inspects middleware AST for checks on `req.session.user`, `req.session.userId`, `req.session.passport`, or `req.cookies`. |
+| `custom` | `name:<name>` | Middleware function or identifier name matches security heuristics (`auth`, `authenticate`, `requireAuth`, `protect`, `verifyToken`, `ensureLoggedIn`, `jwt`). |
+| `unknown` | *(none)* | Default when no positive evidence exists. Never emits `none`. |
+
+Every classified authentication requirement records `auth.evidence` with `{ filePath, line, signal }` for complete traceability.
+
+---
+
+### Verification Summary
+
+- `pnpm lint` ✅ (0 errors, 0 warnings)
+- `pnpm typecheck` ✅ (0 errors)
+- `pnpm test` ✅ (18 test suites, 228/228 tests passing)
+- `pnpm build` ✅ (Core, adapter-express, runner, cli built cleanly)
+
+
 

@@ -8,9 +8,10 @@
           "type": "string",
           "enum": [
             "1.0.0",
-            "1.1.0"
+            "1.1.0",
+            "1.2.0"
           ],
-          "default": "1.1.0"
+          "default": "1.2.0"
         },
         "project": {
           "type": "object",
@@ -97,6 +98,27 @@
                   },
                   "details": {
                     "type": "string"
+                  },
+                  "evidence": {
+                    "type": "object",
+                    "properties": {
+                      "filePath": {
+                        "type": "string"
+                      },
+                      "line": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "signal": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "filePath",
+                      "line",
+                      "signal"
+                    ],
+                    "additionalProperties": false
                   }
                 },
                 "required": [
@@ -288,7 +310,59 @@
               "middleware": {
                 "type": "array",
                 "items": {
-                  "type": "string"
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "provenance": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "literal",
+                                "resolved",
+                                "inferred",
+                                "unresolved"
+                              ]
+                            },
+                            "filePath": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "line": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "column": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "snippet": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "filePath",
+                            "line"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
                 },
                 "default": []
               },
@@ -364,7 +438,8 @@
                       "DG-R001",
                       "DG-R002",
                       "DG-R003",
-                      "DG-I001"
+                      "DG-I001",
+                      "DG-I002"
                     ]
                   },
                   {
@@ -394,7 +469,8 @@
                   "DG-R001",
                   "DG-R002",
                   "DG-R003",
-                  "DG-I001"
+                  "DG-I001",
+                  "DG-I002"
                 ]
               },
               "severity": {

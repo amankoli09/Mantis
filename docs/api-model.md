@@ -1,4 +1,4 @@
-# DevGuard API Model Specification (`v1.1.0`)
+# DevGuard API Model Specification (`v1.2.0`)
 
 The **DevGuard API Model** (`ApiModel`) is the standardized, framework-agnostic data representation produced when DevGuard statically scans a backend codebase.
 
@@ -12,7 +12,7 @@ An `ApiModel` object contains the following root properties:
 
 ```jsonc
 {
-  "modelVersion": "1.1.0",
+  "modelVersion": "1.2.0",
   "project": {
     "name": "my-express-app",
     "framework": "express",
@@ -26,7 +26,7 @@ An `ApiModel` object contains the following root properties:
 
 | Field          | Type           | Required? | Description                                                              |
 | :------------- | :------------- | :-------: | :----------------------------------------------------------------------- |
-| `modelVersion` | `"1.1.0"` (or `"1.0.0"`) | Yes | Exact schema version string. Core validator accepts both `1.0.0` and `1.1.0`. |
+| `modelVersion` | `"1.2.0"` (or `"1.1.0"`, `"1.0.0"`) | Yes | Exact schema version string. Core validator accepts `1.0.0`, `1.1.0`, and `1.2.0`. |
 | `project`      | `object`       |    Yes    | Target project information (`framework`, `language`, `root` path).       |
 | `metadata`     | `object`       | Optional  | Additional scan run environment information.                             |
 | `endpoints`    | `Endpoint[]`   |    Yes    | Array of extracted API endpoints discovered during static code analysis. |
@@ -44,12 +44,12 @@ Each item in the `endpoints` array describes a unique HTTP route:
 | `method`           | `enum`                 |              Yes              | HTTP method: `'GET' \| 'POST' \| 'PUT' \| 'PATCH' \| 'DELETE' \| 'OPTIONS' \| 'HEAD'`.                              |
 | `path`             | `string`               |              Yes              | Normalized route path (e.g., `"/api/users/:id"`).                                                                   |
 | `description`      | `string`               |              No               | Human-readable explanation extracted from comments.                                                                 |
-| `auth`             | `object`               |  Yes (defaults to `unknown`)  | Authentication requirement details (`type`: `'none' \| 'bearer' \| 'apiKey' \| 'cookie' \| 'custom' \| 'unknown'`). |
+| `auth`             | `object`               |  Yes (defaults to `unknown`)  | Authentication requirement (`type`: `'none' \| 'bearer' \| 'apiKey' \| 'cookie' \| 'custom' \| 'unknown'`) and optional `evidence` (`filePath`, `line`, `signal`). |
 | `effect`           | `enum`                 |  Yes (defaults to `unknown`)  | Mutation behavior: `'read' \| 'write' \| 'destructive' \| 'unknown'`. Safe mode only runs `'read'` by default.      |
 | `params`           | `ParamDefinition[]`    |    Yes (defaults to `[]`)     | Parameters extracted from path segments, query strings, headers, or request body.                                   |
 | `requestBody`      | `object`               |              No               | Expected payload structure, content type, and whole-payload schema (see single source of truth rule below).         |
 | `responses`        | `ResponseDefinition[]` |    Yes (defaults to `[]`)     | Known HTTP status codes (e.g. `200`, `201`, `400`) and schemas.                                                     |
-| `middleware`       | `string[]`             |    Yes (defaults to `[]`)     | List of middleware names applied to this endpoint.                                                                  |
+| `middleware`       | `MiddlewareEntry[] \| string[]` | Yes (defaults to `[]`) | Ordered list of middleware applied to this endpoint, in Express execution order. In v1.2.0, entries contain `{ name, provenance }`. |
 | `mountChain`       | `MountEntry[]`         |              No               | Ordered list of router mounts from application root to handler, capturing the file and line of each mount step.    |
 | `provenance`       | `Provenance`           |              Yes              | Source code location where this endpoint was defined (file, line number, snippet).                                  |
 | `confidence`       | `enum`                 | Yes (defaults to `confirmed`) | Certainty status: `'confirmed' \| 'uncertain'`.                                                                     |
@@ -97,7 +97,26 @@ When a route path contains dynamic expressions that cannot be statically resolve
 
 ---
 
-## ⚠️ 3. Diagnostics (`diagnostics[]`)
+## 🔒 3. Authentication Detection & Evidence
+
+DevGuard detects authentication requirements statically from active middleware chains and handler inspectable code.
+**Honesty rule**: DevGuard never infers `auth: 'none'`. If no known authentication evidence is discovered, `auth` remains `type: 'unknown'`.
+
+### Auth Classification Rule Set
+
+| Classification (`type`) | Evidence Signal (`signal`) | Detection Condition |
+| :---------------------- | :------------------------- | :------------------ |
+| `bearer`                | `header:authorization:Bearer` | Inspects `req.headers.authorization` or `req.headers['authorization']` and checks for `'Bearer'` token prefix or substring. |
+| `apiKey`                | `header:x-api-key`         | Inspects `req.headers['x-api-key']` or `req.headers['apikey']`. |
+| `cookie`                | `session:user`             | Inspects `req.session.user`, `req.session.userId`, `req.session.passport`, or `req.cookies`. |
+| `custom`                | `name:<middlewareName>`    | Middleware identifier matches auth naming heuristics (e.g. `requireAuth`, `authenticate`, `protect`, `ensureLoggedIn`, `verifyToken`). |
+| `unknown`               | *(none)*                   | Default when no positive authentication evidence is found. Never claims `none`. |
+
+When authentication is classified, `auth.evidence` records `{ filePath, line, signal }` pinpointing the exact source file and line providing the proof.
+
+---
+
+## ⚠️ 4. Diagnostics (`diagnostics[]`)
 
 Diagnostics capture issues or ambiguities encountered during analysis without crashing the scan:
 
@@ -108,10 +127,11 @@ Diagnostics capture issues or ambiguities encountered during analysis without cr
 | `DG-R002` | `warning` | **Unresolved Router Mount**: A router was mounted but its definition was missing.   |
 | `DG-R003` |  `info`   | **Dynamic Path**: Route uses a runtime dynamic expression. Unresolvable segments are replaced with normalized `<EXPRESSION>` placeholders. |
 | `DG-I001` |  `info`   | **Unresolved Handler**: Route handler could not be statically resolved. Inferred fields remain empty. |
+| `DG-I002` |  `info`   | **Unresolved Middleware**: Middleware expression could not be statically resolved. Appears as `<unresolved>` in middleware chain. |
 
 Each diagnostic records:
 
-- `code`: Diagnostic code enum (`DG-P001`, `DG-R001`, `DG-R002`, `DG-R003`, `DG-I001`).
+- `code`: Diagnostic code enum (`DG-P001`, `DG-R001`, `DG-R002`, `DG-R003`, `DG-I001`, `DG-I002`).
 - `severity`: `'error' | 'warning' | 'info'`.
 - `message`: Formatted human-readable explanation.
 - `file` & `line`: Source location (optional only for project-wide diagnostics).
