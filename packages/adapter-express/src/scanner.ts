@@ -15,7 +15,7 @@ import {
   extractFileDeclarations,
   resolveCrossFileRoutes,
   type FileDeclarations,
-} from './route-extractor.js';
+} from './extract/route-extractor.js';
 
 export interface ScanOptions {
   projectName?: string;
