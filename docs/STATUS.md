@@ -43,8 +43,15 @@ DevGuard/
 │   │   ├── src/file-walker.ts # Deterministic file traversal excluding node_modules/git
 │   │   ├── src/parser.ts      # Babel AST parser with tolerant error recovery (DG-P001)
 │   │   ├── src/module-graph.ts# Multi-file dependency graph and export resolver
-│   │   ├── src/constant-evaluator.ts # Static evaluator for constants and expressions
-│   │   ├── src/route-extractor.ts    # Route definitions, handler AST inference, mount resolution
+│   │   ├── src/extract/       # Focused route extraction engine
+│   │   │   ├── types.ts           # Shared domain interfaces (PendingRouterRoute, ExtractedMount, etc.)
+│   │   │   ├── path-evaluator.ts  # Constant evaluation, template literals, placeholder formatting
+│   │   │   ├── handler-resolver.ts# Inline, local, and 1-hop imported controller function resolution
+│   │   │   ├── param-inference.ts # Parameter & body field AST inference (req.params/query/body)
+│   │   │   ├── declarations.ts    # Per-file AST extraction of apps, routers, routes, and mounts
+│   │   │   ├── mount-resolver.ts  # Cross-file mount resolution, DFS traversal, mountChain
+│   │   │   └── route-extractor.ts # Thin orchestrator wiring declarations and mount resolver
+│   │   ├── src/route-extractor.ts # Backward compatibility shim re-exporting extract/route-extractor.js
 │   │   └── src/scanner.ts     # Main orchestrator (ExpressAdapter.scan / scanProject)
 │   ├── runner/                # Phase 2 test runner (scaffolded)
 │   └── cli/                   # Phase 3 command-line interface (scaffolded)
@@ -67,9 +74,9 @@ When `ExpressAdapter.scan(projectRoot)` (or `scanProject(projectRoot)`) executes
 2. **Deterministic File Walk (`file-walker.ts`)**: Discovers all `.js`, `.cjs`, `.mjs`, `.ts` files, skipping `node_modules`, hidden files, and build directories.
 3. **Module Graph Construction (`module-graph.ts`)**: Resolves imports and requires across project files, indexing CommonJS and ESM export bindings. Emits `DG-R001` if an import target cannot be located.
 4. **AST Parsing (`parser.ts`)**: Parses each discovered file using Babel parser. If syntax errors occur, captures a `DG-P001` diagnostic and continues scanning.
-5. **Local Declarations Extraction (`route-extractor.ts`)**: Extracts routes, router instances, and local mounts for each file. Evaluates paths via `constant-evaluator.ts`. If paths contain runtime expressions, formats `<EXPRESSION>` placeholders and emits `DG-R003`.
-6. **Handler Parameter Inference (`route-extractor.ts`)**: Locates the route handler (inline function, local function, single-hop imported identifier, or array of middleware). Identifies the request parameter binding (regardless of parameter name) and extracts `req.params.x`, `req.query.x`, `req.body.x`, bracket accesses, and destructuring with renames. If unresolvable, emits `DG-I001`.
-7. **Cross-File Route Resolution (`route-extractor.ts`)**: Traverses the mount hierarchy using depth-first search, tracking `mountChain` (file and line of each mount step) from application root down to subrouters. Emits `DG-R002` for unresolved or cyclic mounts.
+5. **Local Declarations Extraction (`extract/declarations.ts`)**: Extracts routes, router instances, and local mounts for each file. Evaluates paths via `extract/path-evaluator.ts`. If paths contain runtime expressions, formats `<EXPRESSION>` placeholders and emits `DG-R003`.
+6. **Handler Parameter Inference (`extract/param-inference.ts` via `extract/handler-resolver.ts`)**: Locates the route handler (inline function, local function, single-hop imported identifier, or array of middleware). Identifies the request parameter binding (regardless of parameter name) and extracts `req.params.x`, `req.query.x`, `req.body.x`, bracket accesses, and destructuring with renames. If unresolvable, emits `DG-I001`.
+7. **Cross-File Route Resolution (`extract/mount-resolver.ts`)**: Traverses the mount hierarchy using depth-first search, tracking `mountChain` (file and line of each mount step) from application root down to subrouters. Emits `DG-R002` for unresolved or cyclic mounts.
 8. **Sorting and Validation (`scanner.ts`)**: Sorts endpoints deterministically by HTTP method and normalized path, sorts diagnostics, validates against `validateModel()` in `@devguard/core`, and returns the final `ApiModel`.
 
 ---

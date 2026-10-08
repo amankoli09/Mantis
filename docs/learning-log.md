@@ -754,3 +754,35 @@ A central architectural decision in DevGuard is that static AST extraction must 
 - **Step 8b–8d (Auth detection, middleware semantics, effects, validation libraries)**: Left untouched as planned. Handler effects remain mapped by HTTP method convention until body effects analysis in 8c.
 - **Transitive (2+ hop) Controller Exports**: Currently handles 1-hop imported controllers (`app.get('/items', controller)`). Multi-hop re-exports (`controllers/index.js` re-exporting `items.js`) are not resolved in 8a.
 
+---
+
+## Issue 2 Refactor: Modularizing `route-extractor.ts` (Zero Behavior Change)
+
+### Overview
+
+In Issue #2, we decoupled the monolithic `packages/adapter-express/src/route-extractor.ts` (originally ~2,100 lines) into focused, single-responsibility modules under `packages/adapter-express/src/extract/` without altering analyzer behavior. The 178 tests—including strict `1.1.0` fixture golden deep equality tests—served as the safety net guaranteeing byte-for-byte behavioral preservation.
+
+---
+
+### Module Architecture
+
+1. **`extract/types.ts`**: Shared TypeScript interfaces (`PendingRouterRoute`, `ExtractedMount`, `ExtractedRouter`, `FileDeclarations`, `ExtractRoutesResult`) to prevent circular type dependencies.
+2. **`extract/path-evaluator.ts`**: Constant evaluation, string binary concatenation, template literals, array product combination capping, path joining (`joinPaths`), and placeholder formatting (`formatPlaceholder`).
+3. **`extract/handler-resolver.ts`**: Function AST node resolution (`findHandler`), inspecting inline closures, local function declarations, and 1-hop imported controller exports from the module graph.
+4. **`extract/param-inference.ts`**: AST visitor logic inspecting `req.params`, `req.query`, `req.body`, and headers access, destructuring with aliases, and deterministic sorting (`mergeAndSortParams`).
+5. **`extract/declarations.ts`**: Per-file AST extraction of Express app instances, router factories, routes (`app.get/post`, `router.route`), and mounts (`app.use`).
+6. **`extract/mount-resolver.ts`**: Cross-file router mount resolution, cycle protection, DFS traversal tracking `mountChain`, and final `Endpoint` synthesis.
+7. **`extract/route-extractor.ts`**: Thin orchestrator implementing `extractDirectRoutes` and re-exporting module public APIs.
+8. **`src/route-extractor.ts`**: Backward-compatibility shim preserving package deep import paths.
+
+---
+
+### 🧠 Core Concept to Understand: Refactoring Under Strict Invariants
+
+When refactoring complex static analysis engines, splitting files without tests or with partial assertions frequently introduces subtle regressions (such as parameter ordering shifts, dropped diagnostics, or lost AST provenance). Because Issue #1 locked in strict deep equality (`expect(model).toStrictEqual(goldenModel)`) across all 6 fixtures, every refactoring step was executed under complete behavioral determinism:
+
+1. **Acyclic Dependency Hierarchy**: Level 0 leaves (`types`, `path-evaluator`, `handler-resolver`, `param-inference`) have zero sibling dependencies.
+2. **No Global State**: All module functions accept pure data structures (`File`, `Scope`, `ModuleGraph`) and return immutable records.
+3. **Verified Zero Circularity**: Validated using `madge` with zero cycles across all internal modules.
+
+
