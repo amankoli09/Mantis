@@ -11,8 +11,9 @@
       "id": "GET /health",
       "method": "GET",
       "path": "/health",
-      "description": "Liveness probe — returns static status object.",
-      "auth": { "type": "unknown" },
+      "auth": {
+        "type": "unknown"
+      },
       "effect": "read",
       "params": [],
       "responses": [],
@@ -22,6 +23,7 @@
         "kind": "literal",
         "filePath": "fixtures/simple/app/app.js",
         "line": 10,
+        "column": 4,
         "snippet": "app.get('/health', (req, res) => {"
       },
       "confidence": "confirmed",
@@ -31,8 +33,9 @@
       "id": "GET /users",
       "method": "GET",
       "path": "/users",
-      "description": "List all users.",
-      "auth": { "type": "unknown" },
+      "auth": {
+        "type": "unknown"
+      },
       "effect": "read",
       "params": [],
       "responses": [],
@@ -42,6 +45,7 @@
         "kind": "literal",
         "filePath": "fixtures/simple/app/app.js",
         "line": 15,
+        "column": 4,
         "snippet": "app.get('/users', (req, res) => {"
       },
       "confidence": "confirmed",
@@ -51,8 +55,9 @@
       "id": "POST /users",
       "method": "POST",
       "path": "/users",
-      "description": "Create a new user. Reads req.body.email.",
-      "auth": { "type": "unknown" },
+      "auth": {
+        "type": "unknown"
+      },
       "effect": "write",
       "params": [
         {
@@ -64,21 +69,10 @@
             "kind": "inferred",
             "filePath": "fixtures/simple/app/app.js",
             "line": 27,
-            "snippet": "  const email = req.body.email;"
+            "snippet": "const email = req.body.email;"
           }
         }
       ],
-      "requestBody": {
-        "contentType": "application/json",
-        "required": false,
-        "description": "Inferred from req.body.email access on line 27.",
-        "provenance": {
-          "kind": "inferred",
-          "filePath": "fixtures/simple/app/app.js",
-          "line": 27,
-          "snippet": "  const email = req.body.email;"
-        }
-      },
       "responses": [],
       "middleware": [],
       "mountChain": [],
@@ -86,6 +80,7 @@
         "kind": "literal",
         "filePath": "fixtures/simple/app/app.js",
         "line": 26,
+        "column": 4,
         "snippet": "app.post('/users', (req, res) => {"
       },
       "confidence": "confirmed",
@@ -95,20 +90,21 @@
       "id": "GET /users/:id",
       "method": "GET",
       "path": "/users/:id",
-      "description": "Fetch a single user by id.",
-      "auth": { "type": "unknown" },
+      "auth": {
+        "type": "unknown"
+      },
       "effect": "read",
       "params": [
         {
           "name": "id",
           "in": "path",
           "required": true,
+          "type": "string",
           "description": "User identifier extracted from path segment :id.",
           "provenance": {
             "kind": "literal",
             "filePath": "fixtures/simple/app/app.js",
-            "line": 20,
-            "snippet": "app.get('/users/:id', (req, res) => {"
+            "line": 20
           }
         }
       ],
@@ -119,6 +115,7 @@
         "kind": "literal",
         "filePath": "fixtures/simple/app/app.js",
         "line": 20,
+        "column": 4,
         "snippet": "app.get('/users/:id', (req, res) => {"
       },
       "confidence": "confirmed",
@@ -128,20 +125,21 @@
       "id": "PUT /users/:id",
       "method": "PUT",
       "path": "/users/:id",
-      "description": "Update a user by id. Reads req.body.email.",
-      "auth": { "type": "unknown" },
+      "auth": {
+        "type": "unknown"
+      },
       "effect": "write",
       "params": [
         {
           "name": "id",
           "in": "path",
           "required": true,
+          "type": "string",
           "description": "User identifier extracted from path segment :id.",
           "provenance": {
             "kind": "literal",
             "filePath": "fixtures/simple/app/app.js",
-            "line": 32,
-            "snippet": "app.put('/users/:id', (req, res) => {"
+            "line": 32
           }
         },
         {
@@ -153,21 +151,10 @@
             "kind": "inferred",
             "filePath": "fixtures/simple/app/app.js",
             "line": 34,
-            "snippet": "  const email = req.body.email;"
+            "snippet": "const email = req.body.email;"
           }
         }
       ],
-      "requestBody": {
-        "contentType": "application/json",
-        "required": false,
-        "description": "Inferred from req.body.email access on line 34.",
-        "provenance": {
-          "kind": "inferred",
-          "filePath": "fixtures/simple/app/app.js",
-          "line": 34,
-          "snippet": "  const email = req.body.email;"
-        }
-      },
       "responses": [],
       "middleware": [],
       "mountChain": [],
@@ -175,6 +162,7 @@
         "kind": "literal",
         "filePath": "fixtures/simple/app/app.js",
         "line": 32,
+        "column": 4,
         "snippet": "app.put('/users/:id', (req, res) => {"
       },
       "confidence": "confirmed",
@@ -184,20 +172,21 @@
       "id": "DELETE /users/:id",
       "method": "DELETE",
       "path": "/users/:id",
-      "description": "Permanently remove a user by id.",
-      "auth": { "type": "unknown" },
+      "auth": {
+        "type": "unknown"
+      },
       "effect": "destructive",
       "params": [
         {
           "name": "id",
           "in": "path",
           "required": true,
+          "type": "string",
           "description": "User identifier extracted from path segment :id.",
           "provenance": {
             "kind": "literal",
             "filePath": "fixtures/simple/app/app.js",
-            "line": 39,
-            "snippet": "app.delete('/users/:id', (req, res) => {"
+            "line": 39
           }
         }
       ],
@@ -208,6 +197,7 @@
         "kind": "literal",
         "filePath": "fixtures/simple/app/app.js",
         "line": 39,
+        "column": 4,
         "snippet": "app.delete('/users/:id', (req, res) => {"
       },
       "confidence": "confirmed",

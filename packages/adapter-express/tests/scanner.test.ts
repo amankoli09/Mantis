@@ -10,49 +10,18 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
   const simpleFixturePath = path.join(repoRoot, 'fixtures/simple/app');
   const goldenModelPath = path.join(repoRoot, 'fixtures/simple/expected.model.json');
 
-  it('scans fixtures/simple/app and extracts all 6 endpoints correctly', async () => {
+  it('scans fixtures/simple/app and matches its golden model', async () => {
     const model = await scanProject(simpleFixturePath);
 
     // 1. Model conforms to core ApiModel validation schema
     const validation = validateModel(model);
     expect(validation.success).toBe(true);
 
-    // 2. Exactly 6 routes extracted, sorted deterministically
-    expect(model.endpoints).toHaveLength(6);
-    expect(model.diagnostics).toEqual([]);
-
     const expectedGoldenRaw = readFileSync(goldenModelPath, 'utf8');
     const goldenModel = JSON.parse(expectedGoldenRaw) as ApiModel;
 
-    // 3. Compare all endpoints against golden model on Step 5 supported fields
-    // (requestBody and descriptions are Step 8 inference features and omitted from comparison)
-    for (let i = 0; i < goldenModel.endpoints.length; i++) {
-      const expected = goldenModel.endpoints[i]!;
-      const actual = model.endpoints[i]!;
-
-      expect(actual.id).toBe(expected.id);
-      expect(actual.method).toBe(expected.method);
-      expect(actual.path).toBe(expected.path);
-      expect(actual.effect).toBe(expected.effect);
-      expect(actual.confidence).toBe(expected.confidence);
-      expect(actual.confidenceReason).toBe(expected.confidenceReason);
-
-      // Provenance comparison
-      expect(actual.provenance.kind).toBe(expected.provenance.kind);
-      expect(actual.provenance.line).toBe(expected.provenance.line);
-      expect(actual.provenance.filePath).toBe(expected.provenance.filePath);
-
-      expect(actual.mountChain).toEqual(expected.mountChain);
-
-      // Parameters comparison
-      expect(actual.params).toHaveLength(expected.params.length);
-      for (let p = 0; p < expected.params.length; p++) {
-        expect(actual.params[p]!.name).toBe(expected.params[p]!.name);
-        expect(actual.params[p]!.in).toBe(expected.params[p]!.in);
-        expect(actual.params[p]!.required).toBe(expected.params[p]!.required);
-        expect(actual.params[p]!.provenance?.line).toBe(expected.params[p]!.provenance?.line);
-      }
-    }
+    // 2. Strict deep equality against complete golden model
+    expect(model).toStrictEqual(goldenModel);
   });
 
   it('tolerates broken syntax files and emits DG-P001 while extracting remaining valid routes', async () => {
@@ -104,29 +73,11 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
     const validation = validateModel(model);
     expect(validation.success).toBe(true);
 
-    // 2. 4 routes extracted (3 confirmed, 1 uncertain for unmounted orphanRouter)
-    expect(model.endpoints).toHaveLength(4);
-    expect(model.diagnostics).toHaveLength(1);
-    expect(model.diagnostics[0]!.code).toBe('DG-R002');
-
     const expectedGoldenRaw = readFileSync(goldenModelPath, 'utf8');
     const goldenModel = JSON.parse(expectedGoldenRaw) as ApiModel;
 
-    for (let i = 0; i < goldenModel.endpoints.length; i++) {
-      const expected = goldenModel.endpoints[i]!;
-      const actual = model.endpoints[i]!;
-
-      expect(actual.id).toBe(expected.id);
-      expect(actual.method).toBe(expected.method);
-      expect(actual.path).toBe(expected.path);
-      expect(actual.effect).toBe(expected.effect);
-      expect(actual.confidence).toBe(expected.confidence);
-      expect(actual.confidenceReason).toBe(expected.confidenceReason);
-
-      // Provenance comparison
-      expect(actual.provenance.kind).toBe(expected.provenance.kind);
-      expect(actual.provenance.line).toBe(expected.provenance.line);
-    }
+    // 2. Strict deep equality against complete golden model
+    expect(model).toStrictEqual(goldenModel);
   });
 
   it('scans fixtures/router-cross-file/app and matches its golden model across all export styles', async () => {
@@ -139,84 +90,26 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
     const validation = validateModel(model);
     expect(validation.success).toBe(true);
 
-    // 2. Exactly 6 routes extracted, all confirmed with 0 diagnostics
-    expect(model.endpoints).toHaveLength(6);
-    expect(model.diagnostics).toEqual([]);
-
     const expectedGoldenRaw = readFileSync(goldenModelPath, 'utf8');
     const goldenModel = JSON.parse(expectedGoldenRaw) as ApiModel;
 
-    for (let i = 0; i < goldenModel.endpoints.length; i++) {
-      const expected = goldenModel.endpoints[i]!;
-      const actual = model.endpoints[i]!;
-
-      expect(actual.id).toBe(expected.id);
-      expect(actual.method).toBe(expected.method);
-      expect(actual.path).toBe(expected.path);
-      expect(actual.effect).toBe(expected.effect);
-      expect(actual.confidence).toBe(expected.confidence);
-      expect(actual.confidenceReason).toBe(expected.confidenceReason);
-
-      // Provenance comparison
-      expect(actual.provenance.kind).toBe(expected.provenance.kind);
-      expect(actual.provenance.filePath).toBe(expected.provenance.filePath);
-      expect(actual.provenance.line).toBe(expected.provenance.line);
-      expect(actual.provenance.snippet).toBe(expected.provenance.snippet);
-    }
+    // 2. Strict deep equality against complete golden model
+    expect(model).toStrictEqual(goldenModel);
   });
 
-  it('scans fixtures/nested-routers/app and produces confirmed routes for nested routers and chaining', async () => {
+  it('scans fixtures/nested-routers/app and matches its golden model', async () => {
     const nestedFixturePath = path.join(repoRoot, 'fixtures/nested-routers/app');
+    const goldenModelPath = path.join(repoRoot, 'fixtures/nested-routers/expected.model.json');
     const model = await scanProject(nestedFixturePath);
 
     const validation = validateModel(model);
     expect(validation.success).toBe(true);
 
-    // 1. Confirmed route from routes/users.js line 19
-    const usersRoute = model.endpoints.find((e) => e.id === 'GET /api/users/:id');
-    expect(usersRoute).toBeDefined();
-    expect(usersRoute!.confidence).toBe('confirmed');
-    expect(usersRoute!.path).toBe('/api/users/:id');
+    const expectedGoldenRaw = readFileSync(goldenModelPath, 'utf8');
+    const goldenModel = JSON.parse(expectedGoldenRaw) as ApiModel;
 
-    // 2. Confirmed route from routes/products.js line 8
-    const productsRoute = model.endpoints.find((e) => e.id === 'GET /api/products');
-    expect(productsRoute).toBeDefined();
-    expect(productsRoute!.confidence).toBe('confirmed');
-    
-    // 3. Chained route: GET /api/users
-    const chainGet = model.endpoints.find((e) => e.id === 'GET /api/users');
-    expect(chainGet).toBeDefined();
-    expect(chainGet!.confidence).toBe('confirmed');
-    expect(chainGet!.provenance.line).toBe(10);
-    
-    // 4. Chained route: POST /api/users
-    const chainPost = model.endpoints.find((e) => e.id === 'POST /api/users');
-    expect(chainPost).toBeDefined();
-    expect(chainPost!.confidence).toBe('confirmed');
-    expect(chainPost!.provenance.line).toBe(13);
-
-    // 5. Nested router: GET /api/admin/metrics
-    const adminMetrics = model.endpoints.find((e) => e.id === 'GET /api/admin/metrics');
-    expect(adminMetrics).toBeDefined();
-    expect(adminMetrics!.confidence).toBe('confirmed');
-    expect(adminMetrics!.provenance.filePath).toContain('admin.js');
-    expect(adminMetrics!.provenance.line).toBe(5);
-
-    // 6. Uncertain dynamic route from routes/products.js line 17 matching expected.model.json
-    const goldenModelRaw = readFileSync(path.join(repoRoot, 'fixtures/nested-routers/expected.model.json'), 'utf8');
-    const goldenModel = JSON.parse(goldenModelRaw) as ApiModel;
-    const goldenUncertain = goldenModel.endpoints.find((e) => e.confidence === 'uncertain');
-    expect(goldenUncertain).toBeDefined();
-
-    const actualUncertain = model.endpoints.find((e) => e.confidence === 'uncertain');
-    expect(actualUncertain).toBeDefined();
-    expect(actualUncertain!.id).toBe(goldenUncertain!.id);
-    expect(actualUncertain!.path).toBe(goldenUncertain!.path);
-    expect(actualUncertain!.confidence).toBe(goldenUncertain!.confidence);
-    expect(actualUncertain!.confidenceReason).toBe(goldenUncertain!.confidenceReason);
-    expect(actualUncertain!.provenance.kind).toBe(goldenUncertain!.provenance.kind);
-    expect(actualUncertain!.provenance.filePath).toBe(goldenUncertain!.provenance.filePath);
-    expect(actualUncertain!.provenance.line).toBe(goldenUncertain!.provenance.line);
+    // Strict deep equality against complete golden model
+    expect(model).toStrictEqual(goldenModel);
   });
 
   it('emits DG-R002 and confirms nothing when an imported router cannot be resolved', async () => {
@@ -450,24 +343,8 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
     const expectedGoldenRaw = readFileSync(goldenModelPath, 'utf8');
     const goldenModel = JSON.parse(expectedGoldenRaw) as ApiModel;
 
-    // Check endpoints length
-    expect(model.endpoints).toHaveLength(goldenModel.endpoints.length);
-
-    for (let i = 0; i < goldenModel.endpoints.length; i++) {
-      const expected = goldenModel.endpoints[i]!;
-      const actual = model.endpoints[i]!;
-
-      expect(actual.id).toBe(expected.id);
-      expect(actual.method).toBe(expected.method);
-      expect(actual.path).toBe(expected.path);
-      expect(actual.effect).toBe(expected.effect);
-      expect(actual.confidence).toBe(expected.confidence);
-      expect(actual.confidenceReason).toBe(expected.confidenceReason);
-
-      expect(actual.provenance.kind).toBe(expected.provenance.kind);
-      expect(actual.provenance.filePath).toBe(expected.provenance.filePath);
-      expect(actual.provenance.line).toBe(expected.provenance.line);
-    }
+    // Strict deep equality against complete golden model
+    expect(model).toStrictEqual(goldenModel);
   });
 
 

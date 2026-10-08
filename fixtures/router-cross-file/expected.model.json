@@ -1,5 +1,5 @@
 {
-  "modelVersion": "1.0.0",
+  "modelVersion": "1.1.0",
   "project": {
     "name": "router-cross-file-fixture",
     "framework": "express",
@@ -18,10 +18,17 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [
+        {
+          "filePath": "fixtures/router-cross-file/app/app.js",
+          "line": 15
+        }
+      ],
       "provenance": {
         "kind": "resolved",
         "filePath": "fixtures/router-cross-file/app/routes/admin.js",
         "line": 6,
+        "column": 7,
         "snippet": "router.get('/metrics', (req, res) => {"
       },
       "confidence": "confirmed",
@@ -38,10 +45,17 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [
+        {
+          "filePath": "fixtures/router-cross-file/app/app.js",
+          "line": 13
+        }
+      ],
       "provenance": {
         "kind": "resolved",
         "filePath": "fixtures/router-cross-file/app/routes/items.js",
         "line": 6,
+        "column": 12,
         "snippet": "itemsRouter.get('/all', (req, res) => {"
       },
       "confidence": "confirmed",
@@ -58,10 +72,17 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [
+        {
+          "filePath": "fixtures/router-cross-file/app/app.js",
+          "line": 14
+        }
+      ],
       "provenance": {
         "kind": "resolved",
         "filePath": "fixtures/router-cross-file/app/routes/orders.js",
         "line": 6,
+        "column": 7,
         "snippet": "router.post('/checkout', (req, res) => {"
       },
       "confidence": "confirmed",
@@ -78,10 +99,17 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [
+        {
+          "filePath": "fixtures/router-cross-file/app/app.js",
+          "line": 12
+        }
+      ],
       "provenance": {
         "kind": "resolved",
         "filePath": "fixtures/router-cross-file/app/routes/users.js",
         "line": 6,
+        "column": 7,
         "snippet": "router.get('/profile', (req, res) => {"
       },
       "confidence": "confirmed",
@@ -98,10 +126,17 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [
+        {
+          "filePath": "fixtures/router-cross-file/app/app.js",
+          "line": 16
+        }
+      ],
       "provenance": {
         "kind": "resolved",
         "filePath": "fixtures/router-cross-file/app/routes/shared.js",
         "line": 6,
+        "column": 7,
         "snippet": "router.get('/ping', (req, res) => {"
       },
       "confidence": "confirmed",
@@ -118,10 +153,17 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [
+        {
+          "filePath": "fixtures/router-cross-file/app/app.js",
+          "line": 17
+        }
+      ],
       "provenance": {
         "kind": "resolved",
         "filePath": "fixtures/router-cross-file/app/routes/shared.js",
         "line": 6,
+        "column": 7,
         "snippet": "router.get('/ping', (req, res) => {"
       },
       "confidence": "confirmed",

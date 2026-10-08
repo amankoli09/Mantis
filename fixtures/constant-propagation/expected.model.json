@@ -1,5 +1,5 @@
 {
-  "modelVersion": "1.0.0",
+  "modelVersion": "1.1.0",
   "project": {
     "name": "app",
     "framework": "express",
@@ -18,6 +18,7 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [],
       "provenance": {
         "kind": "unresolved",
         "filePath": "fixtures/constant-propagation/app/app.js",
@@ -39,6 +40,7 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [],
       "provenance": {
         "kind": "unresolved",
         "filePath": "fixtures/constant-propagation/app/app.js",
@@ -60,6 +62,7 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [],
       "provenance": {
         "kind": "unresolved",
         "filePath": "fixtures/constant-propagation/app/app.js",
@@ -81,6 +84,7 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [],
       "provenance": {
         "kind": "unresolved",
         "filePath": "fixtures/constant-propagation/app/app.js",
@@ -102,6 +106,7 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [],
       "provenance": {
         "kind": "unresolved",
         "filePath": "fixtures/constant-propagation/app/app.js",
@@ -123,6 +128,7 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [],
       "provenance": {
         "kind": "unresolved",
         "filePath": "fixtures/constant-propagation/app/app.js",
@@ -144,6 +150,7 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [],
       "provenance": {
         "kind": "literal",
         "filePath": "fixtures/constant-propagation/app/app.js",
@@ -165,6 +172,7 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [],
       "provenance": {
         "kind": "unresolved",
         "filePath": "fixtures/constant-propagation/app/app.js",
@@ -186,6 +194,12 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [
+        {
+          "filePath": "fixtures/constant-propagation/app/app.js",
+          "line": 19
+        }
+      ],
       "provenance": {
         "kind": "resolved",
         "filePath": "fixtures/constant-propagation/app/app.js",
@@ -207,6 +221,7 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [],
       "provenance": {
         "kind": "resolved",
         "filePath": "fixtures/constant-propagation/app/app.js",
@@ -228,6 +243,12 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [
+        {
+          "filePath": "fixtures/constant-propagation/app/app.js",
+          "line": 19
+        }
+      ],
       "provenance": {
         "kind": "resolved",
         "filePath": "fixtures/constant-propagation/app/app.js",
@@ -249,6 +270,7 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [],
       "provenance": {
         "kind": "resolved",
         "filePath": "fixtures/constant-propagation/app/app.js",
@@ -270,6 +292,7 @@
       "params": [],
       "responses": [],
       "middleware": [],
+      "mountChain": [],
       "provenance": {
         "kind": "literal",
         "filePath": "fixtures/constant-propagation/app/app.js",
