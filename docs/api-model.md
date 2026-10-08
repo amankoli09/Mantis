@@ -1,4 +1,4 @@
-# DevGuard API Model Specification (`v1.0.0`)
+# DevGuard API Model Specification (`v1.1.0`)
 
 The **DevGuard API Model** (`ApiModel`) is the standardized, framework-agnostic data representation produced when DevGuard statically scans a backend codebase.
 
@@ -12,7 +12,7 @@ An `ApiModel` object contains the following root properties:
 
 ```jsonc
 {
-  "modelVersion": "1.0.0",
+  "modelVersion": "1.1.0",
   "project": {
     "name": "my-express-app",
     "framework": "express",
@@ -26,7 +26,7 @@ An `ApiModel` object contains the following root properties:
 
 | Field          | Type           | Required? | Description                                                              |
 | :------------- | :------------- | :-------: | :----------------------------------------------------------------------- |
-| `modelVersion` | `"1.0.0"`      |    Yes    | Exact schema version string.                                             |
+| `modelVersion` | `"1.1.0"` (or `"1.0.0"`) | Yes | Exact schema version string. Core validator accepts both `1.0.0` and `1.1.0`. |
 | `project`      | `object`       |    Yes    | Target project information (`framework`, `language`, `root` path).       |
 | `metadata`     | `object`       | Optional  | Additional scan run environment information.                             |
 | `endpoints`    | `Endpoint[]`   |    Yes    | Array of extracted API endpoints discovered during static code analysis. |
@@ -46,13 +46,24 @@ Each item in the `endpoints` array describes a unique HTTP route:
 | `description`      | `string`               |              No               | Human-readable explanation extracted from comments.                                                                 |
 | `auth`             | `object`               |  Yes (defaults to `unknown`)  | Authentication requirement details (`type`: `'none' \| 'bearer' \| 'apiKey' \| 'cookie' \| 'custom' \| 'unknown'`). |
 | `effect`           | `enum`                 |  Yes (defaults to `unknown`)  | Mutation behavior: `'read' \| 'write' \| 'destructive' \| 'unknown'`. Safe mode only runs `'read'` by default.      |
-| `params`           | `ParamDefinition[]`    |    Yes (defaults to `[]`)     | Parameters extracted from path segments, query strings, or headers.                                                 |
-| `requestBody`      | `object`               |              No               | Expected payload structure, content type, and schema.                                                               |
+| `params`           | `ParamDefinition[]`    |    Yes (defaults to `[]`)     | Parameters extracted from path segments, query strings, headers, or request body.                                   |
+| `requestBody`      | `object`               |              No               | Expected payload structure, content type, and whole-payload schema (see single source of truth rule below).         |
 | `responses`        | `ResponseDefinition[]` |    Yes (defaults to `[]`)     | Known HTTP status codes (e.g. `200`, `201`, `400`) and schemas.                                                     |
 | `middleware`       | `string[]`             |    Yes (defaults to `[]`)     | List of middleware names applied to this endpoint.                                                                  |
+| `mountChain`       | `MountEntry[]`         |              No               | Ordered list of router mounts from application root to handler, capturing the file and line of each mount step.    |
 | `provenance`       | `Provenance`           |              Yes              | Source code location where this endpoint was defined (file, line number, snippet).                                  |
 | `confidence`       | `enum`                 | Yes (defaults to `confirmed`) | Certainty status: `'confirmed' \| 'uncertain'`.                                                                     |
 | `confidenceReason` | `DiagnosticCode`       |    Required if `uncertain`    | Diagnostic code explaining why the route is uncertain (e.g., `'DG-R002'`).                                          |
+
+### Parameters vs Request Body Rule (Single Source of Truth)
+
+- **`params` is the single source of truth** for all individual field-level parameter accesses across every location (`'path'`, `'query'`, `'header'`, and `'body'`).
+  - When static analysis infers individual body field accesses from handler code (e.g. `req.body.email` or `const { email } = req.body`), they are recorded in `params` with `in: 'body'`, `required: 'unknown'`, and `type: 'unknown'`.
+- **`requestBody` holds only whole-payload metadata**:
+  - Transport-level metadata (such as `contentType: 'application/json'`).
+  - Top-level schema validation definitions (such as Zod or Joi schemas in Step 8d).
+  - It does **not** duplicate individual field extractions.
+  - If no whole-payload schema or transport metadata is proven by the scanner, the `requestBody` property is omitted.
 
 ---
 

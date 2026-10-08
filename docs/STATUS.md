@@ -1,0 +1,165 @@
+# DevGuard Status Report
+
+*Status as of October 8, 2026.*
+
+---
+
+## 1. Project Goal
+
+DevGuard is an automated, framework-agnostic static analysis security and testing tool for backend REST APIs.
+It statically inspects backend source code (without running or executing application code) to reconstruct an exhaustive, deterministic API Model capturing all HTTP routes, parameters, authentication requirements, and mutation effects.
+Phase 1 focuses on Node.js/Express backends, parsing JavaScript ASTs to extract direct routes, subrouters, cross-file mounts, constant propagation, and request body/parameter accesses.
+
+---
+
+## 2. Steps Completed
+
+| Step | Scope | Status | Commit / Reference |
+| :--- | :--- | :---: | :--- |
+| **Step 1** | Monorepo setup, tooling (pnpm, tsup, vitest, eslint, typescript), directory layout | **Done** | `223c316` |
+| **Step 2** | API Model specification & Zod schemas (`@devguard/core`) | **Done** | `dd9559c` |
+| **Step 3** | Fixture creation: simple single-file Express app | **Done** | `b01ee3e` |
+| **Step 4** | AST parsing pipeline, deterministic file walker, and Express detector | **Done** | `8ebfdb4` |
+| **Step 5** | Direct route extraction (`app.get`, `app.post`, etc.) | **Done** | `4b71946` |
+| **Step 6** | Router-level routes & local mounts (`express.Router()`, `app.use()`, `router.use()`) | **Done** | `687dfba` |
+| **Step 7a** | Cross-file imports & module graph resolution (`require`, `import`) | **Done** | `029705a` |
+| **Step 7b** | Nested routers, deep mounts (`app.use -> router.use -> subrouter`), and route chaining (`app.route()`) | **Done** | `2ec27ff` |
+| **Step 7c** | Constant propagation (literal strings, templates, binary `+`, path arrays, cyclic guard) | **Done** | `2ca4f41` |
+| **Step 7d** | Uncertain expressions, placeholder normalization (`<EXPRESSION>`), line-level provenance checks | **Done** | `3cf5f84` |
+| **Step 8a** | Parameter & body-field inference (`req.params`, `req.query`, `req.body`), `DG-I001` unresolvable handler | **Done (Code & Docs); Goldens & strict equality pending approval** | Code: `1c91f91`, Tests: `69ceee1`, Docs: `3d616ea`, `6a1685c` |
+
+---
+
+## 3. Repository Structure
+
+```
+DevGuard/
+├── packages/
+│   ├── core/                  # Core API Model definitions, Zod validation schemas, diagnostics registry
+│   │   ├── src/schema/        # model.ts, endpoint.ts, params.ts, diagnostics.ts, provenance.ts
+│   │   └── src/utils/         # sort.ts, validator.ts, helpers.ts
+│   ├── adapter-express/       # Express AST analyzer and static route extractor
+│   │   ├── src/detector.ts    # Detects Express project framework and entrypoints
+│   │   ├── src/file-walker.ts # Deterministic file traversal excluding node_modules/git
+│   │   ├── src/parser.ts      # Babel AST parser with tolerant error recovery (DG-P001)
+│   │   ├── src/module-graph.ts# Multi-file dependency graph and export resolver
+│   │   ├── src/constant-evaluator.ts # Static evaluator for constants and expressions
+│   │   ├── src/route-extractor.ts    # Route definitions, handler AST inference, mount resolution
+│   │   └── src/scanner.ts     # Main orchestrator (ExpressAdapter.scan / scanProject)
+│   ├── runner/                # Phase 2 test runner (scaffolded)
+│   └── cli/                   # Phase 3 command-line interface (scaffolded)
+├── fixtures/                  # Real Express test applications and expected golden models
+│   ├── simple/                # Single-file Express app with direct HTTP routes
+│   ├── router-single-file/    # Local express.Router() instances and unmounted orphan router
+│   ├── router-cross-file/     # Multi-file router exports (default, named, re-exports)
+│   ├── nested-routers/        # Multi-level nested routers, router chaining, runtime dynamic path
+│   ├── constant-propagation/  # String constants, template literals, array mounts, cyclic variables
+│   └── inference-basic/       # Handler parameter & body field extraction, destructuring, renames
+└── docs/                      # Architectural documentation, decisions, learning logs, and diagnostics
+```
+
+---
+
+## 4. How a Scan Works End-to-End
+
+When `ExpressAdapter.scan(projectRoot)` (or `scanProject(projectRoot)`) executes:
+1. **Project Identification (`scanner.ts`)**: Resolves project name from `package.json` (or root directory name) and establishes relative paths.
+2. **Deterministic File Walk (`file-walker.ts`)**: Discovers all `.js`, `.cjs`, `.mjs`, `.ts` files, skipping `node_modules`, hidden files, and build directories.
+3. **Module Graph Construction (`module-graph.ts`)**: Resolves imports and requires across project files, indexing CommonJS and ESM export bindings. Emits `DG-R001` if an import target cannot be located.
+4. **AST Parsing (`parser.ts`)**: Parses each discovered file using Babel parser. If syntax errors occur, captures a `DG-P001` diagnostic and continues scanning.
+5. **Local Declarations Extraction (`route-extractor.ts`)**: Extracts routes, router instances, and local mounts for each file. Evaluates paths via `constant-evaluator.ts`. If paths contain runtime expressions, formats `<EXPRESSION>` placeholders and emits `DG-R003`.
+6. **Handler Parameter Inference (`route-extractor.ts`)**: Locates the route handler (inline function, local function, single-hop imported identifier, or array of middleware). Identifies the request parameter binding (regardless of parameter name) and extracts `req.params.x`, `req.query.x`, `req.body.x`, bracket accesses, and destructuring with renames. If unresolvable, emits `DG-I001`.
+7. **Cross-File Route Resolution (`route-extractor.ts`)**: Traverses the mount hierarchy using depth-first search, tracking `mountChain` (file and line of each mount step) from application root down to subrouters. Emits `DG-R002` for unresolved or cyclic mounts.
+8. **Sorting and Validation (`scanner.ts`)**: Sorts endpoints deterministically by HTTP method and normalized path, sorts diagnostics, validates against `validateModel()` in `@devguard/core`, and returns the final `ApiModel`.
+
+---
+
+## 5. Scanner Capabilities & Deliberate Exclusions
+
+### What the scanner detects today:
+- Direct routes on Express applications (`app.get`, `app.post`, `app.put`, `app.delete`, etc.).
+- Router definitions (`express.Router()`) and mounts (`app.use('/prefix', router)`, `router.use()`).
+- Nested multi-level router mounts (`app.use -> router.use -> subrouter`).
+- Route chaining (`router.route('/path').get(...).post(...)`).
+- Multi-file exports (CommonJS `module.exports = router`, `exports.r = router`, ESM default/named exports, and re-exports).
+- Constant propagation for string literals, binary concatenation (`+`), template literals (with static expressions), and path arrays (`app.get(['/a', '/b'], ...)`).
+- Cyclic import and mount loop detection without infinite recursion.
+- Dynamic paths replaced with normalized `<EXPRESSION>` placeholders and marked `confidence: "uncertain"`.
+- Request parameter extraction (`req.params`, `req.query`) and request body property extraction (`req.body`) via member access, bracket string literals, and object destructuring.
+- Handler identification via inline functions, local functions, single-hop imported controllers, and handler arrays.
+
+### What the scanner deliberately does NOT handle yet (Phase 1 Steps 8b–13):
+- Middleware classifications and global middleware semantics (Step 8b).
+- Authentication detection: Bearer tokens, cookies, API keys, public vs protected routes (Step 8b).
+- Route effect inference: statically detecting whether a route mutates data or is read-only (Step 8c).
+- Schema validation inference: Zod, Joi, or express-validator integration (Step 8d).
+- Whole-object passing: passing `req.body` to another function does not guess fields.
+- Computed dynamic keys (e.g., `req.body[computedVar]`).
+- Complex multi-hop re-export chains or dynamic handler factory functions (emits `DG-I001`).
+
+---
+
+## 6. The API Model Specification (`v1.1.0`)
+
+### Core Endpoint Fields
+- `id`: Canonical identifier (`"METHOD /path"`).
+- `method`: HTTP verb (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`, `HEAD`).
+- `path`: Normalized path string.
+- `auth`: Authentication requirements (`type`: `'none' | 'bearer' | 'apiKey' | 'cookie' | 'custom' | 'unknown'`).
+- `effect`: Mutation effect (`'read' | 'write' | 'destructive' | 'unknown'`).
+- `params`: Array of parameters (`name`, `in: 'path' | 'query' | 'header' | 'body'`, `required`, `type`, `provenance`). Single source of truth for individual fields.
+- `requestBody`: Optional whole-payload metadata (`contentType`, whole-payload schema).
+- `mountChain`: Ordered list of router mounts from application root to handler (`filePath`, `line`).
+- `provenance`: Origin tracking (`kind: 'literal' | 'resolved' | 'inferred' | 'unresolved'`, `filePath`, `line`, `column`, `snippet`).
+- `confidence`: `'confirmed' | 'uncertain'`.
+- `confidenceReason`: Diagnostic code if uncertain (`DG-R002`, `DG-R003`).
+
+### Diagnostic Codes
+- **`DG-P001`**: Parse Error (`error`) — File syntax error preventing AST parsing.
+- **`DG-R001`**: Unresolved Import (`warning`) — Missing imported file in module graph.
+- **`DG-R002`**: Unresolved Router Mount (`warning`) — Mounted router identifier cannot be resolved or forms a cycle.
+- **`DG-R003`**: Dynamic Path (`info`) — Path uses runtime variable/expression; replaced with `<EXPRESSION>`.
+- **`DG-I001`**: Unresolved Handler (`info`) — Handler is not an inline function, local function, single-hop import, or handler array.
+
+---
+
+## 7. Fixtures Summary
+
+1. **`fixtures/simple`**: Single-file Express app testing direct route extraction, path parameters, and body inference. Golden model updated to remove unproven `requestBody` blocks.
+2. **`fixtures/router-single-file`**: Single-file app testing `express.Router()` mounts and unmounted orphan router emitting `DG-R002`.
+3. **`fixtures/router-cross-file`**: Multi-file app testing CommonJS exports, named exports, re-exports, and shared routers across multiple mount prefixes.
+4. **`fixtures/nested-routers`**: Deeply nested routers (`app -> users -> admin`), route chaining (`.route()`), and dynamic path expressions emitting `DG-R003`. Unproven `requestBody` block removed.
+5. **`fixtures/constant-propagation`**: Path constant propagation, string concatenation, template literals, array mounts, and cyclic variable protection.
+6. **`fixtures/inference-basic`**: 10 routes testing parameter and body-field inference (`req.params`, `req.query`, `req.body`), destructuring, renames, non-req names (`request`, `r`), imported controllers, handler arrays, shadowing, and `DG-I001`.
+
+---
+
+## 8. Quality Gates Status
+
+- `pnpm lint`: Pass (0 errors, 0 warnings).
+- `pnpm typecheck`: Pass (`tsc -b` exits 0).
+- `pnpm test`: Pass (177/177 tests passing across 18 test files).
+- `pnpm build`: Pass (all packages bundle cleanly via tsup).
+
+---
+
+## 9. Recent Decisions & Clarifications
+
+1. **Process Enforcement**: No changes are committed or applied to golden files without explicit "approved" command from user.
+2. **Params vs requestBody (Single Source of Truth)**: `params` is the single source of truth for individual fields across all locations (`path`, `query`, `header`, `body`). `requestBody` holds only whole-payload metadata.
+3. **requestBody Cleanup**: Hand-written, unproven `requestBody` blocks in `fixtures/simple` and `fixtures/nested-routers` have been removed.
+4. **Golden Strength**: A plan is proposed to upgrade all golden files to `modelVersion: "1.1.0"`, populate `mountChain`, and upgrade scan tests to `toStrictEqual()` with full diagnostics checking.
+5. **Diagnostics Documented**: Full reference documentation created in `docs/diagnostics.md`.
+
+---
+
+## 10. Roadmap: Remaining Steps
+
+- **Step 8b**: Auth & middleware detection (Bearer, API keys, session cookies, public vs protected routes).
+- **Step 8c**: Handler mutation effects (read vs write vs destructive).
+- **Step 8d**: Schema validation inference (Zod, Joi, express-validator schemas into requestBody/params).
+- **Step 9**: Runner engine architecture & safe execution harness.
+- **Step 10**: CLI commands (`devguard scan`, `devguard test`).
+- **Step 11**: End-to-end integration and dogfooding.
+- **Step 12**: Performance optimization and caching.
+- **Step 13**: Final documentation and release packaging.
