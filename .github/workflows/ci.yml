@@ -31,14 +31,11 @@ jobs:
       - name: Run linter
         run: pnpm lint
 
-      - name: Build @devguard/core
-        run: pnpm --filter @devguard/core build
+      - name: Build packages
+        run: pnpm build
 
       - name: Run typecheck
         run: pnpm typecheck
 
       - name: Run tests
         run: pnpm test
-
-      - name: Build packages
-        run: pnpm build

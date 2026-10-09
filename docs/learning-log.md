@@ -922,3 +922,104 @@ When testing REST backends without executing user code beforehand, there is a fu
 - `fixtures/planted-bugs` end-to-end integration test passes with `toStrictEqual` against `expected.findings.json` ✅
 - Report validates against Zod schema and exported JSON Schema (`report.schema.json`) ✅
 - Deterministic report verified across two runs against live server ✅
+
+
+
+🧠 Learning Note for the Owner
+Concept to Understand: What a Test Oracle Is, and Why "5xx on Bad Input" Is a Strong Signal While "5xx on Guessed Valid Input" Is a Weak One
+
+In automated security and software testing, a test oracle is the mechanism used to judge whether an execution was successful or buggy. In black-box testing where the tool has no prior knowledge of business logic, we cannot assert that a response body matches exact business formulas. Instead, we rely on universal behavioral invariants—rules that every well-written HTTP API must satisfy regardless of domain.
+
+The most critical insight in Step 10 is the asymmetry between input signals:
+
+"5xx on Bad Input" is a Strong Signal (high confidence): When DevGuard sends an intentionally malformed request (an empty body, an omitted field, or an inverted data type), the HTTP contract dictates that the server should reject the request with a client error (4xx, such as 400 Bad Request or 422 Unprocessable Entity). If the server responds with a 500 Internal Server Error, it almost certainly means an unhandled runtime exception occurred in the handler code (such as attempting .trim() or .toLowerCase() on an undefined value). Because the input was designed to test input validation, a 500 response is unambiguous proof of a missing validation guard.
+
+"5xx on Our Guessed Valid Input" is a Weak Signal (low confidence): When DevGuard generates a "valid" baseline request, it does so through static AST inference without seeing the live database or runtime environment. The server might return a 500 not because the endpoint has an unhandled bug, but because our static guess lacked an unmodeled prerequisite (such as an existing database entity or a valid external API token). If DevGuard claimed this was a definitive bug, developers would dismiss the tool due to false alarms. By reporting it as server-error-on-valid-input with confidence: 'low', DevGuard stays honest and trustworthy.
+
+---
+
+## Step 12: DevGuard CLI (`devguard scan`, `devguard test`, `devguard report`, and `devguard init`)
+
+### Context and Goal
+
+Until Step 12, DevGuard was an ecosystem of libraries (`@devguard/core`, `@devguard/adapter-express`, `@devguard/runner`). Step 12 delivers the actual user-facing product: the unified `devguard` CLI binary.
+
+A developer or CI runner can invoke:
+```bash
+devguard scan ./backend
+devguard test ./backend --base-url http://127.0.0.1:3000
+devguard report
+```
+
+### Architecture: The Thin CLI Principle
+
+The cardinal architectural rule for `@devguard/cli` is that **zero analysis, scanning, testing, or judgment logic resides in the CLI package**:
+- Argument parsing and flag validation: Commander.
+- Terminal styling: `picocolors` with full `NO_COLOR`, `--no-color`, and non-TTY fallback.
+- Static scanning: delegates 100% to `@devguard/adapter-express` (`detectExpress`, `scanProject`).
+- Test planning, generation, and execution: delegates to `@devguard/core` (`planTests`, `runTests`) and `@devguard/runner` (`loadConfig`, `validateBaseUrl`, `createTestRunner`, `saveSession`).
+- Offline session reporting: delegates to `@devguard/runner` (`loadSession`) and `@devguard/core` (`BUILTIN_ORACLES`).
+
+This ensures that every capability provided by the CLI is completely accessible programmatically by other tools, IDE extensions, or SDKs without shell wrapping.
+
+### Commands Implemented
+
+1. **`devguard scan <path>`**:
+   - Validates directory existence and Express framework detection (exiting 2 if absent).
+   - Extracts `ApiModel` and formats human-readable terminal output (`✓` confirmed, `?` uncertain, parameter types and provenances).
+   - Supports `--json` for machine-readable output and `--out <file>`.
+
+2. **`devguard test [path]`**:
+   - Resolves `devguard.config.json` (or accepts `--base-url`).
+   - Enforces **Host Guard**: non-local URLs without `--allow-remote` immediately exit 2.
+   - Enforces **Destructive Safety**: `--allow-destructive` prompts interactively; in non-TTY/CI environments, requires `--yes` or exits 2.
+   - Supports `--dry-run`: plans test cases and outputs summary without sending any HTTP requests.
+   - Saves session recording into `.devguard/sessions/<sessionId>.json`.
+   - Supports `--fail-on <severity>` (`error`, `warning`, `info`) for configurable CI gating.
+
+3. **`devguard report [session]`**:
+   - Re-evaluates recorded sessions using pure Oracles with **zero network traffic**.
+   - If no session is specified, automatically loads the most recent session from `.devguard/sessions/`.
+   - Exits 0 if clean, 1 if failures or findings exist, 2 if session file is missing/corrupted.
+
+4. **`devguard init`**:
+   - Writes starter `devguard.config.json` with safe defaults (`allowedEffects: ['read']`, loopback `baseUrl`).
+   - Uses atomic `wx` flag to refuse overwriting existing configurations (exits 2).
+
+### Exit Codes Contract
+
+| Exit Code | Semantics |
+|---|---|
+| **0** | Clean scan, all tests passed, or findings below `--fail-on` threshold. |
+| **1** | Runtime tests executed and produced findings/failures at or above threshold. |
+| **2** | Usage error, missing config, framework detection failure, Host Guard violation, or non-TTY destructive without `--yes`. |
+| **3** | Internal error / unhandled crash. |
+
+---
+
+### Verification Summary
+
+- `pnpm lint` ✅ (0 errors, 0 warnings across monorepo)
+- `pnpm typecheck` ✅ (0 errors, `tsc -b` exits 0)
+- `pnpm test` ✅ (33 test files, 320/320 tests passing)
+- Command-level test suites: `init.test.ts`, `scan.test.ts`, `test.test.ts`, `report.test.ts`, `color.test.ts` passing ✅
+- Production binary test: `./packages/cli/dist/index.js` verified for `scan`, `test --dry-run`, and `init` ✅
+
+---
+
+### 🧠 Learning Note for the Owner
+**Concept to Understand: Why CLIs Must Stay Thin, and Why Exit Codes Matter in CI**
+
+1. **Why CLIs Must Stay Thin**:
+   A common antipattern in software engineering is putting business logic, validation rules, or orchestration inside CLI action handlers. When that happens, the logic becomes trapped in standard I/O (stdout, stdin, process exit codes) and cannot be unit-tested without mocking terminal processes. Furthermore, if you later want to build a VS Code extension, a GitHub Action, or a Web UI, you are forced to either shell out to the binary or duplicate the logic.
+   By keeping `@devguard/cli` strictly thin—doing nothing more than parsing arguments, calling library functions, and formatting output—all core functionality remains modular, portable, and easily tested.
+
+2. **Why Exit Codes Matter in CI**:
+   In automated CI/CD pipelines (like GitHub Actions, GitLab CI, or Jenkins), the exit status code of a process is the single source of truth determining pipeline success or failure.
+   If a tool exits `1` for both "your tests found a security bug" and "you misspelled a CLI flag", the CI system cannot differentiate between code failure and tooling misconfiguration.
+   By establishing explicit exit codes:
+   - `0`: The codebase is clean; pipeline succeeds.
+   - `1`: The tests executed properly and found real defects; pipeline fails with actionable test findings.
+   - `2`: A configuration error or safety guard prevented tests from running; pipeline fails fast so the developer can fix their setup.
+   - `3`: The tool crashed internally; pipeline alerts the tool maintainers.
+   This contract makes DevGuard robust and predictable in enterprise pipelines.

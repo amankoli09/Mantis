@@ -7,9 +7,56 @@ DevGuard Core is an engine that statically analyzes Node.js + Express backend co
 ## 📖 Documentation & Tracking
 
 - 📋 **[Build Plan](file:///Users/amankoli/Desktop/DevGuard/docs/PLAN.md)**: Full 13-step architecture and implementation roadmap.
+- 💻 **[CLI Reference](file:///Users/amankoli/Desktop/DevGuard/docs/cli.md)**: Command reference, flags, exit codes, and CI integration guide.
 - 📅 **[Daily Progress Tracker](file:///Users/amankoli/Desktop/DevGuard/docs/daily-tracking.md)**: Dated log tracking daily activities, completed tasks, and testing results.
 - 📐 **[API Model Specification](file:///Users/amankoli/Desktop/DevGuard/docs/api-model.md)**: Details on every field in the versioned API Model schema (`v1.0.0`).
 - 💡 **[Learning Log](file:///Users/amankoli/Desktop/DevGuard/docs/learning-log.md)**: Architectural and tooling decisions explained in plain language.
+
+---
+
+## ⚡ Quick Start with `devguard` CLI
+
+The `devguard` CLI lets you extract API contracts statically and execute safe runtime tests:
+
+### 1. Initialize Configuration
+
+```bash
+devguard init
+```
+
+### 2. Scan an Express Backend
+
+Statically scan an application and extract the full API Model:
+
+```bash
+devguard scan ./fixtures/simple
+# Or output machine-readable JSON:
+devguard scan ./fixtures/simple --json
+```
+
+### 3. Dry-Run Runtime Tests
+
+Generate test cases and verify execution plan without network traffic:
+
+```bash
+devguard test ./fixtures/simple --dry-run --base-url http://127.0.0.1:3000
+```
+
+### 4. Execute Live Contract Tests
+
+Run safe tests against a running backend:
+
+```bash
+devguard test ./fixtures/simple --base-url http://127.0.0.1:3000
+```
+
+### 5. Replay and Inspect Session Findings
+
+Re-render recorded test sessions using pure Oracles with zero network traffic:
+
+```bash
+devguard report
+```
 
 ---
 
