@@ -14,3 +14,21 @@ export * from './recorder.js';
 
 // Runner orchestrator
 export * from './runner.js';
+
+import type { RunnerConfig, RequestPlan, ExecutionResult, TestRunnerEngine } from '@devguard/core';
+import { executeRequest } from './http-client.js';
+
+/**
+ * Creates a TestRunnerEngine adapter backed by the safe undici HTTP client.
+ */
+export function createTestRunner(config: RunnerConfig): TestRunnerEngine {
+  return {
+    execute(plan: RequestPlan): Promise<ExecutionResult> {
+      return executeRequest({
+        plan,
+        limits: config.limits,
+        followRedirects: config.followRedirects,
+      });
+    },
+  };
+}

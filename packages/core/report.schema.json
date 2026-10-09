@@ -1,0 +1,375 @@
+{
+  "$ref": "#/definitions/Report",
+  "definitions": {
+    "Report": {
+      "type": "object",
+      "properties": {
+        "reportVersion": {
+          "type": "string",
+          "const": "1.0.0"
+        },
+        "summary": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "passed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "failed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "skipped": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "total",
+            "passed",
+            "failed",
+            "skipped"
+          ],
+          "additionalProperties": false
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "ruleId": {
+                "type": "string"
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "error",
+                  "warning",
+                  "info"
+                ]
+              },
+              "endpointId": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "evidence": {
+                "type": "object",
+                "properties": {
+                  "request": {
+                    "type": "object",
+                    "properties": {
+                      "method": {
+                        "type": "string",
+                        "enum": [
+                          "GET",
+                          "POST",
+                          "PUT",
+                          "PATCH",
+                          "DELETE",
+                          "OPTIONS",
+                          "HEAD"
+                        ]
+                      },
+                      "path": {
+                        "type": "string"
+                      },
+                      "headers": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      },
+                      "body": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "method",
+                      "path"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "response": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "integer"
+                      },
+                      "headers": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      },
+                      "bodySnippet": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "request",
+                  "response"
+                ],
+                "additionalProperties": false
+              },
+              "source": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string"
+                  },
+                  "line": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  },
+                  "fieldProvenance": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "literal",
+                          "resolved",
+                          "inferred",
+                          "unresolved"
+                        ]
+                      },
+                      "filePath": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "line": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "column": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "snippet": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "filePath",
+                      "line"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "file",
+                  "line"
+                ],
+                "additionalProperties": false
+              },
+              "confidence": {
+                "type": "string",
+                "enum": [
+                  "high",
+                  "medium",
+                  "low"
+                ]
+              }
+            },
+            "required": [
+              "ruleId",
+              "severity",
+              "endpointId",
+              "message",
+              "evidence",
+              "source",
+              "confidence"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "testId": {
+                "type": "string"
+              },
+              "endpointId": {
+                "type": "string"
+              },
+              "generatorId": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "passed",
+                  "failed",
+                  "skipped"
+                ]
+              },
+              "skipReason": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "enum": [
+                      "disallowed-effect-unknown",
+                      "uncertain-endpoint",
+                      "explicitly-skipped",
+                      "effect-not-allowed",
+                      "no-sample-for-path-param"
+                    ]
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "endpointId": {
+                    "type": "string"
+                  },
+                  "paramName": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "endpointId"
+                ],
+                "additionalProperties": false
+              },
+              "request": {
+                "type": "object",
+                "properties": {
+                  "endpointId": {
+                    "type": "string"
+                  },
+                  "method": {
+                    "type": "string",
+                    "enum": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "PATCH",
+                      "DELETE",
+                      "OPTIONS",
+                      "HEAD"
+                    ]
+                  },
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "headers": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "body": {
+                    "type": "string"
+                  },
+                  "effect": {
+                    "type": "string",
+                    "enum": [
+                      "read",
+                      "write",
+                      "destructive",
+                      "unknown"
+                    ]
+                  }
+                },
+                "required": [
+                  "endpointId",
+                  "method",
+                  "url",
+                  "headers",
+                  "effect"
+                ],
+                "additionalProperties": false
+              },
+              "response": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "integer"
+                  },
+                  "statusText": {
+                    "type": "string"
+                  },
+                  "headers": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "body": {
+                    "type": "string"
+                  },
+                  "truncated": {
+                    "type": "boolean"
+                  },
+                  "byteLength": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "status",
+                  "statusText",
+                  "headers",
+                  "body",
+                  "truncated",
+                  "byteLength"
+                ],
+                "additionalProperties": false
+              },
+              "error": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "testId",
+              "endpointId",
+              "generatorId",
+              "status",
+              "request"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "generatedAt": {
+              "type": "string"
+            },
+            "durationMs": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "reportVersion",
+        "summary",
+        "findings",
+        "results"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

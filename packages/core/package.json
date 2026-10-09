@@ -19,7 +19,8 @@
   },
   "files": [
     "dist",
-    "api-model.schema.json"
+    "api-model.schema.json",
+    "report.schema.json"
   ],
   "scripts": {
     "build": "tsup",
