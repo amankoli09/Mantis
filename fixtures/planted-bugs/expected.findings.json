@@ -1,0 +1,109 @@
+[
+  {
+    "confidence": "high",
+    "endpointId": "GET /api/debug-error",
+    "evidence": {
+      "request": {
+        "method": "GET",
+        "path": "/api/debug-error"
+      },
+      "response": {
+        "bodySnippet": "{\"error\":\"Internal server error\",\"stack\":\"Error: Database pool connection timeout at pool.js:42\\n    at Object.<anonymous> (/app/db/pool.js:42:15)\\n    at Module._compile (node_modules/loader.js:10:5)\"}",
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    "message": "Response body contains stack trace or debug leak",
+    "ruleId": "no-stack-trace-leak",
+    "severity": "warning",
+    "source": {
+      "file": "fixtures/planted-bugs/app/app.js",
+      "line": 36
+    }
+  },
+  {
+    "confidence": "low",
+    "endpointId": "GET /api/internal-fail",
+    "evidence": {
+      "request": {
+        "method": "GET",
+        "path": "/api/internal-fail"
+      },
+      "response": {
+        "bodySnippet": "{\"error\":\"Downstream service unavailable\"}",
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 500
+      }
+    },
+    "message": "Server responded with 500 on presumed valid baseline request",
+    "ruleId": "server-error-on-valid-input",
+    "severity": "warning",
+    "source": {
+      "file": "fixtures/planted-bugs/app/app.js",
+      "line": 59
+    }
+  },
+  {
+    "confidence": "high",
+    "endpointId": "GET /api/profile",
+    "evidence": {
+      "request": {
+        "method": "GET",
+        "path": "/api/profile"
+      },
+      "response": {
+        "bodySnippet": "{\"user\":{\"apiKey\":\"[REDACTED]\",\"id\":1,\"passwordHash\":\"[REDACTED]\",\"username\":\"alice\"}}",
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 200
+      }
+    },
+    "message": "Response JSON contains sensitive field at path: user.apiKey, user.passwordHash",
+    "ruleId": "no-sensitive-fields",
+    "severity": "warning",
+    "source": {
+      "file": "fixtures/planted-bugs/app/app.js",
+      "line": 45
+    }
+  },
+  {
+    "confidence": "high",
+    "endpointId": "POST /api/users",
+    "evidence": {
+      "request": {
+        "body": "{}",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "method": "POST",
+        "path": "/api/users"
+      },
+      "response": {
+        "bodySnippet": "{\"error\":\"Internal Server Error\"}",
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 500
+      }
+    },
+    "message": "Expected 4xx for invalid input, but server responded with 500",
+    "ruleId": "no-5xx-on-bad-input",
+    "severity": "error",
+    "source": {
+      "fieldProvenance": {
+        "filePath": "fixtures/planted-bugs/app/app.js",
+        "kind": "inferred",
+        "line": 29,
+        "name": "email",
+        "snippet": "const email = req.body.email;"
+      },
+      "file": "fixtures/planted-bugs/app/app.js",
+      "line": 28
+    }
+  }
+]

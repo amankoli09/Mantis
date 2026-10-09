@@ -877,3 +877,48 @@ When building automated security and API testing software, engineers often worry
      - `no-sample-for-path-param`: an explicit sample for a path segment (e.g. `:id`) was not provided, preventing arbitrary parameter guessing.
      - `explicitly-skipped`: matches a user-defined skip pattern in `devguard.config.json`.
    - Recording all skip reasons directly into `.devguard/sessions/<sessionId>.json` guarantees that security audits and test reports can transparently explain test coverage gaps without re-running against the live server.
+
+---
+
+## Step 10: Test Planner, Input Generators & Response Oracles (`@devguard/core`)
+
+### Overview
+
+In Step 10, we implemented the core test planner, modular input generators, response oracles, and test orchestration engine in `@devguard/core`. The engine turns the static `ApiModel` into deterministic test plans, executes them through an injected test runner interface, and evaluates responses using pluggable oracles to generate code-linked, provenance-backed findings.
+
+---
+
+### 🧠 Core Concept to Understand: What a Test Oracle Is, and Why "5xx on Bad Input" Is a Strong Signal While "5xx on Our Guessed Valid Input" Is a Weak One
+
+#### 1. What Is a Test Oracle?
+In software testing theory, a **test oracle** is a mechanism or principle that determines whether a program executed correctly or failed.
+Generating an HTTP request is only half the problem; judging whether the server's response was acceptable requires an oracle. In black-box testing without formal API specifications, oracles cannot verify business correctness (e.g. "did the user's balance update to exactly $42.50?"). Instead, we rely on **universal behavioral invariants**:
+- Input validation invariants: invalid inputs must not crash the server (`no-5xx-on-bad-input`).
+- Information hygiene invariants: stack traces and sensitive internal identifiers must never leak to the client (`no-stack-trace-leak`, `no-sensitive-fields`).
+
+#### 2. The Asymmetry: Strong Signal vs Weak Signal
+When testing REST backends without executing user code beforehand, there is a fundamental difference in confidence between two types of 5xx errors:
+
+1. **"5xx on Bad Input" is a Strong Signal (`confidence: 'high'`)**:
+   - The generator deliberately crafts an invalid request: an empty body, an omitted required parameter, or an inverted data type (e.g., sending a number where a string was read).
+   - In standard HTTP REST conventions, the server is contractually obligated to catch invalid data and return a client error (`4xx`, such as `400 Bad Request` or `422 Unprocessable Entity`).
+   - If the server instead responds with `500 Internal Server Error`, it almost certainly means an unhandled exception occurred in the route handler (e.g., `TypeError: Cannot read properties of undefined`).
+   - Because our premise is deliberately adversarial input, a 500 response is unambiguous proof of missing input validation. We can report this finding with `confidence: 'high'`.
+
+2. **"5xx on Our Guessed Valid Input" is a Weak Signal (`confidence: 'low'`)**:
+   - The generator attempts to construct a "valid" baseline request based on static AST inference.
+   - However, static analysis cannot see live database state, foreign keys, or complex domain validation rules (e.g. requiring a pre-existing organization ID or specific email domain).
+   - If our guessed baseline request returns a 500, did the server fail due to a real server bug, or did it fail because our static guess violated an unmodeled prerequisite?
+   - Therefore, DevGuard separates this into `server-error-on-valid-input` and assigns it `confidence: 'low'`.
+   - This prevents false accusations and ensures developers trust DevGuard's findings.
+
+---
+
+### Verification Summary
+
+- `pnpm lint` ✅ (0 errors, 0 warnings)
+- `pnpm typecheck` ✅ (0 errors across all packages)
+- `pnpm test` ✅ (28 test suites, 293/293 tests passing)
+- `fixtures/planted-bugs` end-to-end integration test passes with `toStrictEqual` against `expected.findings.json` ✅
+- Report validates against Zod schema and exported JSON Schema (`report.schema.json`) ✅
+- Deterministic report verified across two runs against live server ✅

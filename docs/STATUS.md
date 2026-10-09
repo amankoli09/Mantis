@@ -28,7 +28,8 @@ Phase 1 focuses on Node.js/Express backends, parsing JavaScript ASTs to extract 
 | **Step 7d** | Uncertain expressions, placeholder normalization (`<EXPRESSION>`), line-level provenance checks | **Done** | `3cf5f84` |
 | **Step 8a** | Parameter & body-field inference (`req.params`, `req.query`, `req.body`), `DG-I001` unresolvable handler | **Done** | PR #4 (`4c71850`) |
 | **Step 8b** | Middleware chain order & authentication detection (`bearer`, `apiKey`, `cookie`, `custom`), `DG-I002` unresolved middleware | **Done** | PR #6 (`8c03227`) |
-| **Step 9** | Config file, safe HTTP runner, host guard, limits, secret redaction, session recording (`@devguard/runner`) | **Done** | `feat-runner-step-9` |
+| **Step 9** | Config file, safe HTTP runner, host guard, limits, secret redaction, session recording (`@devguard/runner`) | **Done** | PR #15 (`c9d0603`) |
+| **Step 10** | Test planner, input generators, response oracles, planted-bugs fixture, Report schema (`@devguard/core`) | **Done** | `feat-test-engine-step-10` |
 
 ---
 

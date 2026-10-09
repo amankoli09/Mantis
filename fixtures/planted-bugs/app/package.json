@@ -1,0 +1,10 @@
+{
+  "name": "planted-bugs-fixture",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Runnable Express app with planted bugs for DevGuard Step 10 test engine.",
+  "main": "app.js",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
