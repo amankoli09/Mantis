@@ -20,3 +20,6 @@ export * from './adapter/index.js';
 
 // Endpoint Helpers
 export * from './helpers/endpoint-helpers.js';
+
+// Runner, Session & Config Schemas
+export * from './schema/runner.js';

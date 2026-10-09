@@ -6,3 +6,4 @@ coverage
 .turbo
 *.tsbuildinfo
 .kilo
+.devguard
