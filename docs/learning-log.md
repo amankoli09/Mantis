@@ -849,5 +849,31 @@ Every classified authentication requirement records `auth.evidence` with `{ file
 - `pnpm test` ✅ (18 test suites, 228/228 tests passing)
 - `pnpm build` ✅ (Core, adapter-express, runner, cli built cleanly)
 
+---
 
+## Step 9: Runner, Safety Engine, Config & Session Recording (`@devguard/runner`)
 
+### Overview
+
+In Step 9, we built the `@devguard/runner` package. For the first time in DevGuard's lifecycle, the tool transitions from purely inspecting static ASTs to actively sending HTTP requests to running services.
+
+---
+
+### 🧠 Core Concept to Understand: Why a Testing Tool's Biggest Risk is the Tool Itself, and Why Every Skipped Request Needs a Recorded Reason
+
+When building automated security and API testing software, engineers often worry most about missing a vulnerability (false negatives). But in production and staging environments, **the testing tool itself is frequently the greatest hazard**:
+
+1. **The Danger of Unguarded Automated Requests**:
+   - Sending blind `DELETE`, `PUT`, or `POST` requests can permanently purge live databases, corrupt tenant state, trigger third-party billing charges (e.g. Stripe, Twilio), or deadlock backend workers.
+   - Targeting the wrong base URL (due to misconfiguration, typos, or DNS rebinding) can accidentally attack external servers or unauthorized infrastructure.
+   - For these reasons, DevGuard establishes **safe mode by default**: only `read` requests are eligible to run, non-local network calls are blocked by host guards, and unknown mutation effects are treated as hazardous by default.
+
+2. **Why Every Skipped Request Must Have a Structured Reason**:
+   - In automated testing, silently dropping a test is worse than a test failure. If an endpoint is omitted without notice, users assume the route was tested and certified safe.
+   - In DevGuard, nothing is ever silently dropped. Every endpoint evaluated by the safety engine that cannot run receives a structured `SkipReason` containing a machine-readable code and a human-readable explanation:
+     - `disallowed-effect-unknown`: the scanner could not prove whether the endpoint mutates state.
+     - `uncertain-endpoint`: the route path contains dynamic `<EXPRESSION>` placeholders that cannot resolve to a concrete URL.
+     - `effect-not-allowed`: the endpoint performs writes or destructive operations not opted into via `allowedEffects`.
+     - `no-sample-for-path-param`: an explicit sample for a path segment (e.g. `:id`) was not provided, preventing arbitrary parameter guessing.
+     - `explicitly-skipped`: matches a user-defined skip pattern in `devguard.config.json`.
+   - Recording all skip reasons directly into `.devguard/sessions/<sessionId>.json` guarantees that security audits and test reports can transparently explain test coverage gaps without re-running against the live server.

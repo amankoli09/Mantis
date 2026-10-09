@@ -70,7 +70,17 @@ importers:
         specifier: ^3.24.1
         version: 3.25.2(zod@3.25.76)
 
-  packages/runner: {}
+  packages/runner:
+    dependencies:
+      '@devguard/core':
+        specifier: workspace:*
+        version: link:../core
+      undici:
+        specifier: ^8.11.2
+        version: 8.11.2
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
 
 packages:
 
@@ -1332,6 +1342,10 @@ packages:
   undici-types@8.9.0:
     resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
 
+  undici@8.11.2:
+    resolution: {integrity: sha512-u4UB2/IrKdU6lFxumHmmo1a3fCQO5tzQllRorfoRS63txhrB7xTpSn1PftwC4qEHkOaqP95fCWW4lJzwErwzhQ==}
+    engines: {node: '>=22.19.0'}
+
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
 
@@ -2536,6 +2550,8 @@ snapshots:
   ufo@1.6.4: {}
 
   undici-types@8.9.0: {}
+
+  undici@8.11.2: {}
 
   uri-js@4.4.1:
     dependencies:
