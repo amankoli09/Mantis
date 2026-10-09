@@ -1,6 +1,6 @@
 # DevGuard Status Report
 
-*Status as of October 8, 2026.*
+_Status as of October 8, 2026._
 
 ---
 
@@ -14,22 +14,23 @@ Phase 1 focuses on Node.js/Express backends, parsing JavaScript ASTs to extract 
 
 ## 2. Steps Completed
 
-| Step | Scope | Status | Commit / Reference |
-| :--- | :--- | :---: | :--- |
-| **Step 1** | Monorepo setup, tooling (pnpm, tsup, vitest, eslint, typescript), directory layout | **Done** | `223c316` |
-| **Step 2** | API Model specification & Zod schemas (`@devguard/core`) | **Done** | `dd9559c` |
-| **Step 3** | Fixture creation: simple single-file Express app | **Done** | `b01ee3e` |
-| **Step 4** | AST parsing pipeline, deterministic file walker, and Express detector | **Done** | `8ebfdb4` |
-| **Step 5** | Direct route extraction (`app.get`, `app.post`, etc.) | **Done** | `4b71946` |
-| **Step 6** | Router-level routes & local mounts (`express.Router()`, `app.use()`, `router.use()`) | **Done** | `687dfba` |
-| **Step 7a** | Cross-file imports & module graph resolution (`require`, `import`) | **Done** | `029705a` |
-| **Step 7b** | Nested routers, deep mounts (`app.use -> router.use -> subrouter`), and route chaining (`app.route()`) | **Done** | `2ec27ff` |
-| **Step 7c** | Constant propagation (literal strings, templates, binary `+`, path arrays, cyclic guard) | **Done** | `2ca4f41` |
-| **Step 7d** | Uncertain expressions, placeholder normalization (`<EXPRESSION>`), line-level provenance checks | **Done** | `3cf5f84` |
-| **Step 8a** | Parameter & body-field inference (`req.params`, `req.query`, `req.body`), `DG-I001` unresolvable handler | **Done** | PR #4 (`4c71850`) |
-| **Step 8b** | Middleware chain order & authentication detection (`bearer`, `apiKey`, `cookie`, `custom`), `DG-I002` unresolved middleware | **Done** | PR #6 (`8c03227`) |
-| **Step 9** | Config file, safe HTTP runner, host guard, limits, secret redaction, session recording (`@devguard/runner`) | **Done** | PR #15 (`c9d0603`) |
-| **Step 10** | Test planner, input generators, response oracles, planted-bugs fixture, Report schema (`@devguard/core`) | **Done** | `feat-test-engine-step-10` |
+| Step        | Scope                                                                                                                       |  Status  | Commit / Reference                 |
+| :---------- | :-------------------------------------------------------------------------------------------------------------------------- | :------: | :--------------------------------- |
+| **Step 1**  | Monorepo setup, tooling (pnpm, tsup, vitest, eslint, typescript), directory layout                                          | **Done** | `223c316`                          |
+| **Step 2**  | API Model specification & Zod schemas (`@devguard/core`)                                                                    | **Done** | `dd9559c`                          |
+| **Step 3**  | Fixture creation: simple single-file Express app                                                                            | **Done** | `b01ee3e`                          |
+| **Step 4**  | AST parsing pipeline, deterministic file walker, and Express detector                                                       | **Done** | `8ebfdb4`                          |
+| **Step 5**  | Direct route extraction (`app.get`, `app.post`, etc.)                                                                       | **Done** | `4b71946`                          |
+| **Step 6**  | Router-level routes & local mounts (`express.Router()`, `app.use()`, `router.use()`)                                        | **Done** | `687dfba`                          |
+| **Step 7a** | Cross-file imports & module graph resolution (`require`, `import`)                                                          | **Done** | `029705a`                          |
+| **Step 7b** | Nested routers, deep mounts (`app.use -> router.use -> subrouter`), and route chaining (`app.route()`)                      | **Done** | `2ec27ff`                          |
+| **Step 7c** | Constant propagation (literal strings, templates, binary `+`, path arrays, cyclic guard)                                    | **Done** | `2ca4f41`                          |
+| **Step 7d** | Uncertain expressions, placeholder normalization (`<EXPRESSION>`), line-level provenance checks                             | **Done** | `3cf5f84`                          |
+| **Step 8a** | Parameter & body-field inference (`req.params`, `req.query`, `req.body`), `DG-I001` unresolvable handler                    | **Done** | PR #4 (`4c71850`)                  |
+| **Step 8b** | Middleware chain order & authentication detection (`bearer`, `apiKey`, `cookie`, `custom`), `DG-I002` unresolved middleware | **Done** | PR #6 (`8c03227`)                  |
+| **Step 9**  | Config file, safe HTTP runner, host guard, limits, secret redaction, session recording (`@devguard/runner`)                 | **Done** | PR #15 (`c9d0603`)                 |
+| **Step 10** | Test planner, input generators, response oracles, planted-bugs fixture, Report schema (`@devguard/core`)                    | **Done** | PR #8 (`feat-test-engine-step-10`) |
+| **Step 12** | CLI `devguard scan`, `test`, `report`, and `init` commands with terminal formatting & JSON output (`@devguard/cli`)         | **Done** | PR #9 (`feat-cli-step-12`)         |
 
 ---
 
@@ -73,6 +74,7 @@ DevGuard/
 ## 4. How a Scan Works End-to-End
 
 When `ExpressAdapter.scan(projectRoot)` (or `scanProject(projectRoot)`) executes:
+
 1. **Project Identification (`scanner.ts`)**: Resolves project name from `package.json` (or root directory name) and establishes relative paths.
 2. **Deterministic File Walk (`file-walker.ts`)**: Discovers all `.js`, `.cjs`, `.mjs`, `.ts` files, skipping `node_modules`, hidden files, and build directories.
 3. **Module Graph Construction (`module-graph.ts`)**: Resolves imports and requires across project files, indexing CommonJS and ESM export bindings. Emits `DG-R001` if an import target cannot be located.
@@ -87,6 +89,7 @@ When `ExpressAdapter.scan(projectRoot)` (or `scanProject(projectRoot)`) executes
 ## 5. Scanner Capabilities & Deliberate Exclusions
 
 ### What the scanner detects today:
+
 - Direct routes on Express applications (`app.get`, `app.post`, `app.put`, `app.delete`, etc.).
 - Router definitions (`express.Router()`) and mounts (`app.use('/prefix', router)`, `router.use()`).
 - Nested multi-level router mounts (`app.use -> router.use -> subrouter`).
@@ -99,6 +102,7 @@ When `ExpressAdapter.scan(projectRoot)` (or `scanProject(projectRoot)`) executes
 - Handler identification via inline functions, local functions, single-hop imported controllers, and handler arrays.
 
 ### What the scanner deliberately does NOT handle yet (Phase 1 Steps 8b–13):
+
 - Middleware classifications and global middleware semantics (Step 8b).
 - Authentication detection: Bearer tokens, cookies, API keys, public vs protected routes (Step 8b).
 - Route effect inference: statically detecting whether a route mutates data or is read-only (Step 8c).
@@ -112,6 +116,7 @@ When `ExpressAdapter.scan(projectRoot)` (or `scanProject(projectRoot)`) executes
 ## 6. The API Model Specification (`v1.1.0`)
 
 ### Core Endpoint Fields
+
 - `id`: Canonical identifier (`"METHOD /path"`).
 - `method`: HTTP verb (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`, `HEAD`).
 - `path`: Normalized path string.
@@ -125,6 +130,7 @@ When `ExpressAdapter.scan(projectRoot)` (or `scanProject(projectRoot)`) executes
 - `confidenceReason`: Diagnostic code if uncertain (`DG-R002`, `DG-R003`).
 
 ### Diagnostic Codes
+
 - **`DG-P001`**: Parse Error (`error`) — File syntax error preventing AST parsing.
 - **`DG-R001`**: Unresolved Import (`warning`) — Missing imported file in module graph.
 - **`DG-R002`**: Unresolved Router Mount (`warning`) — Mounted router identifier cannot be resolved or forms a cycle.
@@ -148,7 +154,7 @@ When `ExpressAdapter.scan(projectRoot)` (or `scanProject(projectRoot)`) executes
 
 - `pnpm lint`: Pass (0 errors, 0 warnings).
 - `pnpm typecheck`: Pass (`tsc -b` exits 0).
-- `pnpm test`: Pass (177/177 tests passing across 18 test files).
+- `pnpm test`: Pass (320/320 tests passing across 33 test files).
 - `pnpm build`: Pass (all packages bundle cleanly via tsup).
 
 ---

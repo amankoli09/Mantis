@@ -26,6 +26,14 @@
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "devguard": "node ./dist/index.js"
+  },
+  "dependencies": {
+    "@devguard/adapter-express": "workspace:*",
+    "@devguard/core": "workspace:*",
+    "@devguard/runner": "workspace:*",
+    "commander": "^13.1.0",
+    "picocolors": "^1.1.1"
   }
 }
