@@ -5,6 +5,7 @@ import type { GeneratorPlugin, OraclePlugin, TestRunnerEngine } from '../plugins
 import { BUILTIN_GENERATORS } from '../generators/index.js';
 import { BUILTIN_ORACLES } from '../oracles/index.js';
 import { planTests } from '../planner/index.js';
+import { runCrossAnalysis } from '../analysis/cross-analysis.js';
 
 export interface RunTestsOptions {
   model: ApiModel;
@@ -75,6 +76,15 @@ export async function runTests(options: RunTestsOptions): Promise<Report> {
       ...(executionResult.error ? { error: executionResult.error.message } : {}),
     });
   }
+
+  // Cross-analysis: route in code 404 live, live route not in code, consistency checks
+  const crossFindings = await runCrossAnalysis({
+    model: options.model,
+    config: options.config,
+    runner: options.runner,
+    results,
+  });
+  rawFindings.push(...crossFindings);
 
   // Deduplicate findings deterministically by (endpointId, ruleId)
   const findingMap = new Map<string, Finding>();

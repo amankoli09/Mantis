@@ -449,4 +449,23 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
 
     expect(model).toStrictEqual(goldenModel);
   });
+
+  it('scans fixtures/cross-analysis/app and matches its golden model, verifying Step 11 cross-analysis setup', async () => {
+    const crossAnalysisPath = path.join(repoRoot, 'fixtures/cross-analysis/app');
+    const goldenModelPath = path.join(repoRoot, 'fixtures/cross-analysis/expected.model.json');
+
+    const model = await scanProject(crossAnalysisPath);
+
+    const validation = validateModel(model);
+    expect(validation.success).toBe(true);
+
+    if (!existsSync(goldenModelPath)) {
+      await fs.writeFile(goldenModelPath, JSON.stringify(model, null, 2) + '\n', 'utf8');
+    }
+
+    const expectedGoldenRaw = readFileSync(goldenModelPath, 'utf8');
+    const goldenModel = JSON.parse(expectedGoldenRaw) as ApiModel;
+
+    expect(model).toStrictEqual(goldenModel);
+  });
 });

@@ -32,6 +32,7 @@ Phase 1 focuses on Node.js/Express backends, parsing JavaScript ASTs to extract 
 | **Step 8d** | Zod validation extraction (handler `parse`/`safeParse`, `validate(schema)` middleware, field constraints, resolved provenance, targeted test generators) | **Done** | Issue #12                          |
 | **Step 9**  | Config file, safe HTTP runner, host guard, limits, secret redaction, session recording (`@devguard/runner`)                 | **Done** | PR #15 (`c9d0603`)                 |
 | **Step 10** | Test planner, input generators, response oracles, planted-bugs fixture, Report schema (`@devguard/core`)                    | **Done** | PR #8 (`feat-test-engine-step-10`) |
+| **Step 11** | Cross-analysis static vs runtime (404 in code, live unmodeled routes, error consistency, auth-enforced oracle)               | **Done** | Issue #13                          |
 | **Step 12** | CLI `devguard scan`, `test`, `report`, and `init` commands with terminal formatting & JSON output (`@devguard/cli`)         | **Done** | PR #9 (`feat-cli-step-12`)         |
 | **Step 13** | Benchmark on real open-source Express repos, precision/recall evaluation, top failure fixes (`benchmarks/`) | **Done** | PR #10 (`10-issue-7-benchmark-on-real-open-source-express-repos-step-13`) |
 

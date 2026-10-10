@@ -81,6 +81,7 @@ export const RunnerConfigSchema = z.object({
   limits: RunnerLimitsSchema.default({}),
   allowRemote: z.boolean().default(false),
   followRedirects: z.boolean().default(false),
+  probePaths: z.array(z.string()).optional(),
 });
 export type RunnerConfig = z.infer<typeof RunnerConfigSchema>;
 export type RunnerConfigInput = z.input<typeof RunnerConfigSchema>;

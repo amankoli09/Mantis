@@ -40,5 +40,6 @@ export * from './generators/index.js';
 // Built-in Oracles
 export * from './oracles/index.js';
 
-// Orchestrator
+// Orchestrator & Cross-analysis
 export * from './engine/orchestrator.js';
+export * from './analysis/cross-analysis.js';

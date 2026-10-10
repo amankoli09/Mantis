@@ -94,6 +94,7 @@ export async function testCommand(
       },
       allowRemote: false,
       followRedirects: false,
+      probePaths: [],
     };
   } else {
     console.error(

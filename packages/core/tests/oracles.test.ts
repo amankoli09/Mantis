@@ -4,6 +4,7 @@ import {
   no5xxOnBadInputOracle,
   noStackTraceLeakOracle,
   noSensitiveFieldsOracle,
+  authEnforcedOracle,
 } from '../src/index.js';
 
 const mockEndpoint: Endpoint = {
@@ -264,6 +265,106 @@ describe('no-sensitive-fields Oracle', () => {
     };
 
     const findings = noSensitiveFieldsOracle.judge(acceptTestCase, result, mockEndpoint);
+    expect(findings).toHaveLength(0);
+  });
+});
+
+describe('authEnforcedOracle', () => {
+  const protectedBearerEndpoint: Endpoint = {
+    ...mockEndpoint,
+    id: 'GET /api/secure/profile',
+    method: 'GET',
+    path: '/api/secure/profile',
+    effect: 'read',
+    auth: { type: 'bearer' },
+  };
+
+  const unauthenticatedTestCase: TestCase = {
+    id: 'GET /api/secure/profile::auth-probe::unauthenticated',
+    endpointId: 'GET /api/secure/profile',
+    generatorId: 'auth-probe',
+    description: 'Unauthenticated test',
+    expectedBehavior: 'should-reject',
+    request: {
+      endpointId: 'GET /api/secure/profile',
+      method: 'GET',
+      url: 'http://127.0.0.1:3000/api/secure/profile',
+      headers: { accept: 'application/json' },
+      effect: 'read',
+    },
+  };
+
+  it('flags 200 response on bearer endpoint without credentials as error finding', () => {
+    const result: ExecutionResult = {
+      endpointId: 'GET /api/secure/profile',
+      request: unauthenticatedTestCase.request,
+      response: {
+        status: 200,
+        statusText: 'OK',
+        headers: { 'content-type': 'application/json' },
+        body: '{"username":"alice"}',
+        truncated: false,
+        byteLength: 20,
+      },
+      durationMs: 10,
+    };
+
+    const findings = authEnforcedOracle.judge(unauthenticatedTestCase, result, protectedBearerEndpoint);
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.ruleId).toBe('auth-enforced');
+    expect(findings[0]?.severity).toBe('error');
+    expect(findings[0]?.message).toContain('HTTP 200 without credentials');
+    expect(findings[0]?.evidence.response.status).toBe(200);
+    expect(findings[0]?.source.file).toBe(protectedBearerEndpoint.provenance.filePath);
+    expect(findings[0]?.source.line).toBe(protectedBearerEndpoint.provenance.line);
+  });
+
+  it('produces 0 findings when protected endpoint responds 401 Unauthorized', () => {
+    const result: ExecutionResult = {
+      endpointId: 'GET /api/secure/profile',
+      request: unauthenticatedTestCase.request,
+      response: {
+        status: 401,
+        statusText: 'Unauthorized',
+        headers: { 'content-type': 'application/json' },
+        body: '{"error":"Unauthorized"}',
+        truncated: false,
+        byteLength: 24,
+      },
+      durationMs: 10,
+    };
+
+    const findings = authEnforcedOracle.judge(unauthenticatedTestCase, result, protectedBearerEndpoint);
+    expect(findings).toHaveLength(0);
+  });
+
+  it('produces 0 findings when request includes Authorization header', () => {
+    const authTestCase: TestCase = {
+      ...unauthenticatedTestCase,
+      request: {
+        ...unauthenticatedTestCase.request,
+        headers: {
+          accept: 'application/json',
+          authorization: 'Bearer valid_token',
+        },
+      },
+    };
+
+    const result: ExecutionResult = {
+      endpointId: 'GET /api/secure/profile',
+      request: authTestCase.request,
+      response: {
+        status: 200,
+        statusText: 'OK',
+        headers: { 'content-type': 'application/json' },
+        body: '{"username":"alice"}',
+        truncated: false,
+        byteLength: 20,
+      },
+      durationMs: 10,
+    };
+
+    const findings = authEnforcedOracle.judge(authTestCase, result, protectedBearerEndpoint);
     expect(findings).toHaveLength(0);
   });
 });

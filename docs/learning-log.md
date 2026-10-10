@@ -1211,3 +1211,54 @@ Previously, handler inference could only detect accessed properties (`req.body.x
 ### Verification and Regression Safety
 - **Fixture First**: Created `fixtures/zod-validation/` testing inline `schema.parse`, 1-hop imported schema from `schemas.js`, `validate(schema)` middleware, and query parameter validation.
 - **Strict Golden Model & Provenance Line Verification**: Validated across all 12 golden models (`golden-model-validation.test.ts`, `provenance-line-check.test.ts`) with zero regressions.
+
+---
+
+## Step 11: Cross-Analysis — Static AST vs Runtime Live Behavior (Issue #13)
+
+### Overview
+
+Step 11 introduces cross-analysis capabilities that correlate static source code AST extraction with live HTTP test runner observations. While static analysis identifies routes, parameters, authentication requirements, and mutation effects from code, runtime testing observes actual server responses. By cross-referencing both layers, DevGuard detects deep discrepancies:
+1. **Dead routes** (defined in code but returning 404 live).
+2. **Shadow / unmodeled routes** (responding live but not detected in static code AST).
+3. **API consistency deviations** across endpoints (divergent error response JSON shapes or unexpected status code differences for similar client errors).
+4. **Broken authentication enforcement** (endpoints declared with bearer/cookie authentication responding 2xx to unauthenticated requests).
+
+---
+
+### Key Architectural Concepts
+
+#### 1. Auth Enforced Oracle & Auth Probe Generator
+- **Auth Probe Generator (`auth-probe.ts`)**:
+  - Targets endpoints statically inferred to require `bearer` or `cookie` authentication.
+  - Generates unauthenticated probe requests omitting authorization headers and cookies.
+  - Operates strictly within safe testing limits (`effect: 'read'` only when running in safe mode).
+- **Auth Enforced Oracle (`auth-enforced.ts`)**:
+  - Evaluates live responses to auth probe requests.
+  - Fires an `auth-enforced` finding (severity `error`) if the live server returns a `2xx` success code instead of rejecting the unauthenticated request (401/403).
+  - Supplies request/response evidence and source line provenance pointing directly to the route handler or authentication middleware declaration.
+
+#### 2. Cross-Analysis Engine (`packages/core/src/analysis/cross-analysis.ts`)
+- **Route in Code but 404 Live (`route-in-code-404-live`)**:
+  - Scans model endpoints where valid baseline tests returned `404 Not Found`.
+  - Flags dead or broken route declarations, unmounted router files, or missing route prefixes with `warning` severity.
+- **Route Live but Not in Code (`live-route-not-in-code`)**:
+  - Opt-in safe probing via `config.probePaths` (e.g. `['/healthz', '/metrics', '/api/internal']`).
+  - Checks if any configured probe path matches static model endpoints.
+  - For unmodeled paths, issues safe GET probes; if the endpoint returns an active status (< 400), issues a `warning` finding flagging unmodeled or dynamically loaded routes.
+- **API Consistency Checks**:
+  - **Status Code Deviations (`consistency/status-code-deviation`)**: Evaluates 4xx client failure status codes across endpoints (e.g. 400 Bad Request vs 422 Unprocessable Entity). When a cluster of endpoints shares a standard status code (e.g. 400) and an outlier deviates (e.g. 422), flags an `info` consistency finding.
+  - **Error Response Shapes (`consistency/error-response-shape`)**: Extracts top-level JSON keys from error response bodies (e.g. `{ error }` vs `{ message }` vs `{ errors }`). Flags outliers deviating from the API-wide standard error envelope.
+
+---
+
+### Verification and Regression Safety
+- **Fixture First**: Created `fixtures/cross-analysis/` with deliberate live discrepancies:
+  - `/api/secure/profile` (auth bypass returning 200 without token).
+  - `/api/secure/settings` (properly rejects with 401).
+  - `/api/dead-route` (defined in code, 404 live).
+  - `/api/items`, `/orders`, `/users` (consistent 400 `{ error }`).
+  - `/api/tickets` (deviating 422 `{ message }`).
+  - `/healthz` (unmodeled route).
+- **Automated Golden File Checks**: Verified in `golden-model-validation.test.ts`, `provenance-line-check.test.ts`, and `cross-analysis-e2e.test.ts`.
+- **Monorepo Safety**: Full test suite (37 files, 465 tests) passing green with strict typecheck and linting.

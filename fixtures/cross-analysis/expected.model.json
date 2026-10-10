@@ -1,0 +1,325 @@
+{
+  "modelVersion": "1.2.0",
+  "project": {
+    "name": "cross-analysis-fixture",
+    "framework": "express",
+    "language": "javascript",
+    "root": "fixtures/cross-analysis/app"
+  },
+  "endpoints": [
+    {
+      "id": "GET /api/dead-route",
+      "method": "GET",
+      "path": "/api/dead-route",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "read",
+      "params": [],
+      "responses": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/cross-analysis/app/app.js",
+            "line": 6,
+            "column": 8
+          }
+        }
+      ],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/cross-analysis/app/app.js",
+        "line": 32,
+        "column": 4,
+        "snippet": "app.get('/api/dead-route', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "POST /api/items",
+      "method": "POST",
+      "path": "/api/items",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "params": [
+        {
+          "name": "name",
+          "in": "body",
+          "required": "unknown",
+          "type": "unknown",
+          "provenance": {
+            "kind": "inferred",
+            "filePath": "fixtures/cross-analysis/app/app.js",
+            "line": 39,
+            "snippet": "const name = req.body.name;"
+          }
+        }
+      ],
+      "responses": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/cross-analysis/app/app.js",
+            "line": 6,
+            "column": 8
+          }
+        }
+      ],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/cross-analysis/app/app.js",
+        "line": 38,
+        "column": 4,
+        "snippet": "app.post('/api/items', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "POST /api/orders",
+      "method": "POST",
+      "path": "/api/orders",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "params": [
+        {
+          "name": "item",
+          "in": "body",
+          "required": "unknown",
+          "type": "unknown",
+          "provenance": {
+            "kind": "inferred",
+            "filePath": "fixtures/cross-analysis/app/app.js",
+            "line": 48,
+            "snippet": "const item = req.body.item;"
+          }
+        }
+      ],
+      "responses": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/cross-analysis/app/app.js",
+            "line": 6,
+            "column": 8
+          }
+        }
+      ],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/cross-analysis/app/app.js",
+        "line": 47,
+        "column": 4,
+        "snippet": "app.post('/api/orders', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /api/secure/profile",
+      "method": "GET",
+      "path": "/api/secure/profile",
+      "auth": {
+        "type": "bearer",
+        "evidence": {
+          "filePath": "fixtures/cross-analysis/app/app.js",
+          "line": 9,
+          "signal": "header:authorization:Bearer"
+        }
+      },
+      "effect": "read",
+      "params": [],
+      "responses": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/cross-analysis/app/app.js",
+            "line": 6,
+            "column": 8
+          }
+        },
+        {
+          "name": "requireBearer",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/cross-analysis/app/app.js",
+            "line": 22,
+            "column": 31
+          }
+        }
+      ],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/cross-analysis/app/app.js",
+        "line": 22,
+        "column": 4,
+        "snippet": "app.get('/api/secure/profile', requireBearer, (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /api/secure/settings",
+      "method": "GET",
+      "path": "/api/secure/settings",
+      "auth": {
+        "type": "bearer",
+        "evidence": {
+          "filePath": "fixtures/cross-analysis/app/app.js",
+          "line": 9,
+          "signal": "header:authorization:Bearer"
+        }
+      },
+      "effect": "read",
+      "params": [],
+      "responses": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/cross-analysis/app/app.js",
+            "line": 6,
+            "column": 8
+          }
+        },
+        {
+          "name": "requireBearer",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/cross-analysis/app/app.js",
+            "line": 27,
+            "column": 32
+          }
+        }
+      ],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/cross-analysis/app/app.js",
+        "line": 27,
+        "column": 4,
+        "snippet": "app.get('/api/secure/settings', requireBearer, (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "POST /api/tickets",
+      "method": "POST",
+      "path": "/api/tickets",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "params": [
+        {
+          "name": "title",
+          "in": "body",
+          "required": "unknown",
+          "type": "unknown",
+          "provenance": {
+            "kind": "inferred",
+            "filePath": "fixtures/cross-analysis/app/app.js",
+            "line": 66,
+            "snippet": "const title = req.body.title;"
+          }
+        }
+      ],
+      "responses": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/cross-analysis/app/app.js",
+            "line": 6,
+            "column": 8
+          }
+        }
+      ],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/cross-analysis/app/app.js",
+        "line": 65,
+        "column": 4,
+        "snippet": "app.post('/api/tickets', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "POST /api/users",
+      "method": "POST",
+      "path": "/api/users",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "params": [
+        {
+          "name": "email",
+          "in": "body",
+          "required": "unknown",
+          "type": "unknown",
+          "provenance": {
+            "kind": "inferred",
+            "filePath": "fixtures/cross-analysis/app/app.js",
+            "line": 57,
+            "snippet": "const email = req.body.email;"
+          }
+        }
+      ],
+      "responses": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/cross-analysis/app/app.js",
+            "line": 6,
+            "column": 8
+          }
+        }
+      ],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/cross-analysis/app/app.js",
+        "line": 56,
+        "column": 4,
+        "snippet": "app.post('/api/users', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "DG-I002",
+      "severity": "info",
+      "message": "Middleware could not be statically resolved: expression (unresolved expression)",
+      "file": "fixtures/cross-analysis/app/app.js",
+      "line": 74,
+      "column": 8
+    }
+  ]
+}

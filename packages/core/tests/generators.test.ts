@@ -6,6 +6,7 @@ import {
   missingFieldGenerator,
   wrongTypeGenerator,
   boundaryValueGenerator,
+  authProbeGenerator,
 } from '../src/index.js';
 
 const mockGetEndpoint: Endpoint = {
@@ -248,5 +249,62 @@ describe('Input Generators', () => {
     expect(tooLongCase).toBeDefined();
     const tooLongBody = JSON.parse(tooLongCase?.request.body ?? '{}');
     expect(tooLongBody.username.length).toBe(21);
+  });
+});
+
+describe('authProbeGenerator', () => {
+  const baseConfig: RunnerConfig = {
+    baseUrl: 'http://127.0.0.1:3000',
+    skip: [],
+    allowedEffects: ['read'],
+    pathParamSamples: { id: '123' },
+    limits: {
+      timeoutMs: 5000,
+      maxResponseBytes: 1048576,
+      maxRequests: 50,
+      concurrency: 5,
+      retries: 0,
+    },
+    allowRemote: false,
+    followRedirects: false,
+    probePaths: [],
+  };
+
+  const bearerReadEndpoint: Endpoint = {
+    ...mockGetEndpoint,
+    id: 'GET /api/secure/profile',
+    path: '/api/secure/profile',
+    params: [],
+    auth: { type: 'bearer' },
+    effect: 'read',
+  };
+
+  const bearerWriteEndpoint: Endpoint = {
+    ...mockPostEndpoint,
+    id: 'POST /api/secure/items',
+    path: '/api/secure/items',
+    auth: { type: 'bearer' },
+    effect: 'write',
+  };
+
+  it('generates unauthenticated probe test case for read bearer endpoint', () => {
+    const cases = authProbeGenerator.generate(bearerReadEndpoint, baseConfig);
+    expect(cases).toHaveLength(1);
+    expect(cases[0]?.id).toBe('GET /api/secure/profile::auth-probe::unauthenticated');
+    expect(cases[0]?.expectedBehavior).toBe('should-reject');
+    expect(cases[0]?.request.headers.authorization).toBeUndefined();
+    expect(cases[0]?.skip).toBeUndefined();
+  });
+
+  it('skips write endpoint in safe mode (when allowedEffects is read only)', () => {
+    const cases = authProbeGenerator.generate(bearerWriteEndpoint, baseConfig);
+    expect(cases).toHaveLength(1);
+    expect(cases[0]?.skip).toBeDefined();
+    expect(cases[0]?.skip?.code).toBe('effect-not-allowed');
+  });
+
+  it('produces 0 test cases for endpoints without bearer or cookie auth', () => {
+    const cases = authProbeGenerator.generate(mockGetEndpoint, baseConfig);
+    expect(cases).toHaveLength(0);
   });
 });
