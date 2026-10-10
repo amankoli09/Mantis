@@ -112,10 +112,25 @@ describe('Planted Bugs Fixture — End-to-End Test Engine', () => {
     const report1 = await runTests({ model, config, runner });
     const report2 = await runTests({ model, config, runner });
 
-    // Exclude volatile timestamps
+    // Exclude volatile timestamps and duration/date headers
     const stripMeta = (r: Report) => {
       const { meta, ...rest } = r;
-      return rest;
+      return {
+        ...rest,
+        results: rest.results.map((item) => ({
+          ...item,
+          durationMs: 0,
+          response: item.response
+            ? {
+                ...item.response,
+                headers: {
+                  ...item.response.headers,
+                  date: '<volatile>',
+                },
+              }
+            : undefined,
+        })),
+      };
     };
 
     expect(stripMeta(report1)).toStrictEqual(stripMeta(report2));

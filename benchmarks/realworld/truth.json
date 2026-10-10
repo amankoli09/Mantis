@@ -1,0 +1,29 @@
+{
+  "name": "realworld",
+  "url": "https://github.com/gothinkster/node-express-realworld-example-app",
+  "commit": "30b68e1e881462b2f4164ea09ab4c4f5699c7b0b",
+  "license": "MIT",
+  "style": "TypeScript, barrel exports, subrouter root mount",
+  "endpoints": [
+    { "method": "GET", "path": "/" },
+    { "method": "GET", "path": "/api/tags" },
+    { "method": "POST", "path": "/api/users" },
+    { "method": "POST", "path": "/api/users/login" },
+    { "method": "GET", "path": "/api/user" },
+    { "method": "PUT", "path": "/api/user" },
+    { "method": "GET", "path": "/api/articles" },
+    { "method": "GET", "path": "/api/articles/feed" },
+    { "method": "POST", "path": "/api/articles" },
+    { "method": "GET", "path": "/api/articles/:slug" },
+    { "method": "PUT", "path": "/api/articles/:slug" },
+    { "method": "DELETE", "path": "/api/articles/:slug" },
+    { "method": "GET", "path": "/api/articles/:slug/comments" },
+    { "method": "POST", "path": "/api/articles/:slug/comments" },
+    { "method": "DELETE", "path": "/api/articles/:slug/comments/:id" },
+    { "method": "POST", "path": "/api/articles/:slug/favorite" },
+    { "method": "DELETE", "path": "/api/articles/:slug/favorite" },
+    { "method": "GET", "path": "/api/profiles/:username" },
+    { "method": "POST", "path": "/api/profiles/:username/follow" },
+    { "method": "DELETE", "path": "/api/profiles/:username/follow" }
+  ]
+}

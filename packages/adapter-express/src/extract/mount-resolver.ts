@@ -116,9 +116,22 @@ function resolveExportedRouter(
         mountLocation
       );
     }
+    if (exportedName === 'default') {
+      const defaultRouter = routersByFile.get(targetFile)?.get('default');
+      if (defaultRouter) {
+        return defaultRouter;
+      }
+    }
   }
 
-  // Case B: exp.localName is null (e.g. module.exports = require('./admin'))
+  // Case B: exp.localName is null (e.g. export default Router().use(...), module.exports = require('./admin'))
+  if (exportedName === 'default') {
+    const defaultRouter = routersByFile.get(targetFile)?.get('default');
+    if (defaultRouter) {
+      return defaultRouter;
+    }
+  }
+
   // Find import in targetFile matching exp.line
   const lineImp = node.imports.find((i) => i.line === exp.line);
   if (lineImp) {

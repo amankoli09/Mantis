@@ -1,0 +1,13 @@
+{
+  "name": "node-todo",
+  "url": "https://github.com/scotch-io/node-todo",
+  "commit": "0fdb905b3517c3516418a5ac2ec8da370ce6c753",
+  "license": "MIT",
+  "style": "Small API (Route Factory)",
+  "endpoints": [
+    { "method": "GET", "path": "/api/todos" },
+    { "method": "POST", "path": "/api/todos" },
+    { "method": "DELETE", "path": "/api/todos/:todo_id" },
+    { "method": "GET", "path": "*" }
+  ]
+}

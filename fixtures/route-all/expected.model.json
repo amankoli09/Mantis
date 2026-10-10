@@ -1,0 +1,144 @@
+{
+  "modelVersion": "1.2.0",
+  "project": {
+    "name": "route-all-fixture",
+    "framework": "express",
+    "language": "javascript",
+    "root": "fixtures/route-all/app"
+  },
+  "endpoints": [
+    {
+      "id": "GET /health",
+      "method": "GET",
+      "path": "/health",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "read",
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/route-all/app/app.js",
+        "line": 4,
+        "column": 4,
+        "snippet": "app.all('/health', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "POST /health",
+      "method": "POST",
+      "path": "/health",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/route-all/app/app.js",
+        "line": 4,
+        "column": 4,
+        "snippet": "app.all('/health', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "PUT /health",
+      "method": "PUT",
+      "path": "/health",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/route-all/app/app.js",
+        "line": 4,
+        "column": 4,
+        "snippet": "app.all('/health', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "PATCH /health",
+      "method": "PATCH",
+      "path": "/health",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/route-all/app/app.js",
+        "line": 4,
+        "column": 4,
+        "snippet": "app.all('/health', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "DELETE /health",
+      "method": "DELETE",
+      "path": "/health",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "destructive",
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/route-all/app/app.js",
+        "line": 4,
+        "column": 4,
+        "snippet": "app.all('/health', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /users",
+      "method": "GET",
+      "path": "/users",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "read",
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/route-all/app/app.js",
+        "line": 8,
+        "column": 4,
+        "snippet": "app.get('/users', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    }
+  ],
+  "diagnostics": []
+}

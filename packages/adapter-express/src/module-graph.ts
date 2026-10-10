@@ -53,7 +53,7 @@ export interface ModuleGraph {
   diagnostics: Diagnostic[];
 }
 
-const JS_EXTENSIONS = ['.js', '.cjs', '.mjs'] as const;
+const JS_EXTENSIONS = ['.js', '.cjs', '.mjs', '.ts', '.cts', '.mts'] as const;
 
 /**
  * Normalizes a file path to use POSIX-style forward slashes.

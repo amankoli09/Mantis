@@ -1,0 +1,91 @@
+{
+  "modelVersion": "1.2.0",
+  "project": {
+    "name": "fixture-route-factory",
+    "framework": "express",
+    "language": "javascript",
+    "root": "fixtures/route-factory/app"
+  },
+  "endpoints": [
+    {
+      "id": "GET /api/items",
+      "method": "GET",
+      "path": "/api/items",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "read",
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/route-factory/app/routes.js",
+        "line": 2,
+        "column": 6,
+        "snippet": "app.get('/api/items', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "POST /api/items",
+      "method": "POST",
+      "path": "/api/items",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/route-factory/app/routes.js",
+        "line": 6,
+        "column": 6,
+        "snippet": "app.post('/api/items', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "DELETE /api/items/:id",
+      "method": "DELETE",
+      "path": "/api/items/:id",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "destructive",
+      "params": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "description": "User identifier extracted from path segment :id.",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/route-factory/app/routes.js",
+            "line": 10
+          }
+        }
+      ],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/route-factory/app/routes.js",
+        "line": 10,
+        "column": 6,
+        "snippet": "app.delete('/api/items/:id', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    }
+  ],
+  "diagnostics": []
+}
