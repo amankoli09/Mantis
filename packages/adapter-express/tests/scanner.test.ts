@@ -385,4 +385,19 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
 
     expect(model).toStrictEqual(goldenModel);
   });
+
+  it('scans fixtures/router-root-mount/app and matches its golden model, verifying root router mount without path prefix', async () => {
+    const rootMountPath = path.join(repoRoot, 'fixtures/router-root-mount/app');
+    const goldenModelPath = path.join(repoRoot, 'fixtures/router-root-mount/expected.model.json');
+
+    const model = await scanProject(rootMountPath);
+
+    const validation = validateModel(model);
+    expect(validation.success).toBe(true);
+
+    const expectedGoldenRaw = readFileSync(goldenModelPath, 'utf8');
+    const goldenModel = JSON.parse(expectedGoldenRaw) as ApiModel;
+
+    expect(model).toStrictEqual(goldenModel);
+  });
 });

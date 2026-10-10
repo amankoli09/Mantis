@@ -6,6 +6,8 @@ import type {
   ImportDeclaration,
   VariableDeclarator,
   CallExpression,
+  ExportDefaultDeclaration,
+  AssignmentExpression,
 } from '@babel/types';
 import {
   createDiagnostic,
@@ -174,6 +176,73 @@ export function extractFileDeclarations(
     },
   });
 
+
+  const callExpressionRouters = new Map<CallExpression, ExtractedRouter>();
+
+  function isRouterCall(
+    callExpr: CallExpression,
+    scope: NodePath['scope']
+  ): boolean {
+    if (
+      callExpr.callee.type === 'MemberExpression' &&
+      callExpr.callee.property.type === 'Identifier' &&
+      callExpr.callee.property.name === 'Router'
+    ) {
+      if (callExpr.callee.object.type === 'Identifier') {
+        const objBinding = scope.getBinding(callExpr.callee.object.name);
+        if (objBinding && expressFactoryBindings.has(objBinding)) {
+          return true;
+        }
+      } else if (
+        callExpr.callee.object.type === 'CallExpression' &&
+        callExpr.callee.object.callee.type === 'Identifier' &&
+        callExpr.callee.object.callee.name === 'require' &&
+        callExpr.callee.object.arguments.length > 0 &&
+        callExpr.callee.object.arguments[0]?.type === 'StringLiteral' &&
+        callExpr.callee.object.arguments[0].value === 'express'
+      ) {
+        return true;
+      }
+    }
+    if (callExpr.callee.type === 'Identifier') {
+      const routerBinding = scope.getBinding(callExpr.callee.name);
+      if (routerBinding && expressRouterFactoryBindings.has(routerBinding)) {
+        return true;
+      }
+      if (callExpr.callee.name === 'Router') {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function getChainedRouterRoot(
+    expr: Node,
+    scope: NodePath['scope']
+  ): { rootRouterCall: CallExpression; chainedCalls: CallExpression[] } | null {
+    if (expr.type !== 'CallExpression') return null;
+
+    const chainedCalls: CallExpression[] = [];
+    let curr: CallExpression = expr;
+
+    while (true) {
+      if (isRouterCall(curr, scope)) {
+        return { rootRouterCall: curr, chainedCalls };
+      }
+      if (
+        curr.callee.type === 'MemberExpression' &&
+        curr.callee.object.type === 'CallExpression'
+      ) {
+        chainedCalls.unshift(curr);
+        curr = curr.callee.object;
+      } else {
+        break;
+      }
+    }
+
+    return null;
+  }
+
   // Phase 2: Identify Express app and Router instance declarations
   traverse(ast, {
     VariableDeclarator(pathNode: NodePath<VariableDeclarator>) {
@@ -202,44 +271,9 @@ export function extractFileDeclarations(
         return;
       }
 
-      // 2. Check: const r = express.Router()
-      let isExpressRouterCall = false;
-      if (
-        init.callee.type === 'MemberExpression' &&
-        init.callee.property.type === 'Identifier' &&
-        init.callee.property.name === 'Router' &&
-        init.callee.object.type === 'Identifier'
-      ) {
-        const objBinding = pathNode.scope.getBinding(init.callee.object.name);
-        if (objBinding && expressFactoryBindings.has(objBinding)) {
-          isExpressRouterCall = true;
-        }
-      }
-
-      // 3. Check: const r = Router() (from const { Router } = require('express'))
-      if (init.callee.type === 'Identifier') {
-        const routerBinding = pathNode.scope.getBinding(init.callee.name);
-        if (routerBinding && expressRouterFactoryBindings.has(routerBinding)) {
-          isExpressRouterCall = true;
-        }
-      }
-
-      // 4. Check: const r = require('express').Router()
-      if (
-        init.callee.type === 'MemberExpression' &&
-        init.callee.property.type === 'Identifier' &&
-        init.callee.property.name === 'Router' &&
-        init.callee.object.type === 'CallExpression' &&
-        init.callee.object.callee.type === 'Identifier' &&
-        init.callee.object.callee.name === 'require' &&
-        init.callee.object.arguments.length > 0 &&
-        init.callee.object.arguments[0]?.type === 'StringLiteral' &&
-        init.callee.object.arguments[0].value === 'express'
-      ) {
-        isExpressRouterCall = true;
-      }
-
-      if (isExpressRouterCall) {
+      // 2. Check: Router instantiation (including chained calls like Router().use(...))
+      const res = getChainedRouterRoot(init, pathNode.scope);
+      if (res) {
         const routerBinding = pathNode.scope.getBinding(varName);
         if (routerBinding) {
           const routerRecord: ExtractedRouter = {
@@ -255,6 +289,67 @@ export function extractFileDeclarations(
           };
           expressRouterBindings.set(routerBinding, routerRecord);
           routers.set(varName, routerRecord);
+          callExpressionRouters.set(init, routerRecord);
+          for (const c of res.chainedCalls) {
+            callExpressionRouters.set(c, routerRecord);
+          }
+        }
+      }
+    },
+
+    ExportDefaultDeclaration(pathNode: NodePath<ExportDefaultDeclaration>) {
+      const decl = pathNode.node.declaration;
+      const res = getChainedRouterRoot(decl, pathNode.scope);
+      if (res) {
+        const varName = 'default';
+        const routerRecord: ExtractedRouter = {
+          id: `${relFile}:${varName}`,
+          relFile,
+          filePathForProvenance,
+          varName,
+          declLine: pathNode.node.loc?.start.line ?? 1,
+          declCol: pathNode.node.loc?.start.column,
+          routes: [],
+          mounts: [],
+          uses: [],
+        };
+        routers.set(varName, routerRecord);
+        callExpressionRouters.set(decl as CallExpression, routerRecord);
+        for (const c of res.chainedCalls) {
+          callExpressionRouters.set(c, routerRecord);
+        }
+      }
+    },
+
+    AssignmentExpression(pathNode: NodePath<AssignmentExpression>) {
+      const left = pathNode.node.left;
+      const right = pathNode.node.right;
+      if (
+        left.type === 'MemberExpression' &&
+        left.object.type === 'Identifier' &&
+        left.object.name === 'module' &&
+        left.property.type === 'Identifier' &&
+        left.property.name === 'exports'
+      ) {
+        const res = getChainedRouterRoot(right, pathNode.scope);
+        if (res) {
+          const varName = 'default';
+          const routerRecord: ExtractedRouter = {
+            id: `${relFile}:${varName}`,
+            relFile,
+            filePathForProvenance,
+            varName,
+            declLine: pathNode.node.loc?.start.line ?? 1,
+            declCol: pathNode.node.loc?.start.column,
+            routes: [],
+            mounts: [],
+            uses: [],
+          };
+          routers.set(varName, routerRecord);
+          callExpressionRouters.set(right as CallExpression, routerRecord);
+          for (const c of res.chainedCalls) {
+            callExpressionRouters.set(c, routerRecord);
+          }
         }
       }
     },
@@ -285,6 +380,13 @@ export function extractFileDeclarations(
             routerRecord = expressRouterBindings.get(bound)!;
           }
         }
+      } else if (memberExpr.object.type === 'CallExpression') {
+        if (callExpressionRouters.has(memberExpr.object)) {
+          routerRecord = callExpressionRouters.get(memberExpr.object)!;
+        }
+      }
+      if (!routerRecord && callExpressionRouters.has(node)) {
+        routerRecord = callExpressionRouters.get(node)!;
       }
 
       // 1. Check for app.use('/prefix', ...) or router.use(...) mounts & middlewares

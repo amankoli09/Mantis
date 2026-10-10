@@ -29,7 +29,7 @@ export interface WalkResult {
 
 const DEFAULT_IGNORE_DIRS = ['node_modules', 'dist', 'build', 'coverage', '.git'];
 const DEFAULT_MAX_FILE_SIZE_BYTES = 1024 * 1024; // 1 MB
-const DEFAULT_EXTENSIONS = ['.js', '.cjs', '.mjs'];
+const DEFAULT_EXTENSIONS = ['.js', '.cjs', '.mjs', '.ts', '.cts', '.mts'];
 
 /**
  * Deterministically compares two strings using unicode code-point ordering.

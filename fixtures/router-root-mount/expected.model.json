@@ -1,0 +1,88 @@
+{
+  "modelVersion": "1.2.0",
+  "project": {
+    "name": "fixture-router-root-mount",
+    "framework": "express",
+    "language": "javascript",
+    "root": "fixtures/router-root-mount/app"
+  },
+  "endpoints": [
+    {
+      "id": "GET /health",
+      "method": "GET",
+      "path": "/health",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "read",
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [
+        {
+          "filePath": "fixtures/router-root-mount/app/app.js",
+          "line": 7
+        }
+      ],
+      "provenance": {
+        "kind": "resolved",
+        "filePath": "fixtures/router-root-mount/app/routes.js",
+        "line": 4,
+        "column": 7,
+        "snippet": "router.get('/health', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /root",
+      "method": "GET",
+      "path": "/root",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "read",
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/router-root-mount/app/app.js",
+        "line": 9,
+        "column": 4,
+        "snippet": "app.get('/root', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "POST /status",
+      "method": "POST",
+      "path": "/status",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [
+        {
+          "filePath": "fixtures/router-root-mount/app/app.js",
+          "line": 7
+        }
+      ],
+      "provenance": {
+        "kind": "resolved",
+        "filePath": "fixtures/router-root-mount/app/routes.js",
+        "line": 8,
+        "column": 7,
+        "snippet": "router.post('/status', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    }
+  ],
+  "diagnostics": []
+}
