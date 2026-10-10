@@ -1,0 +1,17 @@
+{
+  "name": "express-mongoose-es6-rest-api",
+  "url": "https://github.com/kunalkapadia/express-mongoose-es6-rest-api",
+  "commit": "247fedde56e380fae720ce65ff65a7d0b034b3e2",
+  "license": "MIT",
+  "style": "ES6 / Babel REST API with subrouters",
+  "endpoints": [
+    { "method": "POST", "path": "/api/auth/login" },
+    { "method": "GET", "path": "/api/auth/random-number" },
+    { "method": "GET", "path": "/api/health-check" },
+    { "method": "GET", "path": "/api/users" },
+    { "method": "POST", "path": "/api/users" },
+    { "method": "GET", "path": "/api/users/:userId" },
+    { "method": "PUT", "path": "/api/users/:userId" },
+    { "method": "DELETE", "path": "/api/users/:userId" }
+  ]
+}

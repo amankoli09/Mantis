@@ -1,0 +1,24 @@
+{
+  "name": "express-rest-es2017-boilerplate",
+  "url": "https://github.com/danielfsousa/express-rest-es2017-boilerplate",
+  "commit": "b8bed6d7cfce3cf2ef89ec1b5e47b52dfc50e874",
+  "license": "MIT",
+  "style": "Modern ES2017 / ESM, MVC with controllers",
+  "endpoints": [
+    { "method": "GET", "path": "/v1/status" },
+    { "method": "POST", "path": "/v1/auth/register" },
+    { "method": "POST", "path": "/v1/auth/login" },
+    { "method": "POST", "path": "/v1/auth/refresh-token" },
+    { "method": "POST", "path": "/v1/auth/send-password-reset" },
+    { "method": "POST", "path": "/v1/auth/reset-password" },
+    { "method": "POST", "path": "/v1/auth/facebook" },
+    { "method": "POST", "path": "/v1/auth/google" },
+    { "method": "GET", "path": "/v1/users" },
+    { "method": "POST", "path": "/v1/users" },
+    { "method": "GET", "path": "/v1/users/profile" },
+    { "method": "GET", "path": "/v1/users/:userId" },
+    { "method": "PUT", "path": "/v1/users/:userId" },
+    { "method": "PATCH", "path": "/v1/users/:userId" },
+    { "method": "DELETE", "path": "/v1/users/:userId" }
+  ]
+}
