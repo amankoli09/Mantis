@@ -7,6 +7,40 @@ export interface OpenApiExportOptions {
   servers?: Array<{ url: string; description?: string }>;
 }
 
+export interface OpenApiOperation {
+  operationId?: string;
+  summary?: string;
+  description?: string;
+  parameters?: Array<{
+    name: string;
+    in: string;
+    required: boolean;
+    schema: Record<string, unknown>;
+    description?: string;
+  }>;
+  requestBody?: {
+    required: boolean;
+    content: Record<string, { schema: Record<string, unknown> }>;
+  };
+  responses: Record<string, { description: string }>;
+  security?: Array<Record<string, string[]>>;
+}
+
+export interface OpenApiDocument {
+  openapi: string;
+  info: {
+    title: string;
+    version: string;
+    description?: string;
+  };
+  servers?: Array<{ url: string; description?: string }>;
+  paths: Record<string, Record<string, OpenApiOperation>>;
+  components?: {
+    securitySchemes?: Record<string, Record<string, unknown>>;
+    schemas?: Record<string, Record<string, unknown>>;
+  };
+}
+
 /**
  * Converts Express-style colon path segments (:param) into OpenAPI curly bracket format ({param}).
  */
@@ -33,8 +67,8 @@ function generateOperationId(method: string, path: string): string {
 export function exportOpenApi(
   model: ApiModel,
   options: OpenApiExportOptions = {}
-): Record<string, unknown> {
-  const paths: Record<string, Record<string, unknown>> = {};
+): OpenApiDocument {
+  const paths: Record<string, Record<string, OpenApiOperation>> = {};
   const usedSecuritySchemes = new Set<string>();
 
   for (const endpoint of model.endpoints) {
@@ -44,7 +78,13 @@ export function exportOpenApi(
     }
 
     const methodLower = endpoint.method.toLowerCase();
-    const parameters: Array<Record<string, unknown>> = [];
+    const parameters: Array<{
+      name: string;
+      in: string;
+      required: boolean;
+      schema: Record<string, unknown>;
+      description?: string;
+    }> = [];
 
     // 1. Map parameters
     for (const param of endpoint.params) {
@@ -80,7 +120,7 @@ export function exportOpenApi(
     }
 
     // 2. Map request body
-    let requestBody: Record<string, unknown> | undefined;
+    let requestBody: OpenApiOperation['requestBody'] | undefined;
     if (endpoint.requestBody?.schema) {
       requestBody = {
         required: endpoint.requestBody.required ?? true,
@@ -135,7 +175,7 @@ export function exportOpenApi(
     }
 
     // 4. Default responses
-    const responses: Record<string, unknown> = {
+    const responses: Record<string, { description: string }> = {
       '200': {
         description:
           endpoint.effect === 'destructive'
@@ -153,7 +193,7 @@ export function exportOpenApi(
       responses['400'] = { description: 'Bad Request — validation or parameter constraint violation' };
     }
 
-    const operation: Record<string, unknown> = {
+    const operation: OpenApiOperation = {
       operationId: generateOperationId(endpoint.method, endpoint.path),
       summary: `${endpoint.method} ${endpoint.path}`,
       description: `Inferred effect: ${endpoint.effect}. Confidence: ${endpoint.confidence}.`,
@@ -174,9 +214,9 @@ export function exportOpenApi(
   }
 
   // 5. Components & Security Schemes
-  const components: Record<string, unknown> = {};
+  const components: NonNullable<OpenApiDocument['components']> = {};
   if (usedSecuritySchemes.size > 0) {
-    const securitySchemes: Record<string, unknown> = {};
+    const securitySchemes: Record<string, Record<string, unknown>> = {};
     if (usedSecuritySchemes.has('bearerAuth')) {
       securitySchemes.bearerAuth = {
         type: 'http',

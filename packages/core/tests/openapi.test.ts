@@ -83,26 +83,29 @@ describe('OpenAPI 3.0 Exporter', () => {
     expect(openapi.paths['/api/users/{id}']).toBeDefined();
     expect(openapi.paths['/api/users/{id}'].get).toBeDefined();
 
-    const getOp = openapi.paths['/api/users/{id}'].get;
-    expect(getOp.parameters).toHaveLength(2);
-    expect(getOp.parameters[0]).toMatchObject({
+    const getOp = openapi.paths['/api/users/{id}']?.get;
+    expect(getOp).toBeDefined();
+    expect(getOp?.parameters).toHaveLength(2);
+    expect(getOp?.parameters?.[0]).toMatchObject({
       name: 'id',
       in: 'path',
       required: true,
     });
-    expect(getOp.parameters[1]).toMatchObject({
+    expect(getOp?.parameters?.[1]).toMatchObject({
       name: 'details',
       in: 'query',
       required: false,
     });
-    expect(getOp.security).toEqual([{ bearerAuth: [] }]);
+    expect(getOp?.security).toEqual([{ bearerAuth: [] }]);
 
-    const postOp = openapi.paths['/api/users'].post;
+    const postOp = openapi.paths['/api/users']?.post;
     expect(postOp).toBeDefined();
-    expect(postOp.requestBody).toBeDefined();
-    expect(postOp.requestBody.content['application/json'].schema.properties.email).toBeDefined();
+    expect(postOp?.requestBody).toBeDefined();
+    const bodySchema = postOp?.requestBody?.content['application/json']?.schema;
+    expect(bodySchema).toBeDefined();
+    expect((bodySchema?.properties as Record<string, unknown> | undefined)?.email).toBeDefined();
 
-    expect(openapi.components.securitySchemes.bearerAuth).toEqual({
+    expect(openapi.components?.securitySchemes?.bearerAuth).toEqual({
       type: 'http',
       scheme: 'bearer',
       bearerFormat: 'JWT',
