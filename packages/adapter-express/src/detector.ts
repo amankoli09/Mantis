@@ -1,5 +1,5 @@
-import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { type FileSystem, nodeFileSystem } from './fs.js';
 import { walkProjectFiles } from './file-walker.js';
 
 export type DetectionSignal =
@@ -36,15 +36,19 @@ const IMPORT_EXPRESS_REGEX = /(?:from\s*['"]express['"]|import\s*['"]express['"]
  *    and performs a fast text check for `require('express')` or `import ... from 'express'`.
  *
  * @param projectRoot Absolute or relative path to the root directory.
+ * @param fileSystem FileSystem instance, defaults to nodeFileSystem.
  * @returns DetectionResult containing `detected`, `signal`, and `file`.
  */
-export async function detectExpress(projectRoot: string): Promise<DetectionResult> {
+export async function detectExpress(
+  projectRoot: string,
+  fileSystem: FileSystem = nodeFileSystem
+): Promise<DetectionResult> {
   const resolvedRoot = path.resolve(projectRoot);
 
   // 1. Primary Check: package.json
   const pkgPath = path.join(resolvedRoot, 'package.json');
   try {
-    const rawPkg = await fs.readFile(pkgPath, 'utf8');
+    const rawPkg = await fileSystem.readFile(pkgPath, 'utf8');
     const parsedPkg = JSON.parse(rawPkg) as {
       dependencies?: Record<string, string>;
       devDependencies?: Record<string, string>;
@@ -70,12 +74,12 @@ export async function detectExpress(projectRoot: string): Promise<DetectionResul
   }
 
   // 2. Secondary Check: Fast text search across source files
-  const { files } = await walkProjectFiles(resolvedRoot);
+  const { files } = await walkProjectFiles(resolvedRoot, {}, fileSystem);
 
   for (const relFile of files) {
     const fullPath = path.join(resolvedRoot, relFile);
     try {
-      const content = await fs.readFile(fullPath, 'utf8');
+      const content = await fileSystem.readFile(fullPath, 'utf8');
 
       if (REQUIRE_EXPRESS_REGEX.test(content)) {
         return {

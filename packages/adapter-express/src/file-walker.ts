@@ -1,5 +1,5 @@
-import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { type FileSystem, nodeFileSystem, type FileStat } from './fs.js';
 
 export interface WalkOptions {
   /**
@@ -51,7 +51,8 @@ function compareCodePoints(a: string, b: string): number {
  */
 export async function walkProjectFiles(
   projectRoot: string,
-  options: WalkOptions = {}
+  options: WalkOptions = {},
+  fileSystem: FileSystem = nodeFileSystem
 ): Promise<WalkResult> {
   const ignoreDirs = new Set(options.ignoreDirs ?? DEFAULT_IGNORE_DIRS);
   const maxFileSizeBytes = options.maxFileSizeBytes ?? DEFAULT_MAX_FILE_SIZE_BYTES;
@@ -62,7 +63,7 @@ export async function walkProjectFiles(
   const skippedHugeFiles: string[] = [];
 
   try {
-    const rootStat = await fs.stat(resolvedRoot);
+    const rootStat = await fileSystem.stat(resolvedRoot);
     if (!rootStat.isDirectory()) {
       return { files: [], skippedHugeFiles: [] };
     }
@@ -71,31 +72,36 @@ export async function walkProjectFiles(
   }
 
   async function traverse(currentDir: string): Promise<void> {
-    let entries: import('node:fs').Dirent[];
+    let entries: string[];
     try {
-      entries = await fs.readdir(currentDir, { withFileTypes: true });
+      entries = await fileSystem.readdir(currentDir);
     } catch {
       return;
     }
 
-    // Sort dirents first to maintain consistent traversal
-    entries.sort((a, b) => compareCodePoints(a.name, b.name));
+    // Sort entries to maintain consistent traversal
+    entries.sort(compareCodePoints);
 
-    for (const entry of entries) {
-      const entryName = entry.name;
+    for (const entryName of entries) {
       const fullPath = path.join(currentDir, entryName);
-
-      // Never follow symlinks (prevent circular directory loops & escapes)
-      if (entry.isSymbolicLink()) {
+      let s: FileStat;
+      try {
+        s = fileSystem.lstat ? await fileSystem.lstat(fullPath) : await fileSystem.stat(fullPath);
+      } catch {
         continue;
       }
 
-      if (entry.isDirectory()) {
+      // Never follow symlinks (prevent circular directory loops & escapes)
+      if (s.isSymbolicLink && s.isSymbolicLink()) {
+        continue;
+      }
+
+      if (s.isDirectory()) {
         if (ignoreDirs.has(entryName)) {
           continue;
         }
         await traverse(fullPath);
-      } else if (entry.isFile()) {
+      } else if (s.isFile()) {
         const ext = path.extname(entryName).toLowerCase();
         if (!extensions.has(ext)) {
           continue;
@@ -103,16 +109,10 @@ export async function walkProjectFiles(
 
         const relativePath = path.relative(resolvedRoot, fullPath).split(path.sep).join('/');
 
-        try {
-          const fileStat = await fs.stat(fullPath);
-          if (fileStat.size > maxFileSizeBytes) {
-            skippedHugeFiles.push(relativePath);
-          } else {
-            files.push(relativePath);
-          }
-        } catch {
-          // If stat fails for any reason, safely skip file
-          continue;
+        if (s.size !== undefined && s.size > maxFileSizeBytes) {
+          skippedHugeFiles.push(relativePath);
+        } else {
+          files.push(relativePath);
         }
       }
     }

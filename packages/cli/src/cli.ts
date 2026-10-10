@@ -3,6 +3,7 @@ import { setNoColor } from './ui/color.js';
 import { scanCommand } from './commands/scan.js';
 import { testCommand } from './commands/test.js';
 import { reportCommand } from './commands/report.js';
+import { diffCommand } from './commands/diff.js';
 import { initCommand } from './commands/init.js';
 
 export function createCli(): Command {
@@ -28,6 +29,7 @@ export function createCli(): Command {
     .description('Statically scan an Express codebase and produce an ApiModel')
     .argument('<path>', 'Path to backend application root directory')
     .option('--json', 'Output raw ApiModel JSON')
+    .option('--openapi', 'Export OpenAPI 3.0 specification JSON')
     .option('--out <file>', 'Write output to file')
     .option('--verbose', 'Show detailed parameter types and provenances')
     .action(async (targetPath: string, options) => {
@@ -49,6 +51,7 @@ export function createCli(): Command {
     .option('--allow-remote', 'Allow testing non-local URLs')
     .option('--yes', 'Confirm destructive executions without prompting')
     .option('--json', 'Output Report JSON')
+    .option('--html', 'Output standalone HTML Report')
     .option('--out <file>', 'Write output to file')
     .option('--fail-on <severity>', 'Fail exit threshold (error, warning, info)')
     .action(async (targetPath: string, options) => {
@@ -60,12 +63,27 @@ export function createCli(): Command {
 
   program
     .command('report')
-    .description('Re-render a recorded test session without network traffic')
-    .argument('[session]', 'Session ID or path to recorded session JSON file')
+    .description('Re-render a recorded test session or report without network traffic')
+    .argument('[session]', 'Session ID or path to recorded session/report JSON file')
     .option('--json', 'Output Report JSON')
+    .option('--html', 'Output standalone HTML Report')
     .option('--out <file>', 'Write output to file')
     .action(async (sessionArg: string | undefined, options) => {
       const exitCode = await reportCommand(sessionArg, options);
+      if (exitCode !== 0) {
+        process.exitCode = exitCode;
+      }
+    });
+
+  program
+    .command('diff')
+    .description('Compare two ApiModels or two Reports')
+    .argument('<fileA>', 'Baseline ApiModel or Report JSON')
+    .argument('<fileB>', 'Target ApiModel or Report JSON')
+    .option('--json', 'Output Diff JSON')
+    .option('--out <file>', 'Write output to file')
+    .action(async (fileA: string, fileB: string, options) => {
+      const exitCode = await diffCommand(fileA, fileB, options);
       if (exitCode !== 0) {
         process.exitCode = exitCode;
       }

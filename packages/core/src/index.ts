@@ -43,3 +43,6 @@ export * from './oracles/index.js';
 // Orchestrator & Cross-analysis
 export * from './engine/orchestrator.js';
 export * from './analysis/cross-analysis.js';
+
+// Exporters
+export * from './export/openapi.js';

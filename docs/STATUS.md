@@ -35,6 +35,7 @@ Phase 1 focuses on Node.js/Express backends, parsing JavaScript ASTs to extract 
 | **Step 11** | Cross-analysis static vs runtime (404 in code, live unmodeled routes, error consistency, auth-enforced oracle)               | **Done** | Issue #13                          |
 | **Step 12** | CLI `devguard scan`, `test`, `report`, and `init` commands with terminal formatting & JSON output (`@devguard/cli`)         | **Done** | PR #9 (`feat-cli-step-12`)         |
 | **Step 13** | Benchmark on real open-source Express repos, precision/recall evaluation, top failure fixes (`benchmarks/`) | **Done** | PR #10 (`10-issue-7-benchmark-on-real-open-source-express-repos-step-13`) |
+| **Phase 1.5** | OpenAPI 3.0 export (`--openapi`), GitHub Action & CI recipes, Diff mode (`devguard diff`), HTML test reports (`--html`), FileSystem abstraction, `DG-R004` split, ADRs 0001-0006 | **Done** | Issue #14 |
 
 ---
 

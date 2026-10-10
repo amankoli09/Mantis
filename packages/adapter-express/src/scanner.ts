@@ -1,4 +1,3 @@
-import { promises as fs } from 'node:fs';
 import type { File } from '@babel/types';
 import path from 'node:path';
 import {
@@ -8,6 +7,7 @@ import {
   type ApiModel,
   type Diagnostic,
 } from '@devguard/core';
+import { type FileSystem, nodeFileSystem } from './fs.js';
 import { walkProjectFiles } from './file-walker.js';
 import { parseFile } from './parser.js';
 import { buildModuleGraph } from './module-graph.js';
@@ -19,20 +19,25 @@ import {
 
 export interface ScanOptions {
   projectName?: string;
+  fileSystem?: FileSystem;
 }
 
 /**
  * Scans an Express project directory by discovering JavaScript files, parsing ASTs,
  * resolving module dependencies, and extracting direct and mounted routes across files.
  */
-export async function scanProject(projectRoot: string, options: ScanOptions = {}): Promise<ApiModel> {
+export async function scanProject(
+  projectRoot: string,
+  options: ScanOptions = {},
+  fileSystem: FileSystem = options.fileSystem ?? nodeFileSystem
+): Promise<ApiModel> {
   const resolvedRoot = path.resolve(projectRoot);
 
   // 1. Determine project name
   let projectName = options.projectName;
   if (!projectName) {
     try {
-      const rawPkg = await fs.readFile(path.join(resolvedRoot, 'package.json'), 'utf8');
+      const rawPkg = await fileSystem.readFile(path.join(resolvedRoot, 'package.json'), 'utf8');
       const pkg = JSON.parse(rawPkg) as { name?: string };
       if (pkg.name) {
         projectName = pkg.name;
@@ -46,7 +51,7 @@ export async function scanProject(projectRoot: string, options: ScanOptions = {}
   }
 
   // 2. Walk project files deterministically
-  const { files } = await walkProjectFiles(resolvedRoot);
+  const { files } = await walkProjectFiles(resolvedRoot, {}, fileSystem);
 
   const diagnostics: Diagnostic[] = [];
 
@@ -54,7 +59,7 @@ export async function scanProject(projectRoot: string, options: ScanOptions = {}
   const relativeRoot = path.relative(process.cwd(), resolvedRoot).split(path.sep).join('/') || '.';
 
   // 3. Build Module Graph across all project files
-  const moduleGraph = await buildModuleGraph(resolvedRoot, files);
+  const moduleGraph = await buildModuleGraph(resolvedRoot, files, fileSystem);
   for (const diag of moduleGraph.diagnostics) {
     const formattedDiag = { ...diag };
     if (relativeRoot && relativeRoot !== '.' && formattedDiag.file && !formattedDiag.file.startsWith(relativeRoot)) {
@@ -69,7 +74,7 @@ export async function scanProject(projectRoot: string, options: ScanOptions = {}
     const fullPath = path.join(resolvedRoot, relFile);
     let code: string;
     try {
-      code = await fs.readFile(fullPath, 'utf8');
+      code = await fileSystem.readFile(fullPath, 'utf8');
     } catch {
       continue;
     }

@@ -1,7 +1,15 @@
 import { z } from 'zod';
 import { ProvenanceSchema } from './provenance.js';
 
-export const DiagnosticCodeSchema = z.enum(['DG-P001', 'DG-R001', 'DG-R002', 'DG-R003', 'DG-I001', 'DG-I002']);
+export const DiagnosticCodeSchema = z.enum([
+  'DG-P001',
+  'DG-R001',
+  'DG-R002',
+  'DG-R003',
+  'DG-R004',
+  'DG-I001',
+  'DG-I002',
+]);
 export type DiagnosticCode = z.infer<typeof DiagnosticCodeSchema>;
 
 export const DiagnosticSeveritySchema = z.enum(['error', 'warning', 'info']);
@@ -32,6 +40,7 @@ export type DiagnosticParamsMap = {
   'DG-R001': { importPath: string; sourceFile: string };
   'DG-R002': { mountPath: string; routerIdentifier?: string };
   'DG-R003': { rawExpression: string };
+  'DG-R004': { routerIdentifier: string };
   'DG-I001': { handlerName?: string; reason?: string };
   'DG-I002': { middlewareName?: string; reason?: string };
 };
@@ -64,6 +73,13 @@ export const DIAGNOSTICS_REGISTRY = {
     title: 'Dynamic Path',
     template: (params: { rawExpression: string }) =>
       `Route path uses dynamic runtime expression: ${params.rawExpression}`,
+  },
+  'DG-R004': {
+    code: 'DG-R004',
+    defaultSeverity: 'warning',
+    title: 'Unmounted Router',
+    template: (params: { routerIdentifier: string }) =>
+      `Router "${params.routerIdentifier}" is declared but never mounted to the application`,
   },
   'DG-I001': {
     code: 'DG-I001',

@@ -1,4 +1,4 @@
-import { promises as fs, existsSync, statSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 import path from 'node:path';
 import _traverse, { type NodePath, type TraverseOptions } from '@babel/traverse';
 import type {
@@ -17,6 +17,7 @@ import {
   compareStrings,
   type Diagnostic,
 } from '@devguard/core';
+import { type FileSystem, nodeFileSystem } from './fs.js';
 import { walkProjectFiles } from './file-walker.js';
 import { parseFile } from './parser.js';
 
@@ -439,12 +440,13 @@ export function extractModuleInfo(
             if (spec.type === 'ExportSpecifier') {
               const exportedName =
                 spec.exported.type === 'Identifier' ? spec.exported.name : spec.exported.value;
-              const localName = spec.local.name;
-              
+              const sourceImportedName = spec.local.name;
+              const bindingName = `__reexport_${exportedName}`;
+
               // Record corresponding import and export for re-export
               imports.push({
-                localName,
-                importedName: localName,
+                localName: bindingName,
+                importedName: sourceImportedName,
                 specifier,
                 sourcePath,
                 isExternal,
@@ -453,7 +455,7 @@ export function extractModuleInfo(
 
               exports.push({
                 exportedName,
-                localName,
+                localName: bindingName,
                 line: spec.loc?.start.line ?? line,
               });
             }
@@ -622,12 +624,36 @@ export function extractModuleInfo(
                   : prop.key.type === 'StringLiteral'
                     ? prop.key.value
                     : '<computed>';
-              const localName = prop.value.type === 'Identifier' ? prop.value.name : null;
-              exports.push({
-                exportedName: propName,
-                localName,
-                line: propLine,
-              });
+              if (
+                prop.value.type === 'CallExpression' &&
+                prop.value.callee.type === 'Identifier' &&
+                prop.value.callee.name === 'require' &&
+                prop.value.arguments[0]?.type === 'StringLiteral'
+              ) {
+                const specifier = prop.value.arguments[0].value;
+                const { isExternal, sourcePath } = resolveSpecifier(specifier, filePath, projectRoot, fileSet);
+                const bindingName = `__reexport_${propName}`;
+                imports.push({
+                  localName: bindingName,
+                  importedName: 'default',
+                  specifier,
+                  sourcePath,
+                  isExternal,
+                  line: propLine,
+                });
+                exports.push({
+                  exportedName: propName,
+                  localName: bindingName,
+                  line: propLine,
+                });
+              } else {
+                const localName = prop.value.type === 'Identifier' ? prop.value.name : null;
+                exports.push({
+                  exportedName: propName,
+                  localName,
+                  line: propLine,
+                });
+              }
             }
           }
         } else if (
@@ -723,11 +749,12 @@ export function extractModuleInfo(
  */
 export async function buildModuleGraph(
   projectRoot: string,
-  providedFiles?: string[]
+  providedFiles?: string[],
+  fileSystem: FileSystem = nodeFileSystem
 ): Promise<ModuleGraph> {
   const resolvedRoot = path.resolve(projectRoot);
 
-  const fileList = providedFiles ?? (await walkProjectFiles(resolvedRoot)).files;
+  const fileList = providedFiles ?? (await walkProjectFiles(resolvedRoot, {}, fileSystem)).files;
   const sortedFiles = [...fileList].map(normalizeSlashes).sort(compareStrings);
   const fileSet = new Set(sortedFiles);
 
@@ -738,7 +765,7 @@ export async function buildModuleGraph(
     const fullPath = path.join(resolvedRoot, relFile);
     let code: string;
     try {
-      code = await fs.readFile(fullPath, 'utf8');
+      code = await fileSystem.readFile(fullPath, 'utf8');
     } catch {
       continue;
     }

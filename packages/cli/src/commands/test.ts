@@ -13,6 +13,7 @@ import {
 } from '@devguard/core';
 import { loadConfig, validateBaseUrl, createTestRunner, saveSession } from '@devguard/runner';
 import { formatTestTerminal, formatTestBanner } from '../ui/formatters.js';
+import { generateHtmlReport } from '../ui/html-report.js';
 
 export interface TestCliOptions {
   config?: string;
@@ -23,6 +24,7 @@ export interface TestCliOptions {
   allowRemote?: boolean;
   yes?: boolean;
   json?: boolean;
+  html?: boolean;
   out?: string;
   failOn?: 'error' | 'warning' | 'info';
 }
@@ -224,7 +226,15 @@ export async function testCommand(
   }
 
   // 10. Print / Write Report Output
-  if (options.json) {
+  if (options.html) {
+    const htmlOutput = generateHtmlReport(report);
+    if (options.out) {
+      await fs.writeFile(path.resolve(options.out), htmlOutput, 'utf-8');
+      console.log(`Report written to ${options.out}`);
+    } else {
+      console.log(htmlOutput);
+    }
+  } else if (options.json) {
     const jsonOutput = JSON.stringify(report, null, 2);
     if (options.out) {
       await fs.writeFile(path.resolve(options.out), jsonOutput, 'utf-8');

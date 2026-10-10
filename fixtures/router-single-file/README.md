@@ -13,4 +13,4 @@ A single-file Express application testing local `express.Router()` instances, mo
 
 ## Diagnostics
 
-- **`DG-R002` (Warning)**: `Could not resolve router mounted at "<unmounted>" for identifier "orphanRouter"` emitted at line 26 because `orphanRouter` is instantiated and contains routes, but has no mount binding to the application.
+- **`DG-R004` (Warning)**: `Router "orphanRouter" is declared but never mounted to the application` emitted at line 26 because `orphanRouter` is instantiated and contains routes, but has no mount binding to the application.
