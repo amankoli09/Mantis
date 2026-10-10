@@ -432,8 +432,8 @@ export function extractFileDeclarations(
         return;
       }
 
-      // 2. Check for HTTP method calls: get, post, put, delete, etc.
-      if (!SUPPORTED_HTTP_METHODS.has(methodName)) return;
+      // 2. Check for HTTP method calls: get, post, put, delete, all, etc.
+      if (!SUPPORTED_HTTP_METHODS.has(methodName) && methodName !== 'all') return;
 
       let isLiteralPath = false;
       let routePath = '';
@@ -449,7 +449,7 @@ export function extractFileDeclarations(
         const callee = currentObj.callee;
         if (callee.type === 'MemberExpression' && callee.property.type === 'Identifier') {
           const propName = callee.property.name.toLowerCase();
-          if (SUPPORTED_HTTP_METHODS.has(propName)) {
+          if (SUPPORTED_HTTP_METHODS.has(propName) || propName === 'all') {
             // It's another HTTP method in the chain, keep going up
             currentObj = callee.object;
             continue;
@@ -595,111 +595,118 @@ export function extractFileDeclarations(
             ? res.partialValues
             : [formatPlaceholder(res.rawExpr || 'expression')];
 
+        const targetMethods =
+          methodName === 'all'
+            ? ['get', 'post', 'put', 'patch', 'delete']
+            : [methodName];
+
         for (const p of paths) {
-          // Direct app route
-          if (effectiveAppBinding) {
-            const methodUpper = methodName.toUpperCase() as HttpMethod;
-            const effect = getEffectForMethod(methodName);
+          for (const currentMethod of targetMethods) {
+            // Direct app route
+            if (effectiveAppBinding) {
+              const methodUpper = currentMethod.toUpperCase() as HttpMethod;
+              const effect = getEffectForMethod(currentMethod);
 
-            const activeAppMiddlewares = appUses
-              .filter((u) => u.line < startLine)
-              .map((u) => u.middleware);
-            const allMiddlewares = [...activeAppMiddlewares, ...routeMiddlewares];
-            const endpointMiddleware = allMiddlewares.map((m) => ({
-              name: m.name,
-              provenance: m.provenance,
-            }));
-            const endpointAuth = classifyAuthFromMiddlewares(allMiddlewares);
-
-            if (res.isResolvable) {
-              const paramMatches = [...p.matchAll(/:([a-zA-Z0-9_]+)/g)];
-              const params = paramMatches.map((match) => ({
-                name: match[1] ?? '',
-                in: 'path' as const,
-                required: true,
-                type: 'string',
-                description: `User identifier extracted from path segment :${match[1]}.`,
-                provenance: {
-                  kind: 'literal' as const,
-                  filePath: filePathForProvenance,
-                  line: startLine,
-                },
+              const activeAppMiddlewares = appUses
+                .filter((u) => u.line < startLine)
+                .map((u) => u.middleware);
+              const allMiddlewares = [...activeAppMiddlewares, ...routeMiddlewares];
+              const endpointMiddleware = allMiddlewares.map((m) => ({
+                name: m.name,
+                provenance: m.provenance,
               }));
+              const endpointAuth = classifyAuthFromMiddlewares(allMiddlewares);
 
-              const mergedParams = mergeAndSortParams(params, inferredParams);
+              if (res.isResolvable) {
+                const paramMatches = [...p.matchAll(/:([a-zA-Z0-9_]+)/g)];
+                const params = paramMatches.map((match) => ({
+                  name: match[1] ?? '',
+                  in: 'path' as const,
+                  required: true,
+                  type: 'string',
+                  description: `User identifier extracted from path segment :${match[1]}.`,
+                  provenance: {
+                    kind: 'literal' as const,
+                    filePath: filePathForProvenance,
+                    line: startLine,
+                  },
+                }));
 
-              directEndpoints.push({
-                id: generateEndpointId(methodUpper, p),
-                method: methodUpper,
-                path: p,
-                auth: endpointAuth,
-                effect,
-                params: mergedParams,
-                responses: [],
-                middleware: endpointMiddleware,
-                mountChain: [],
-                provenance: {
-                  kind: isLiteralKind ? 'literal' : 'resolved',
-                  filePath: filePathForProvenance,
-                  line: startLine,
-                  ...(startCol !== undefined ? { column: startCol } : {}),
-                  ...(snippet ? { snippet } : {}),
-                },
-                confidence: 'confirmed',
-                confidenceReason: null,
-              });
-            } else {
+                const mergedParams = mergeAndSortParams(params, inferredParams);
+
+                directEndpoints.push({
+                  id: generateEndpointId(methodUpper, p),
+                  method: methodUpper,
+                  path: p,
+                  auth: endpointAuth,
+                  effect,
+                  params: mergedParams,
+                  responses: [],
+                  middleware: endpointMiddleware,
+                  mountChain: [],
+                  provenance: {
+                    kind: isLiteralKind ? 'literal' : 'resolved',
+                    filePath: filePathForProvenance,
+                    line: startLine,
+                    ...(startCol !== undefined ? { column: startCol } : {}),
+                    ...(snippet ? { snippet } : {}),
+                  },
+                  confidence: 'confirmed',
+                  confidenceReason: null,
+                });
+              } else {
+                const diagExpr = res.capExceeded
+                  ? `Array product cap exceeded (>100 combinations): ${res.rawExpr || p}`
+                  : (res.rawExpr || p);
+                diagnostics.push(
+                  createDiagnostic(
+                    'DG-R003',
+                    { rawExpression: diagExpr },
+                    { file: filePathForProvenance, line: startLine, column: startCol }
+                  )
+                );
+
+                const placeholderPath = p.startsWith('/') ? p : '/' + p;
+                directEndpoints.push({
+                  id: generateEndpointId(methodUpper, placeholderPath),
+                  method: methodUpper,
+                  path: placeholderPath,
+                  auth: endpointAuth,
+                  effect,
+                  params: [],
+                  responses: [],
+                  middleware: endpointMiddleware,
+                  mountChain: [],
+                  provenance: {
+                    kind: 'unresolved',
+                    filePath: filePathForProvenance,
+                    line: startLine,
+                    ...(startCol !== undefined ? { column: startCol } : {}),
+                    ...(snippet ? { snippet } : {}),
+                  },
+                  confidence: 'uncertain',
+                  confidenceReason: 'DG-R003',
+                });
+              }
+            }
+
+            // Route defined on router instance
+            if (effectiveRouterRecord) {
               const diagExpr = res.capExceeded
                 ? `Array product cap exceeded (>100 combinations): ${res.rawExpr || p}`
                 : (res.rawExpr || p);
-              diagnostics.push(
-                createDiagnostic(
-                  'DG-R003',
-                  { rawExpression: diagExpr },
-                  { file: filePathForProvenance, line: startLine, column: startCol }
-                )
-              );
-
-              const placeholderPath = p.startsWith('/') ? p : '/' + p;
-              directEndpoints.push({
-                id: generateEndpointId(methodUpper, placeholderPath),
-                method: methodUpper,
-                path: placeholderPath,
-                auth: endpointAuth,
-                effect,
-                params: [],
-                responses: [],
-                middleware: endpointMiddleware,
-                mountChain: [],
-                provenance: {
-                  kind: 'unresolved',
-                  filePath: filePathForProvenance,
-                  line: startLine,
-                  ...(startCol !== undefined ? { column: startCol } : {}),
-                  ...(snippet ? { snippet } : {}),
-                },
-                confidence: 'uncertain',
-                confidenceReason: 'DG-R003',
+              effectiveRouterRecord.routes.push({
+                method: currentMethod,
+                routePath: p,
+                startLine,
+                startCol,
+                snippet,
+                isDynamic: !res.isResolvable,
+                rawExpr: diagExpr,
+                inferredParams,
+                routeMiddlewares: routeMiddlewares.length > 0 ? routeMiddlewares : undefined,
               });
             }
-          }
-
-          // Route defined on router instance
-          if (effectiveRouterRecord) {
-            const diagExpr = res.capExceeded
-              ? `Array product cap exceeded (>100 combinations): ${res.rawExpr || p}`
-              : (res.rawExpr || p);
-            effectiveRouterRecord.routes.push({
-              method: methodName,
-              routePath: p,
-              startLine,
-              startCol,
-              snippet,
-              isDynamic: !res.isResolvable,
-              rawExpr: diagExpr,
-              inferredParams,
-              routeMiddlewares: routeMiddlewares.length > 0 ? routeMiddlewares : undefined,
-            });
           }
         }
       }

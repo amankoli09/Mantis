@@ -370,4 +370,19 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
     expect(model.endpoints).toHaveLength(6);
     expect(model.project?.framework).toBe('express');
   });
+
+  it('scans fixtures/route-all/app and matches its golden model, verifying app.all expansion', async () => {
+    const routeAllPath = path.join(repoRoot, 'fixtures/route-all/app');
+    const goldenModelPath = path.join(repoRoot, 'fixtures/route-all/expected.model.json');
+
+    const model = await scanProject(routeAllPath);
+
+    const validation = validateModel(model);
+    expect(validation.success).toBe(true);
+
+    const expectedGoldenRaw = readFileSync(goldenModelPath, 'utf8');
+    const goldenModel = JSON.parse(expectedGoldenRaw) as ApiModel;
+
+    expect(model).toStrictEqual(goldenModel);
+  });
 });
