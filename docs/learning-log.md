@@ -1262,3 +1262,27 @@ Step 11 introduces cross-analysis capabilities that correlate static source code
   - `/healthz` (unmodeled route).
 - **Automated Golden File Checks**: Verified in `golden-model-validation.test.ts`, `provenance-line-check.test.ts`, and `cross-analysis-e2e.test.ts`.
 - **Monorepo Safety**: Full test suite (37 files, 465 tests) passing green with strict typecheck and linting.
+
+---
+
+## [Phase 1.5] - Phase 1.5 Backlog (Issue #14)
+
+### Problem & Objectives
+Following the stabilization of Phase 1 (Steps 1 through 13), several operational, integration, and developer experience gaps identified during benchmarking and production usage needed resolution:
+1. **OpenAPI 3.0 Export**: Allow developers to convert DevGuard ApiModels directly into standardized OpenAPI 3.0.3 documents (`devguard scan --openapi`).
+2. **CI/CD Integration & Recipes**: Provide standard CI recipes, a composite GitHub Action, and document deterministic exit codes (0, 1, 2, 3).
+3. **Diff Mode**: Compare two ApiModels or two test Reports (`devguard diff <fileA> <fileB>`) to surface regressions, added/removed routes, and new failures in PR reviews.
+4. **HTML Test Reports**: Generate standalone, responsive HTML test reports from `report.json` with embedded CSS and zero external network dependencies (`devguard test --html`, `devguard report --html`).
+5. **Scanner Gaps**:
+   - Split `DG-R002` into unresolved router mount (`DG-R002`) and unmounted orphan router (`DG-R004`).
+   - Retain `DG-R003` (dynamic path expressions) as `info` severity to prevent false-positive CI breakages on valid architectures.
+   - Expand `app.all()` / `router.all()` to all standard HTTP methods.
+   - Support multi-hop barrel re-exports (`export *`, `export { default as X }`, inline `require()` in `module.exports = { x: require('./x') }`).
+6. **FileSystem Abstraction**: Pluggable `FileSystem` interface (`nodeFileSystem` vs `MemoryFileSystem`) for in-memory scanning and browser playground readiness.
+7. **ADR Index & Diagnostics Cleanup**: Comprehensive Architecture Decision Records (ADRs 0001–0006) and refreshed diagnostic code documentation.
+
+### Key Architectural Learnings
+- **OpenAPI Schema Fidelity**: DevGuard's Zod extraction already captures structured JSON schemas and constraints. Emitting these directly into `components.schemas` and `requestBody.content['application/json'].schema` enables full OpenAPI 3.0.3 fidelity without external tooling.
+- **Diff Mode Determinism**: Comparing models via endpoint identity keys (`METHOD /path`) and diagnostic keys (`code:file:line:message`) yields instantaneous, clear change summaries (`+1 added, -1 removed, ~1 modified`). In report diff mode, non-zero exit codes immediately alert PR reviewers to regressions.
+- **Self-Contained HTML**: CI environments often run without external internet access or CDN availability. Generating standalone HTML with embedded CSS and vanilla JS makes test reports portable as CI artifacts.
+- **Diagnostic Granularity**: Distinguishing unmounted routers (`DG-R004`) from unresolved mounts (`DG-R002`) clarifies developer guidance: `DG-R004` indicates dead/orphan code, whereas `DG-R002` indicates broken mount logic.

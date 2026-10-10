@@ -69,92 +69,109 @@ function resolveExportedRouter(
     return null;
   }
 
-  // Find matching export in targetFile
-  const exp = node.exports.find(
-    (e) => e.exportedName === exportedName || (exportedName !== 'default' && e.exportedName === '*')
-  );
+  // 1. Check direct matching export in targetFile
+  const directExp = node.exports.find((e) => e.exportedName === exportedName);
+  if (directExp) {
+    // Case A: directExp has a localName
+    if (directExp.localName) {
+      const router = routersByFile.get(targetFile)?.get(directExp.localName);
+      if (router) {
+        return router;
+      }
 
-  if (!exp) {
-    diagnostics.push(
-      createDiagnostic(
-        'DG-R002',
-        { mountPath: mountLocation.prefix, routerIdentifier: `${targetFile}:${exportedName}` },
-        { file: mountLocation.file, line: mountLocation.line, column: mountLocation.column }
-      )
-    );
-    return null;
-  }
-
-  // Case A: exp has a localName (e.g. module.exports = router, export default router, exports.foo = router)
-  if (exp.localName) {
-    // 1. Is it a router declared directly in targetFile?
-    const router = routersByFile.get(targetFile)?.get(exp.localName);
-    if (router) {
-      return router;
-    }
-
-    // 2. Is it a re-export of an import in targetFile? (e.g. const admin = require('./admin'); module.exports = admin;)
-    const imp = node.imports.find((i) => i.localName === exp.localName);
-    if (imp) {
-      if (imp.isExternal || !imp.sourcePath) {
-        diagnostics.push(
-          createDiagnostic(
-            'DG-R002',
-            { mountPath: mountLocation.prefix, routerIdentifier: imp.specifier },
-            { file: mountLocation.file, line: mountLocation.line, column: mountLocation.column }
-          )
+      const imp = node.imports.find((i) => i.localName === directExp.localName);
+      if (imp) {
+        if (imp.isExternal || !imp.sourcePath) {
+          diagnostics.push(
+            createDiagnostic(
+              'DG-R002',
+              { mountPath: mountLocation.prefix, routerIdentifier: imp.specifier },
+              { file: mountLocation.file, line: mountLocation.line, column: mountLocation.column }
+            )
+          );
+          return null;
+        }
+        return resolveExportedRouter(
+          imp.sourcePath,
+          imp.importedName === '*' ? exportedName : imp.importedName,
+          moduleGraph,
+          routersByFile,
+          diagnostics,
+          visited,
+          mountLocation
         );
-        return null;
       }
-      return resolveExportedRouter(
-        imp.sourcePath,
-        imp.importedName === '*' ? exportedName : imp.importedName,
-        moduleGraph,
-        routersByFile,
-        diagnostics,
-        visited,
-        mountLocation
-      );
-    }
-    if (exportedName === 'default') {
-      const defaultRouter = routersByFile.get(targetFile)?.get('default');
-      if (defaultRouter) {
-        return defaultRouter;
+      if (exportedName === 'default') {
+        const defaultRouter = routersByFile.get(targetFile)?.get('default');
+        if (defaultRouter) {
+          return defaultRouter;
+        }
+      }
+    } else {
+      // Case B: directExp.localName is null
+      if (exportedName === 'default') {
+        const defaultRouter = routersByFile.get(targetFile)?.get('default');
+        if (defaultRouter) {
+          return defaultRouter;
+        }
+      }
+
+      const lineImp = node.imports.find((i) => i.line === directExp.line);
+      if (lineImp) {
+        if (lineImp.isExternal || !lineImp.sourcePath) {
+          diagnostics.push(
+            createDiagnostic(
+              'DG-R002',
+              { mountPath: mountLocation.prefix, routerIdentifier: lineImp.specifier },
+              { file: mountLocation.file, line: mountLocation.line, column: mountLocation.column }
+            )
+          );
+          return null;
+        }
+        return resolveExportedRouter(
+          lineImp.sourcePath,
+          lineImp.importedName === '*' ? exportedName : lineImp.importedName,
+          moduleGraph,
+          routersByFile,
+          diagnostics,
+          visited,
+          mountLocation
+        );
       }
     }
   }
 
-  // Case B: exp.localName is null (e.g. export default Router().use(...), module.exports = require('./admin'))
-  if (exportedName === 'default') {
-    const defaultRouter = routersByFile.get(targetFile)?.get('default');
-    if (defaultRouter) {
-      return defaultRouter;
+  // 2. If no direct export, check wildcard re-exports (export * from './...')
+  if (exportedName !== 'default') {
+    const starExports = node.exports.filter((e) => e.exportedName === '*');
+    for (const starExp of starExports) {
+      const starImp = node.imports.find((i) => i.line === starExp.line || i.localName === '*');
+      if (starImp?.sourcePath && !starImp.isExternal) {
+        const dummyDiag: Diagnostic[] = [];
+        const candidate = resolveExportedRouter(
+          starImp.sourcePath,
+          exportedName,
+          moduleGraph,
+          routersByFile,
+          dummyDiag,
+          new Set(visited),
+          mountLocation
+        );
+        if (candidate) {
+          return candidate;
+        }
+      }
     }
   }
 
-  // Find import in targetFile matching exp.line
-  const lineImp = node.imports.find((i) => i.line === exp.line);
-  if (lineImp) {
-    if (lineImp.isExternal || !lineImp.sourcePath) {
-      diagnostics.push(
-        createDiagnostic(
-          'DG-R002',
-          { mountPath: mountLocation.prefix, routerIdentifier: lineImp.specifier },
-          { file: mountLocation.file, line: mountLocation.line, column: mountLocation.column }
-        )
-      );
-      return null;
-    }
-    return resolveExportedRouter(
-      lineImp.sourcePath,
-      lineImp.importedName === '*' ? exportedName : lineImp.importedName,
-      moduleGraph,
-      routersByFile,
-      diagnostics,
-      visited,
-      mountLocation
-    );
-  }
+  diagnostics.push(
+    createDiagnostic(
+      'DG-R002',
+      { mountPath: mountLocation.prefix, routerIdentifier: `${targetFile}:${exportedName}` },
+      { file: mountLocation.file, line: mountLocation.line, column: mountLocation.column }
+    )
+  );
+  return null;
 
   // Export found, but target is not an Express router (e.g. a plain middleware function or constant)
   // Non-routers don't emit DG-R002 unless explicitly unresolvable
@@ -457,11 +474,11 @@ export function resolveCrossFileRoutes(
     const mountInfos = resolvedRouterMounts.get(router.id);
 
     if (!mountInfos || mountInfos.length === 0) {
-      // Unmounted router: emit DG-R002 and mark all its routes as uncertain
+      // Unmounted router: emit DG-R004 and mark all its routes as uncertain
       diagnostics.push(
         createDiagnostic(
-          'DG-R002',
-          { mountPath: '<unmounted>', routerIdentifier: router.varName },
+          'DG-R004',
+          { routerIdentifier: router.varName },
           { file: router.filePathForProvenance, line: router.declLine, column: router.declCol }
         )
       );
@@ -510,7 +527,7 @@ export function resolveCrossFileRoutes(
             ...(route.snippet ? { snippet: route.snippet } : {}),
           },
           confidence: 'uncertain',
-          confidenceReason: 'DG-R002',
+          confidenceReason: 'DG-R004',
         });
       }
     } else {

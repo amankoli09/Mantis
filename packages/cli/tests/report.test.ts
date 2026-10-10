@@ -205,4 +205,77 @@ describe('devguard report', () => {
     expect(parsed.findings).toBeInstanceOf(Array);
     expect(parsed.findings.length).toBeGreaterThan(0);
   });
+
+  it('outputs standalone HTML report with --html and writes to file with --out', async () => {
+    const sessionFile = path.join(tempDir, 'bug-session.json');
+    await fs.writeFile(sessionFile, JSON.stringify(sampleBugSession, null, 2), 'utf-8');
+
+    const htmlOut = path.join(tempDir, 'report.html');
+    const exitCode = await runCli([
+      'node',
+      'devguard',
+      'report',
+      sessionFile,
+      '--html',
+      '--out',
+      htmlOut,
+    ]);
+
+    expect(exitCode).toBe(1);
+    const content = await fs.readFile(htmlOut, 'utf-8');
+    expect(content).toContain('<!DOCTYPE html>');
+    expect(content).toContain('DevGuard Test Report');
+    expect(content).toContain('Findings');
+  });
+
+  it('renders HTML directly from an existing report.json file', async () => {
+    const reportData = {
+      reportVersion: '1.0.0',
+      summary: { total: 1, passed: 1, failed: 0, skipped: 0 },
+      findings: [],
+      results: [
+        {
+          testId: 'test-1',
+          endpointId: 'GET /health',
+          generatorId: 'smoke',
+          status: 'passed',
+          request: {
+            endpointId: 'GET /health',
+            method: 'GET',
+            url: 'http://localhost:3000/health',
+            headers: {},
+            effect: 'read',
+          },
+          response: {
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            body: '{"status":"ok"}',
+            truncated: false,
+            byteLength: 15,
+          },
+        },
+      ],
+      meta: { generatedAt: '2026-10-10T00:00:00.000Z', durationMs: 100 },
+    };
+    const reportJsonPath = path.join(tempDir, 'sample-report.json');
+    await fs.writeFile(reportJsonPath, JSON.stringify(reportData, null, 2), 'utf-8');
+
+    const htmlOut = path.join(tempDir, 'report-from-json.html');
+    const exitCode = await runCli([
+      'node',
+      'devguard',
+      'report',
+      reportJsonPath,
+      '--html',
+      '--out',
+      htmlOut,
+    ]);
+
+    expect(exitCode).toBe(0);
+    const content = await fs.readFile(htmlOut, 'utf-8');
+    expect(content).toContain('<!DOCTYPE html>');
+    expect(content).toContain('Pass Rate');
+    expect(content).toContain('GET /health');
+  });
 });

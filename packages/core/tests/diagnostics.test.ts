@@ -4,8 +4,8 @@ import { createDiagnostic, DIAGNOSTICS_REGISTRY, DiagnosticCodeSchema } from '..
 describe('Diagnostics Registry & Factory', () => {
   it('contains the registered diagnostic codes', () => {
     const codes = DiagnosticCodeSchema.options;
-    expect(codes).toEqual(['DG-P001', 'DG-R001', 'DG-R002', 'DG-R003', 'DG-I001', 'DG-I002']);
-    expect(Object.keys(DIAGNOSTICS_REGISTRY)).toEqual(['DG-P001', 'DG-R001', 'DG-R002', 'DG-R003', 'DG-I001', 'DG-I002']);
+    expect(codes).toEqual(['DG-P001', 'DG-R001', 'DG-R002', 'DG-R003', 'DG-R004', 'DG-I001', 'DG-I002']);
+    expect(Object.keys(DIAGNOSTICS_REGISTRY)).toEqual(['DG-P001', 'DG-R001', 'DG-R002', 'DG-R003', 'DG-R004', 'DG-I001', 'DG-I002']);
   });
 
   it('creates DG-P001 parse error diagnostic with default severity', () => {
@@ -80,6 +80,25 @@ describe('Diagnostics Registry & Factory', () => {
     expect(diag.file).toBe('routes/dynamic.js');
     expect(diag.line).toBe(15);
     expect(diag.message).toBe('Route path uses dynamic runtime expression: prefix + "/items"');
+  });
+
+  it('creates DG-R004 unmounted router diagnostic', () => {
+    const diag = createDiagnostic(
+      'DG-R004',
+      {
+        routerIdentifier: 'orphanRouter',
+      },
+      {
+        file: 'src/app.js',
+        line: 26,
+      },
+    );
+
+    expect(diag.code).toBe('DG-R004');
+    expect(diag.severity).toBe('warning');
+    expect(diag.file).toBe('src/app.js');
+    expect(diag.line).toBe(26);
+    expect(diag.message).toBe('Router "orphanRouter" is declared but never mounted to the application');
   });
 
   it('creates DG-I001 unresolved handler diagnostic with handlerName', () => {

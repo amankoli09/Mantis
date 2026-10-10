@@ -200,7 +200,7 @@ describe('Route Extractor (extractDirectRoutes)', () => {
     const { endpoints, diagnostics } = extractDirectRoutes(ast!, 'src/app.js', code);
 
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0]!.code).toBe('DG-R002');
+    expect(diagnostics[0]!.code).toBe('DG-R004');
     expect(diagnostics[0]!.line).toBe(3);
 
     expect(endpoints).toHaveLength(1);
@@ -208,7 +208,7 @@ describe('Route Extractor (extractDirectRoutes)', () => {
       id: 'GET /orphan',
       path: '/orphan',
       confidence: 'uncertain',
-      confidenceReason: 'DG-R002',
+      confidenceReason: 'DG-R004',
       provenance: {
         kind: 'unresolved',
         line: 4,

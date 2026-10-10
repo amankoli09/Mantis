@@ -1,10 +1,12 @@
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
+import { exportOpenApi } from '@devguard/core';
 import { detectExpress, scanProject } from '@devguard/adapter-express';
 import { formatScanTerminal } from '../ui/formatters.js';
 
 export interface ScanCliOptions {
   json?: boolean;
+  openapi?: boolean;
   out?: string;
   verbose?: boolean;
 }
@@ -46,6 +48,18 @@ export async function scanCommand(
   const model = await scanProject(resolvedPath);
 
   // 3. Output results
+  if (options.openapi) {
+    const openApiSpec = exportOpenApi(model);
+    const jsonOutput = JSON.stringify(openApiSpec, null, 2);
+    if (options.out) {
+      await fs.writeFile(path.resolve(options.out), jsonOutput, 'utf-8');
+      console.log(`OpenAPI specification written to ${options.out}`);
+    } else {
+      console.log(jsonOutput);
+    }
+    return 0;
+  }
+
   if (options.json) {
     const jsonOutput = JSON.stringify(model, null, 2);
     if (options.out) {

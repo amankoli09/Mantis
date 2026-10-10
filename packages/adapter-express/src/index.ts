@@ -8,3 +8,4 @@ export * from './route-extractor.js';
 export * from './module-graph.js';
 export * from './scanner.js';
 export * from './adapter.js';
+export * from './fs.js';

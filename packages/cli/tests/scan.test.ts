@@ -108,4 +108,31 @@ describe('devguard scan', () => {
     expect(output).toContain('DevGuard Scanner');
     expect(output).toContain('param email');
   });
+
+  it('exports valid OpenAPI 3.0 specification when --openapi is provided', async () => {
+    const fixturePath = path.join(FIXTURES_DIR, 'simple');
+    const outFile = path.join(tempDir, 'openapi.json');
+
+    const exitCode = await runCli([
+      'node',
+      'devguard',
+      'scan',
+      fixturePath,
+      '--openapi',
+      '--out',
+      outFile,
+    ]);
+
+    expect(exitCode).toBe(0);
+    const exists = await fs
+      .stat(outFile)
+      .then(() => true)
+      .catch(() => false);
+    expect(exists).toBe(true);
+
+    const openapi = JSON.parse(await fs.readFile(outFile, 'utf-8'));
+    expect(openapi.openapi).toBe('3.0.3');
+    expect(openapi.paths).toBeDefined();
+    expect(openapi.paths['/users']).toBeDefined();
+  });
 });

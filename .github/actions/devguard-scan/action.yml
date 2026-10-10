@@ -1,0 +1,46 @@
+name: 'DevGuard API Scanner'
+description: 'Statically scan Express API routes, extract ApiModel, and export OpenAPI 3.0 specification'
+author: 'DevGuard Team'
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  path:
+    description: 'Path to target Express backend repository/directory'
+    required: false
+    default: '.'
+  export-openapi:
+    description: 'Whether to export OpenAPI 3.0 specification JSON'
+    required: false
+    default: 'false'
+  openapi-out:
+    description: 'Output filepath for OpenAPI JSON specification'
+    required: false
+    default: 'openapi.json'
+  model-out:
+    description: 'Output filepath for DevGuard ApiModel JSON'
+    required: false
+    default: 'api-model.json'
+  fail-on-diagnostics:
+    description: 'Exit with error if unresolvable routes (DG-R002/DG-R003) or warnings are found'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run DevGuard Scan
+      shell: bash
+      run: |
+        ARGS=("${{ inputs.path }}")
+        
+        if [ -n "${{ inputs.model-out }}" ]; then
+          ARGS+=("--json" "--out" "${{ inputs.model-out }}")
+        fi
+
+        if [ "${{ inputs.export-openapi }}" = "true" ]; then
+          npx --yes @devguard/cli scan "${{ inputs.path }}" --openapi --out "${{ inputs.openapi-out }}"
+        fi
+
+        npx --yes @devguard/cli scan "${ARGS[@]}"
