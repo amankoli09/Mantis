@@ -468,7 +468,7 @@ export function resolveCrossFileRoutes(
 
       for (const route of router.routes) {
         const methodUpper = route.method.toUpperCase() as HttpMethod;
-        const effect = getEffectForMethod(route.method);
+        const effect = route.effect ?? getEffectForMethod(route.method);
         const finalPath = route.isDynamic
           ? route.routePath
             ? route.routePath.startsWith('/')
@@ -496,6 +496,7 @@ export function resolveCrossFileRoutes(
           path: finalPath,
           auth: endpointAuth,
           effect,
+          ...(route.effectEvidence ? { effectEvidence: route.effectEvidence } : {}),
           params: [],
           responses: [],
           middleware: endpointMiddleware,
@@ -516,7 +517,7 @@ export function resolveCrossFileRoutes(
       for (const info of mountInfos) {
         for (const route of router.routes) {
           const methodUpper = route.method.toUpperCase() as HttpMethod;
-          const effect = getEffectForMethod(route.method);
+          const effect = route.effect ?? getEffectForMethod(route.method);
 
           const routerUsesBefore = (router.uses ?? [])
             .filter((u) => u.line < route.startLine)
@@ -548,6 +549,7 @@ export function resolveCrossFileRoutes(
               path: placeholderPath,
               auth: endpointAuth,
               effect,
+              ...(route.effectEvidence ? { effectEvidence: route.effectEvidence } : {}),
               params: [],
               responses: [],
               middleware: endpointMiddleware,
@@ -586,6 +588,7 @@ export function resolveCrossFileRoutes(
               path: finalPath,
               auth: endpointAuth,
               effect,
+              ...(route.effectEvidence ? { effectEvidence: route.effectEvidence } : {}),
               params: mergedParams,
               responses: [],
               middleware: endpointMiddleware,

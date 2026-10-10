@@ -1111,3 +1111,57 @@ When developing static analysis engines:
 1. **Developer Idioms Diverge From Library Specs**: The official Express documentation highlights `const app = express(); app.get(...)`. But real open-source developers invent patterns like route factory exports (`module.exports = (app) => ...`), inline router method chaining (`Router().use(...).use(...)`), and array loops over route configs.
 2. **Precision and Recall Tradeoffs**: Static analysis must balance sound guarantees against practical coverage. Flagging dynamic array loops (`routes.forEach(r => router.use(r.path, r.route))`) as `confidence: "uncertain"` preserves truthfulness without crashing or inventing hallucinated routes.
 3. **Regression Proofing with Goldens**: Every time an AST scanner is improved to handle a new pattern, verifying that existing golden models remain 100% byte-for-byte identical guarantees that new fixes never break existing capabilities.
+
+---
+
+## Step 8c: Effect Refinement from Handler Bodies (Issue #11)
+
+### Overview
+
+In Step 8c, we replaced "effect from HTTP method only" with evidence-based effect refinement derived directly from route handler function bodies (including 1-hop imported controllers and 1-hop local helper calls).
+Previously, DevGuard relied solely on HTTP methods (`GET` -> `read`, `POST`/`PUT`/`PATCH` -> `write`, `DELETE` -> `destructive`). However, real-world backends often conceal mutations behind `GET` endpoints (e.g. creating logs, updating counters, deleting records, writing to disk, or proxying writes). Step 8c detects these mutations with AST evidence and provenance, governed by a strict monotonic risk rule.
+
+---
+
+### Key Architectural Concepts
+
+#### 1. The Monotonic Risk Rule
+Static analysis must **never make a route look safer than its HTTP method suggests**:
+$$\text{Risk Rank: } \text{unknown (0)} < \text{read (1)} < \text{write (2)} < \text{destructive (3)}$$
+- **Raising Risk**: If the handler AST yields evidence of a higher risk rank than the baseline HTTP verb (e.g. `Prisma.user.create()` behind `GET` or `Prisma.user.delete()` behind `POST`), the route's effect is raised to `write` or `destructive`, and `effectEvidence` (`{ filePath, line, signal }`) is attached.
+- **Never Lowering Risk**: If a `POST` handler only performs read operations (e.g. `User.findById()`), its effect remains `write` from HTTP baseline. Safe runners and security policies can rely on the HTTP verb guarantee.
+- **Unresolvable Handlers**: When a handler cannot be resolved statically (e.g. dynamic invocation `getDynamicHandler()`), the effect remains at its HTTP method baseline (or `unknown`), and diagnostic `DG-I001` is emitted.
+- **Unclassified Calls**: Arbitrary functions (`foo()`, `helper()`) or built-in object methods (`Object.create()`, `Map.delete()`) are not classified as database mutations.
+
+#### 2. Known-Library Rule Table
+DevGuard implements pattern matchers for the top Node.js data layer and mutation libraries:
+- **Prisma**:
+  - `create`, `createMany`, `update`, `updateMany`, `upsert`, `$executeRaw` -> `write` (`prisma:<method>`)
+  - `delete`, `deleteMany` -> `destructive` (`prisma:<method>`)
+- **Mongoose**:
+  - `create`, `insertMany`, `updateOne`, `updateMany`, `findOneAndUpdate`, `findByIdAndUpdate`, `save` -> `write` (`mongoose:<method>`)
+  - `deleteOne`, `deleteMany`, `findOneAndDelete`, `findByIdAndDelete`, `findOneAndRemove`, `remove` -> `destructive` (`mongoose:<method>`)
+- **Sequelize**:
+  - `create`, `bulkCreate`, `update`, `upsert`, `save` -> `write` (`sequelize:<method>`)
+  - `destroy`, `truncate` -> `destructive` (`sequelize:<method>`)
+- **Knex**:
+  - `.insert()`, `.update()` -> `write` (`knex:<method>`)
+  - `.del()`, `.delete()`, `.truncate()` -> `destructive` (`knex:<method>`)
+- **pg (node-postgres)**:
+  - `client.query('INSERT ...' | 'UPDATE ...')` -> `write` (`pg:query:<verb>`)
+  - `client.query('DELETE ...' | 'DROP ...' | 'TRUNCATE ...')` -> `destructive` (`pg:query:<verb>`)
+- **Node.js fs**:
+  - `fs.writeFile`, `writeFileSync`, `appendFile`, `copyFile` -> `write` (`fs:<method>`)
+  - `fs.unlink`, `unlinkSync`, `rm`, `rmSync`, `rmdir` -> `destructive` (`fs:<method>`)
+- **Fetch / Axios**:
+  - `fetch(url, { method: 'POST' | 'PUT' | 'PATCH' })`, `axios.post/put/patch` -> `write` (`fetch:<method>` / `axios:<method>`)
+  - `fetch(url, { method: 'DELETE' })`, `axios.delete` -> `destructive` (`fetch:DELETE` / `axios:delete`)
+- **Generic Models**:
+  - `.save()`, `.insert()`, `.create()`, `.update()` -> `write` (`db:<method>`)
+  - `.delete()`, `.del()`, `.remove()` -> `destructive` (`db:<method>`)
+
+---
+
+### Verification and Regression Safety
+- **Fixture First**: Created `fixtures/effect-refinement/` exercising safe read, DB writes behind GET, destructive calls behind GET, POST read-only retention, POST deletion escalation, 1-hop controller resolution, and dynamic unresolvable handlers.
+- **Strict Golden Model Verification**: Schema validation and provenance line checks verified across all 11 golden models with zero regressions.

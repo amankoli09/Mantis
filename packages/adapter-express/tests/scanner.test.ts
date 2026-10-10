@@ -415,4 +415,19 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
 
     expect(model).toStrictEqual(goldenModel);
   });
+
+  it('scans fixtures/effect-refinement/app and matches its golden model, verifying effect refinement from handler bodies', async () => {
+    const effectRefinementPath = path.join(repoRoot, 'fixtures/effect-refinement/app');
+    const goldenModelPath = path.join(repoRoot, 'fixtures/effect-refinement/expected.model.json');
+
+    const model = await scanProject(effectRefinementPath);
+
+    const validation = validateModel(model);
+    expect(validation.success).toBe(true);
+
+    const expectedGoldenRaw = readFileSync(goldenModelPath, 'utf8');
+    const goldenModel = JSON.parse(expectedGoldenRaw) as ApiModel;
+
+    expect(model).toStrictEqual(goldenModel);
+  });
 });

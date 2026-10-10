@@ -34,6 +34,7 @@ interface EndpointLike {
   requestBody?: { provenance?: ProvenanceEntry };
   middleware?: Array<string | { name: string; provenance?: ProvenanceEntry }>;
   auth?: { evidence?: { filePath: string; line: number; signal?: string } };
+  effectEvidence?: { filePath: string; line: number; signal?: string };
 }
 
 interface GoldenModel {
@@ -106,6 +107,17 @@ function collectProvenances(
         },
       });
     }
+
+    if (endpoint.effectEvidence) {
+      entries.push({
+        label: `${goldenPath} → endpoint[${endpoint.id}].effectEvidence`,
+        prov: {
+          kind: 'literal',
+          filePath: endpoint.effectEvidence.filePath,
+          line: endpoint.effectEvidence.line,
+        },
+      });
+    }
   }
 
   return entries;
@@ -119,6 +131,10 @@ const GOLDEN_FILES = [
   'fixtures/constant-propagation/expected.model.json',
   'fixtures/inference-basic/expected.model.json',
   'fixtures/auth-middleware/expected.model.json',
+  'fixtures/route-all/expected.model.json',
+  'fixtures/router-root-mount/expected.model.json',
+  'fixtures/route-factory/expected.model.json',
+  'fixtures/effect-refinement/expected.model.json',
 ] as const;
 
 describe('Provenance line integrity — all golden files', () => {
