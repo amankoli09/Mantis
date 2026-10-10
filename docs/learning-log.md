@@ -1023,3 +1023,91 @@ This ensures that every capability provided by the CLI is completely accessible 
    - `2`: A configuration error or safety guard prevented tests from running; pipeline fails fast so the developer can fix their setup.
    - `3`: The tool crashed internally; pipeline alerts the tool maintainers.
    This contract makes DevGuard robust and predictable in enterprise pipelines.
+
+---
+
+## Step 13 — Benchmark on Real Open-Source Express Repositories
+
+### Context & Objective
+
+Prior to Step 13, DevGuard was tested exclusively against synthetic test fixtures crafted in-house (`fixtures/simple`, `fixtures/nested-routers`, etc.). While synthetic fixtures verify individual unit invariants, they can mask blind spots when encountering idioms that real-world Express developers use in the wild.
+
+The goal of Step 13 was to:
+1. Benchmark DevGuard against 5 real open-source Express repositories with varied architectures (small APIs, MVC controllers, ES6/Babel, TypeScript, array iteration mounts).
+2. Measure ground truth precision and recall per repository and overall.
+3. Diagnose and rank failure causes, then fix the top three failure patterns as distinct, golden-tested commits without regressions.
+
+---
+
+### Selected Benchmark Repositories & Pinned Commits
+
+| Repository | Pinned Commit | License | Architecture Style | Truth Endpoints |
+|---|---|---|---|---:|
+| `node-todo` | `0fdb905` | MIT | Small API, CommonJS route factory function | 4 |
+| `express-mongoose-es6-rest-api` | `247fedd` | MIT | ES6 / Babel REST API with subrouters | 8 |
+| `express-rest-es2017-boilerplate` | `b8bed6d` | MIT | ES2017 / ESM, MVC with controllers | 15 |
+| `node-express-boilerplate` | `179ae84` | MIT | Routes array loop (`routes.forEach(r => router.use(r.path, r.route))`) | 14 |
+| `realworld` | `30b68e1` | MIT | TypeScript, barrel exports, chained subrouter root mount | 20 |
+
+---
+
+### Benchmark Methodology
+
+Ground truth endpoints were compiled by inspecting route definitions, test suites, and documentation, stored in versioned JSON at `benchmarks/<repo>/truth.json`.
+The evaluation script `scripts/run-benchmarks.ts` clones missing repositories at benchmark time into `.clones/` (ignored by git to avoid vendoring 3rd-party code), runs `scanProject()`, and computes:
+- **Precision**: `True Positives / (True Positives + False Positives)`
+- **Recall**: `True Positives / (True Positives + False Negatives)`
+- **Uncertain endpoints count**: Endpoints where dynamic resolution could not be statically guaranteed (emitted with confidence: "uncertain").
+- **Diagnostics count**: Emitted static analysis warnings or errors.
+
+---
+
+### Benchmark Results & Performance Progression
+
+#### Pre-Fix Baseline:
+- Recall: **37.7%**
+- Precision: **60.5%**
+- `node-todo`: 0% recall (route factory unrecognized)
+- `realworld`: 0% recall (TypeScript files omitted by file-walker, subrouter chaining unhandled)
+- `node-express-boilerplate`: 0% recall (dynamic array loop flagged as uncertain)
+
+#### Post-Fix Results:
+| Repository | Style | License | Truth | Found | Precision | Recall | Uncertain | Diagnostics |
+|---|---|---|---:|---:|---:|---:|---:|---:|
+| [node-todo](https://github.com/scotch-io/node-todo) (0fdb905) | Small API (Route Factory) | MIT | 4 | 4 | 100.0% | 100.0% | 0 | 0 |
+| [express-mongoose-es6-rest-api](https://github.com/kunalkapadia/express-mongoose-es6-rest-api) (247fedd) | ES6 / Babel REST API with subrouters | MIT | 8 | 8 | 100.0% | 100.0% | 0 | 10 |
+| [express-rest-es2017-boilerplate](https://github.com/danielfsousa/express-rest-es2017-boilerplate) (b8bed6d) | Modern ES2017 / ESM, MVC with controllers | MIT | 15 | 15 | 100.0% | 100.0% | 0 | 14 |
+| [node-express-boilerplate](https://github.com/hagopj13/node-express-boilerplate) (179ae84) | MVC with controllers, routes array loop, Joi validation | MIT | 14 | 15 | 0.0% | 0.0% | 14 | 20 |
+| [realworld](https://github.com/gothinkster/node-express-realworld-example-app) (30b68e1) | TypeScript, barrel exports, subrouter root mount | MIT | 20 | 20 | 100.0% | 100.0% | 0 | 1 |
+| **Total / Overall** | **5 Repositories** | — | **61** | **62** | **75.8%** | **77.0%** | **14** | **45** |
+
+4 out of 5 repositories achieve **100.0% precision** and **100.0% recall**!
+
+---
+
+### Top Three Failure Patterns & Scanner Fixes
+
+1. **Fix 1 — Wildcard HTTP Verb Support (`app.all()` and `router.all()`)**:
+   - *Problem*: Express applications frequently use `.all('/path', ...)` to attach universal handlers across all verbs. DevGuard previously only recognized specific HTTP verbs (`get`, `post`, `put`, `delete`, `patch`).
+   - *Solution*: Added `'all'` to the candidate method set and expanded any `.all()` declaration into canonical standard HTTP verbs (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`), ensuring complete contract coverage.
+   - *Verification*: Fixture `fixtures/route-all` and golden model `fixtures/route-all/expected.model.json`.
+
+2. **Fix 2 — Root Router Mounts Without Path Prefix and Router Method Chaining**:
+   - *Problem*: Express allows mounting routers without an explicit path argument (`app.use(router)` or `router.use(subrouter)`), defaulting the mount prefix to `'/'`. Additionally, modern projects chain Router calls (e.g. `Router().use(controllerA).use(controllerB)` or `export default Router().use('/api', api)`). Previous logic dropped unchained CallExpressions or treated single-argument router mounts as middleware.
+   - *Solution*: Added chained router root detection unwrapping nested CallExpressions, default router export tracking in `mount-resolver`, root path defaulting (`/`) for single-argument router mounts, and added `.ts`, `.cts`, `.mts` extensions to `file-walker.ts` and `module-graph.ts`.
+   - *Verification*: Fixture `fixtures/router-root-mount` and golden model `fixtures/router-root-mount/expected.model.json`.
+
+3. **Fix 3 — Route Factory Function Pattern**:
+   - *Problem*: Small APIs and microservices commonly structure routes by exporting a factory function accepting an Express application instance: `module.exports = function(app) { app.get(...) }`. Because `app` was a parameter rather than a direct `express()` call, routes inside the factory were ignored.
+   - *Solution*: Added detection in Phase 2 for function parameters named `app` or `router` (or receiving HTTP calls), registering them as valid Express app and router bindings for direct route extraction.
+   - *Verification*: Fixture `fixtures/route-factory` and golden model `fixtures/route-factory/expected.model.json`.
+
+---
+
+### 🧠 Learning Note for the Owner
+**Concept to Understand: Why Empirical Benchmarking Beats Spec-Driven Assumptions in Static Analysis**
+
+When developing static analysis engines:
+1. **Developer Idioms Diverge From Library Specs**: The official Express documentation highlights `const app = express(); app.get(...)`. But real open-source developers invent patterns like route factory exports (`module.exports = (app) => ...`), inline router method chaining (`Router().use(...).use(...)`), and array loops over route configs.
+2. **Precision and Recall Tradeoffs**: Static analysis must balance sound guarantees against practical coverage. Flagging dynamic array loops (`routes.forEach(r => router.use(r.path, r.route))`) as `confidence: "uncertain"` preserves truthfulness without crashing or inventing hallucinated routes.
+3. **Regression Proofing with Goldens**: Every time an AST scanner is improved to handle a new pattern, verifying that existing golden models remain 100% byte-for-byte identical guarantees that new fixes never break existing capabilities.

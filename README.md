@@ -127,3 +127,26 @@ pnpm format
 # Verify formatting
 pnpm format:check
 ```
+
+---
+
+## 📊 Real-World Open-Source Express Benchmarks
+
+To measure the accuracy of DevGuard's scanner in real-world scenarios, we benchmarked the engine against diverse open-source Express repositories with hand-curated ground truth endpoints:
+
+| Repository | Style | License | Truth | Found | Precision | Recall | Uncertain | Diagnostics |
+|---|---|---|---:|---:|---:|---:|---:|---:|
+| [node-todo](https://github.com/scotch-io/node-todo) (0fdb905) | Small API (Route Factory) | MIT | 4 | 4 | 100.0% | 100.0% | 0 | 0 |
+| [express-mongoose-es6-rest-api](https://github.com/kunalkapadia/express-mongoose-es6-rest-api) (247fedd) | ES6 / Babel REST API with subrouters | MIT | 8 | 8 | 100.0% | 100.0% | 0 | 10 |
+| [express-rest-es2017-boilerplate](https://github.com/danielfsousa/express-rest-es2017-boilerplate) (b8bed6d) | Modern ES2017 / ESM, MVC with controllers | MIT | 15 | 15 | 100.0% | 100.0% | 0 | 14 |
+| [node-express-boilerplate](https://github.com/hagopj13/node-express-boilerplate) (179ae84) | MVC with controllers, routes array loop, Joi validation | MIT | 14 | 15 | 0.0% | 0.0% | 14 | 20 |
+| [realworld](https://github.com/gothinkster/node-express-realworld-example-app) (30b68e1) | TypeScript, barrel exports, subrouter root mount | MIT | 20 | 20 | 100.0% | 100.0% | 0 | 1 |
+| **Total / Overall** | **5 Repositories** | — | **61** | **62** | **75.8%** | **77.0%** | **14** | **45** |
+
+### Benchmark Evaluation & Key Fixes
+
+Through real-world repository evaluations, we identified and fixed top failure patterns:
+1. **Fix 1 — `app.all()` & `router.all()` Expansion**: Handled multi-method wildcard route handlers expanding into standard HTTP verbs (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`).
+2. **Fix 2 — Root Router Mounts & Method Chaining**: Added support for mounting routers without explicit path prefixes (e.g. `app.use(router)`) and chained router declarations (`Router().use(...).use(...)`) across ESM and CommonJS, along with TypeScript source file support.
+3. **Fix 3 — Route Factory Functions**: Added detection for route factories exporting functions that take `app` or `router` parameters (e.g., `module.exports = function(app) { ... }`).
+
