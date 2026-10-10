@@ -16,6 +16,13 @@ export type HttpMethod = z.infer<typeof HttpMethodSchema>;
 export const EffectSchema = z.enum(['read', 'write', 'destructive', 'unknown']);
 export type Effect = z.infer<typeof EffectSchema>;
 
+export const EffectEvidenceSchema = z.object({
+  filePath: z.string(),
+  line: z.number().int().nonnegative(),
+  signal: z.string(),
+});
+export type EffectEvidence = z.infer<typeof EffectEvidenceSchema>;
+
 export const AuthTypeSchema = z.enum(['none', 'bearer', 'apiKey', 'cookie', 'custom', 'unknown']);
 export type AuthType = z.infer<typeof AuthTypeSchema>;
 
@@ -90,6 +97,7 @@ export const EndpointSchema = z
     description: z.string().optional(),
     auth: AuthDefinitionSchema.default({ type: 'unknown' }),
     effect: EffectSchema.default('unknown'),
+    effectEvidence: EffectEvidenceSchema.optional(),
     params: z.array(ParamDefinitionSchema).default([]),
     requestBody: RequestBodyDefinitionSchema.optional(),
     responses: z.array(ResponseDefinitionSchema).default([]),

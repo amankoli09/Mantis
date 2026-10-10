@@ -16,6 +16,7 @@ import {
   type Diagnostic,
   type Endpoint,
   type Effect,
+  type EffectEvidence,
   type HttpMethod,
   type ParamDefinition,
 } from '@devguard/core';
@@ -31,6 +32,7 @@ import {
   inferParamsFromHandler,
   mergeAndSortParams,
 } from './param-inference.js';
+import { inferEffectFromHandler } from './effect-inference.js';
 import type {
   ExtractedRouter,
   ExtractedMount,
@@ -736,10 +738,29 @@ export function extractFileDeclarations(
 
         for (const p of paths) {
           for (const currentMethod of targetMethods) {
+            const baselineEffect = getEffectForMethod(currentMethod);
+            let routeEffect = baselineEffect;
+            let routeEffectEvidence: EffectEvidence | undefined;
+
+            if (
+              handlerResult.resolved &&
+              handlerResult.fnNode &&
+              handlerResult.fnAst &&
+              handlerResult.handlerFilePathForProvenance
+            ) {
+              const inference = inferEffectFromHandler(
+                handlerResult.fnNode,
+                handlerResult.fnAst,
+                handlerResult.handlerFilePathForProvenance,
+                baselineEffect
+              );
+              routeEffect = inference.effect;
+              routeEffectEvidence = inference.effectEvidence;
+            }
+
             // Direct app route
             if (effectiveAppBinding) {
               const methodUpper = currentMethod.toUpperCase() as HttpMethod;
-              const effect = getEffectForMethod(currentMethod);
 
               const activeAppMiddlewares = appUses
                 .filter((u) => u.line < startLine)
@@ -773,7 +794,8 @@ export function extractFileDeclarations(
                   method: methodUpper,
                   path: p,
                   auth: endpointAuth,
-                  effect,
+                  effect: routeEffect,
+                  ...(routeEffectEvidence ? { effectEvidence: routeEffectEvidence } : {}),
                   params: mergedParams,
                   responses: [],
                   middleware: endpointMiddleware,
@@ -806,7 +828,8 @@ export function extractFileDeclarations(
                   method: methodUpper,
                   path: placeholderPath,
                   auth: endpointAuth,
-                  effect,
+                  effect: routeEffect,
+                  ...(routeEffectEvidence ? { effectEvidence: routeEffectEvidence } : {}),
                   params: [],
                   responses: [],
                   middleware: endpointMiddleware,
@@ -839,6 +862,8 @@ export function extractFileDeclarations(
                 rawExpr: diagExpr,
                 inferredParams,
                 routeMiddlewares: routeMiddlewares.length > 0 ? routeMiddlewares : undefined,
+                effect: routeEffect,
+                effectEvidence: routeEffectEvidence,
               });
             }
           }

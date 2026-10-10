@@ -1,0 +1,381 @@
+{
+  "modelVersion": "1.2.0",
+  "project": {
+    "name": "effect-refinement-fixture",
+    "framework": "express",
+    "language": "javascript",
+    "root": "fixtures/effect-refinement/app"
+  },
+  "endpoints": [
+    {
+      "id": "GET /controller-write",
+      "method": "GET",
+      "path": "/controller-write",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "effectEvidence": {
+        "filePath": "fixtures/effect-refinement/app/controller.js",
+        "line": 2,
+        "signal": "mongoose:create"
+      },
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/effect-refinement/app/app.js",
+        "line": 68,
+        "column": 4,
+        "snippet": "app.get('/controller-write', createRecord);"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "DELETE /delete-endpoint",
+      "method": "DELETE",
+      "path": "/delete-endpoint",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "destructive",
+      "effectEvidence": {
+        "filePath": "fixtures/effect-refinement/app/app.js",
+        "line": 63,
+        "signal": "mongoose:findByIdAndDelete"
+      },
+      "params": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": "unknown",
+          "type": "unknown",
+          "provenance": {
+            "kind": "inferred",
+            "filePath": "fixtures/effect-refinement/app/app.js",
+            "line": 63,
+            "snippet": "await User.findByIdAndDelete(req.params.id);"
+          }
+        }
+      ],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/effect-refinement/app/app.js",
+        "line": 62,
+        "column": 4,
+        "snippet": "app.delete('/delete-endpoint', async (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /fetch-post",
+      "method": "GET",
+      "path": "/fetch-post",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "effectEvidence": {
+        "filePath": "fixtures/effect-refinement/app/app.js",
+        "line": 33,
+        "signal": "fetch:POST"
+      },
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/effect-refinement/app/app.js",
+        "line": 32,
+        "column": 4,
+        "snippet": "app.get('/fetch-post', async (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /fs-write",
+      "method": "GET",
+      "path": "/fs-write",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "effectEvidence": {
+        "filePath": "fixtures/effect-refinement/app/app.js",
+        "line": 27,
+        "signal": "fs:writeFileSync"
+      },
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/effect-refinement/app/app.js",
+        "line": 26,
+        "column": 4,
+        "snippet": "app.get('/fs-write', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /knex-del",
+      "method": "GET",
+      "path": "/knex-del",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "destructive",
+      "effectEvidence": {
+        "filePath": "fixtures/effect-refinement/app/app.js",
+        "line": 45,
+        "signal": "knex:del"
+      },
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/effect-refinement/app/app.js",
+        "line": 44,
+        "column": 4,
+        "snippet": "app.get('/knex-del', async (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /mongoose-update",
+      "method": "GET",
+      "path": "/mongoose-update",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "effectEvidence": {
+        "filePath": "fixtures/effect-refinement/app/app.js",
+        "line": 21,
+        "signal": "mongoose:updateOne"
+      },
+      "params": [
+        {
+          "name": "id",
+          "in": "query",
+          "required": "unknown",
+          "type": "unknown",
+          "provenance": {
+            "kind": "inferred",
+            "filePath": "fixtures/effect-refinement/app/app.js",
+            "line": 21,
+            "snippet": "await User.updateOne({ _id: req.query.id }, { name: 'updated' });"
+          }
+        }
+      ],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/effect-refinement/app/app.js",
+        "line": 20,
+        "column": 4,
+        "snippet": "app.get('/mongoose-update', async (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "POST /post-delete",
+      "method": "POST",
+      "path": "/post-delete",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "destructive",
+      "effectEvidence": {
+        "filePath": "fixtures/effect-refinement/app/app.js",
+        "line": 57,
+        "signal": "mongoose:findByIdAndDelete"
+      },
+      "params": [
+        {
+          "name": "id",
+          "in": "body",
+          "required": "unknown",
+          "type": "unknown",
+          "provenance": {
+            "kind": "inferred",
+            "filePath": "fixtures/effect-refinement/app/app.js",
+            "line": 57,
+            "snippet": "await User.findByIdAndDelete(req.body.id);"
+          }
+        }
+      ],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/effect-refinement/app/app.js",
+        "line": 56,
+        "column": 4,
+        "snippet": "app.post('/post-delete', async (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "POST /post-read-only",
+      "method": "POST",
+      "path": "/post-read-only",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "params": [
+        {
+          "name": "id",
+          "in": "body",
+          "required": "unknown",
+          "type": "unknown",
+          "provenance": {
+            "kind": "inferred",
+            "filePath": "fixtures/effect-refinement/app/app.js",
+            "line": 51,
+            "snippet": "const user = await User.findById(req.body.id);"
+          }
+        }
+      ],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/effect-refinement/app/app.js",
+        "line": 50,
+        "column": 4,
+        "snippet": "app.post('/post-read-only', async (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /prisma-create",
+      "method": "GET",
+      "path": "/prisma-create",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "effectEvidence": {
+        "filePath": "fixtures/effect-refinement/app/app.js",
+        "line": 15,
+        "signal": "prisma:create"
+      },
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/effect-refinement/app/app.js",
+        "line": 14,
+        "column": 4,
+        "snippet": "app.get('/prisma-create', async (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /prisma-delete",
+      "method": "GET",
+      "path": "/prisma-delete",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "destructive",
+      "effectEvidence": {
+        "filePath": "fixtures/effect-refinement/app/app.js",
+        "line": 39,
+        "signal": "prisma:delete"
+      },
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/effect-refinement/app/app.js",
+        "line": 38,
+        "column": 4,
+        "snippet": "app.get('/prisma-delete', async (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /safe-read",
+      "method": "GET",
+      "path": "/safe-read",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "read",
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/effect-refinement/app/app.js",
+        "line": 8,
+        "column": 4,
+        "snippet": "app.get('/safe-read', async (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /unresolvable-handler",
+      "method": "GET",
+      "path": "/unresolvable-handler",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "read",
+      "params": [],
+      "responses": [],
+      "middleware": [],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/effect-refinement/app/app.js",
+        "line": 71,
+        "column": 4,
+        "snippet": "app.get('/unresolvable-handler', getDynamicHandler());"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "DG-I001",
+      "severity": "info",
+      "message": "Route handler could not be statically resolved: getDynamicHandler()",
+      "file": "fixtures/effect-refinement/app/app.js",
+      "line": 71
+    }
+  ]
+}

@@ -46,6 +46,7 @@ Each item in the `endpoints` array describes a unique HTTP route:
 | `description`      | `string`               |              No               | Human-readable explanation extracted from comments.                                                                 |
 | `auth`             | `object`               |  Yes (defaults to `unknown`)  | Authentication requirement (`type`: `'none' \| 'bearer' \| 'apiKey' \| 'cookie' \| 'custom' \| 'unknown'`) and optional `evidence` (`filePath`, `line`, `signal`). |
 | `effect`           | `enum`                 |  Yes (defaults to `unknown`)  | Mutation behavior: `'read' \| 'write' \| 'destructive' \| 'unknown'`. Safe mode only runs `'read'` by default.      |
+| `effectEvidence`   | `object`               |              No               | Provenance evidence for effect refinement (`filePath`, `line`, `signal`), attached when handler evidence raises or confirms mutation behavior. |
 | `params`           | `ParamDefinition[]`    |    Yes (defaults to `[]`)     | Parameters extracted from path segments, query strings, headers, or request body.                                   |
 | `requestBody`      | `object`               |              No               | Expected payload structure, content type, and whole-payload schema (see single source of truth rule below).         |
 | `responses`        | `ResponseDefinition[]` |    Yes (defaults to `[]`)     | Known HTTP status codes (e.g. `200`, `201`, `400`) and schemas.                                                     |
@@ -54,6 +55,44 @@ Each item in the `endpoints` array describes a unique HTTP route:
 | `provenance`       | `Provenance`           |              Yes              | Source code location where this endpoint was defined (file, line number, snippet).                                  |
 | `confidence`       | `enum`                 | Yes (defaults to `confirmed`) | Certainty status: `'confirmed' \| 'uncertain'`.                                                                     |
 | `confidenceReason` | `DiagnosticCode`       |    Required if `uncertain`    | Diagnostic code explaining why the route is uncertain (e.g., `'DG-R002'`).                                          |
+
+### Effect Refinement & Monotonic Risk Rule (Step 8c)
+
+The initial baseline effect is derived from the HTTP verb:
+- `GET`, `HEAD`, `OPTIONS` → `'read'`
+- `POST`, `PUT`, `PATCH` → `'write'`
+- `DELETE` → `'destructive'`
+- Other / custom → `'unknown'`
+
+Static analysis examines the handler AST (one hop from route declaration or controller import, plus 1-hop local helper calls) for positive database or filesystem mutation evidence.
+
+#### Monotonic Risk Rule
+Evidence can **raise** the risk level (`read` < `write` < `destructive`), but **never lower it**:
+- If evidence indicates a higher risk than the HTTP method suggests (e.g. `User.create()` behind `GET` or `User.delete()` behind `POST`), the effect is raised to `'write'` or `'destructive'`, with `effectEvidence` pointing to the call line and signal.
+- If a `POST` handler only reads data, its effect remains `'write'`.
+- If a handler is unresolvable (`DG-I001`), the effect stays at its HTTP method baseline (or `unknown`).
+- Unknown or arbitrary function calls are not classified.
+
+#### Known-Library Rule Table
+
+| Library / Category | Method / Call Signature | Inferred Effect | Provenance Signal |
+| :----------------- | :---------------------- | :-------------- | :---------------- |
+| **Prisma** | `prisma.<model>.create`, `createMany`, `update`, `updateMany`, `upsert`, `$executeRaw` | `write` | `prisma:<method>` |
+| **Prisma** | `prisma.<model>.delete`, `deleteMany` | `destructive` | `prisma:<method>` |
+| **Mongoose** | `<Model>.create`, `insertMany`, `updateOne`, `updateMany`, `findOneAndUpdate`, `findByIdAndUpdate`, `save` | `write` | `mongoose:<method>` |
+| **Mongoose** | `<Model>.deleteOne`, `deleteMany`, `findOneAndDelete`, `findByIdAndDelete`, `findOneAndRemove`, `remove` | `destructive` | `mongoose:<method>` |
+| **Sequelize** | `<Model>.bulkCreate`, `upsert` | `write` | `sequelize:<method>` |
+| **Sequelize** | `<Model>.destroy`, `truncate` | `destructive` | `sequelize:<method>` |
+| **Knex** | `knex(...).insert()`, `.update()` | `write` | `knex:<method>` |
+| **Knex** | `knex(...).del()`, `.delete()`, `.truncate()` | `destructive` | `knex:<method>` |
+| **pg (node-postgres)** | `client.query('INSERT ...' \| 'UPDATE ...')` | `write` | `pg:query:<verb>` |
+| **pg (node-postgres)** | `client.query('DELETE ...' \| 'DROP ...' \| 'TRUNCATE ...')` | `destructive` | `pg:query:<verb>` |
+| **Node.js fs** | `fs.writeFile`, `writeFileSync`, `appendFile`, `copyFile` | `write` | `fs:<method>` |
+| **Node.js fs** | `fs.unlink`, `unlinkSync`, `rm`, `rmSync`, `rmdir` | `destructive` | `fs:<method>` |
+| **Fetch / Axios** | `fetch(url, { method: 'POST' \| 'PUT' \| 'PATCH' })`, `axios.post`, `put`, `patch` | `write` | `fetch:<method>` / `axios:<method>` |
+| **Fetch / Axios** | `fetch(url, { method: 'DELETE' })`, `axios.delete` | `destructive` | `fetch:DELETE` / `axios:delete` |
+| **Generic DB** | `<db>.insert()`, `<item>.save()`, `<repo>.update()` | `write` | `db:<method>` |
+| **Generic DB** | `<db>.delete()`, `<repo>.del()`, `<model>.remove()` | `destructive` | `db:<method>` |
 
 ### Parameters vs Request Body Rule (Single Source of Truth)
 
