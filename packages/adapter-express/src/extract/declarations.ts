@@ -33,6 +33,12 @@ import {
   mergeAndSortParams,
 } from './param-inference.js';
 import { inferEffectFromHandler } from './effect-inference.js';
+import {
+  extractZodSchemasFromHandler,
+  extractZodSchemasFromMiddlewareCall,
+  buildParamsAndBodyFromZod,
+  mergeZodIntoParams,
+} from './zod-extractor.js';
 import type {
   ExtractedRouter,
   ExtractedMount,
@@ -720,6 +726,60 @@ export function extractFileDeclarations(
         );
       }
 
+      // Extract Zod schemas from middleware calls and handler body
+      const zodSchemas = [
+        // 1. Route-level middleware calls
+        ...(handlerArgs.length > 1
+          ? handlerArgs
+              .slice(0, handlerArgs.length - 1)
+              .filter((mw): mw is NonNullable<typeof mw> => Boolean(mw))
+              .flatMap((mw) =>
+                extractZodSchemasFromMiddlewareCall(
+                  mw,
+                  pathNode.scope,
+                  ast,
+                  relFile,
+                  filePathForProvenance,
+                  moduleGraph,
+                  astCache
+                )
+              )
+          : []),
+        // 2. Resolved middleware function ASTs
+        ...routeMiddlewares
+          .filter((mw) => mw.resolved && mw.fnNode)
+          .flatMap((mw) =>
+            extractZodSchemasFromHandler(
+              mw.fnNode!,
+              ast,
+              pathNode.scope,
+              mw.fnFilePath ?? relFile,
+              mw.fnFilePath ?? filePathForProvenance,
+              moduleGraph,
+              astCache
+            )
+          ),
+        // 3. Route handler function body
+        ...(handlerResult.resolved && handlerResult.fnNode && handlerResult.fnAst
+          ? extractZodSchemasFromHandler(
+              handlerResult.fnNode,
+              handlerResult.fnAst,
+              pathNode.scope,
+              handlerResult.handlerFile ?? relFile,
+              handlerResult.handlerFilePathForProvenance ?? filePathForProvenance,
+              moduleGraph,
+              astCache
+            )
+          : []),
+      ];
+
+      const { params: zodParams, requestBody: zodRequestBody } =
+        buildParamsAndBodyFromZod(zodSchemas);
+
+      if (zodParams.length > 0) {
+        inferredParams = mergeZodIntoParams(inferredParams, zodParams);
+      }
+
       const startLine = memberExpr.property.loc?.start.line ?? node.loc?.start.line ?? 1;
       const startCol = memberExpr.property.loc?.start.column ?? node.loc?.start.column;
       const snippet = codeLines[startLine - 1]?.trim();
@@ -797,6 +857,7 @@ export function extractFileDeclarations(
                   effect: routeEffect,
                   ...(routeEffectEvidence ? { effectEvidence: routeEffectEvidence } : {}),
                   params: mergedParams,
+                  ...(zodRequestBody ? { requestBody: zodRequestBody } : {}),
                   responses: [],
                   middleware: endpointMiddleware,
                   mountChain: [],
@@ -831,6 +892,7 @@ export function extractFileDeclarations(
                   effect: routeEffect,
                   ...(routeEffectEvidence ? { effectEvidence: routeEffectEvidence } : {}),
                   params: [],
+                  ...(zodRequestBody ? { requestBody: zodRequestBody } : {}),
                   responses: [],
                   middleware: endpointMiddleware,
                   mountChain: [],
@@ -861,6 +923,7 @@ export function extractFileDeclarations(
                 isDynamic: !res.isResolvable,
                 rawExpr: diagExpr,
                 inferredParams,
+                requestBody: zodRequestBody,
                 routeMiddlewares: routeMiddlewares.length > 0 ? routeMiddlewares : undefined,
                 effect: routeEffect,
                 effectEvidence: routeEffectEvidence,

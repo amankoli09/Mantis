@@ -6,12 +6,15 @@ import { resolveEndpointUrl } from '../helpers/planner-helpers.js';
 
 const MAX_FIELDS_CAP = 5;
 
-function getMismatchedValue(paramType?: string): unknown {
-  if (paramType === 'number') {
+function getMismatchedValue(paramType?: string, paramSchema?: Record<string, unknown>): unknown {
+  if (paramType === 'number' || paramSchema?.type === 'number') {
     return 'not-a-number';
   }
-  if (paramType === 'boolean') {
+  if (paramType === 'boolean' || paramSchema?.type === 'boolean') {
     return 'not-a-boolean';
+  }
+  if (paramType === 'array' || paramSchema?.type === 'array') {
+    return 'not-an-array';
   }
   // For strings and unknown, sending a number is the classic wrong-type test
   return 12345;
@@ -45,7 +48,7 @@ export const wrongTypeGenerator: GeneratorPlugin = {
         const bodyObj: Record<string, unknown> = {};
         for (const p of bodyParams) {
           if (p.name === targetParam.name) {
-            bodyObj[p.name] = getMismatchedValue(p.type);
+            bodyObj[p.name] = getMismatchedValue(p.type, p.schema);
           } else {
             bodyObj[p.name] = p.type === 'number' ? 42 : 'test';
           }
@@ -77,7 +80,7 @@ export const wrongTypeGenerator: GeneratorPlugin = {
         const search = new URLSearchParams();
         for (const p of queryParams) {
           if (p.name === targetParam.name) {
-            search.set(p.name, String(getMismatchedValue(p.type)));
+            search.set(p.name, String(getMismatchedValue(p.type, p.schema)));
           } else {
             search.set(p.name, 'test');
           }

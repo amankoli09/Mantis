@@ -1,5 +1,5 @@
 import type { Node } from '@babel/types';
-import type { Diagnostic, Endpoint, ParamDefinition, Provenance, Effect, EffectEvidence } from '@devguard/core';
+import type { Diagnostic, Endpoint, ParamDefinition, Provenance, Effect, EffectEvidence, RequestBodyDefinition } from '@devguard/core';
 
 export interface ExtractedMiddleware {
   name: string;
@@ -26,6 +26,7 @@ export interface PendingRouterRoute {
   isDynamic: boolean;
   rawExpr?: string;
   inferredParams?: ParamDefinition[];
+  requestBody?: RequestBodyDefinition;
   routeMiddlewares?: ExtractedMiddleware[];
   effect?: Effect;
   effectEvidence?: EffectEvidence;

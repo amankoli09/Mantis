@@ -5,6 +5,7 @@ import {
   emptyBodyGenerator,
   missingFieldGenerator,
   wrongTypeGenerator,
+  boundaryValueGenerator,
 } from '../src/index.js';
 
 const mockGetEndpoint: Endpoint = {
@@ -175,5 +176,77 @@ describe('Input Generators', () => {
     const countCase = cases.find((c) => c.field === 'count');
     const body2 = JSON.parse(countCase?.request.body ?? '{}');
     expect(typeof body2.count).toBe('string');
+  });
+
+  it('boundary-values generates test cases for min/max and string constraints', () => {
+    const constrainedEndpoint: Endpoint = {
+      id: 'POST /api/constrained',
+      method: 'POST',
+      path: '/api/constrained',
+      effect: 'write',
+      confidence: 'confirmed',
+      auth: { type: 'unknown' },
+      params: [
+        {
+          name: 'age',
+          in: 'body',
+          required: true,
+          type: 'number',
+          schema: { type: 'number', minimum: 18, maximum: 99 },
+          provenance: { kind: 'resolved', filePath: 'schema.js', line: 10 },
+        },
+        {
+          name: 'username',
+          in: 'body',
+          required: true,
+          type: 'string',
+          schema: { type: 'string', minLength: 3, maxLength: 20 },
+          provenance: { kind: 'resolved', filePath: 'schema.js', line: 11 },
+        },
+        {
+          name: 'email',
+          in: 'body',
+          required: true,
+          type: 'string',
+          schema: { type: 'string', format: 'email' },
+          provenance: { kind: 'resolved', filePath: 'schema.js', line: 12 },
+        },
+      ],
+      responses: [],
+      middleware: [],
+      provenance: { kind: 'literal', filePath: 'routes.js', line: 5 },
+    };
+
+    const writeAllowedConfig: RunnerConfig = {
+      ...baseConfig,
+      allowedEffects: ['read', 'write'],
+    };
+
+    const cases = boundaryValueGenerator.generate(constrainedEndpoint, writeAllowedConfig);
+    expect(cases.length).toBeGreaterThanOrEqual(4);
+
+    // Below minimum test: age = 17
+    const belowMinCase = cases.find((c) => c.id.includes('below-min'));
+    expect(belowMinCase).toBeDefined();
+    const belowMinBody = JSON.parse(belowMinCase?.request.body ?? '{}');
+    expect(belowMinBody.age).toBe(17);
+
+    // Above maximum test: age = 100
+    const aboveMaxCase = cases.find((c) => c.id.includes('above-max'));
+    expect(aboveMaxCase).toBeDefined();
+    const aboveMaxBody = JSON.parse(aboveMaxCase?.request.body ?? '{}');
+    expect(aboveMaxBody.age).toBe(100);
+
+    // Too short string test: username length < 3
+    const tooShortCase = cases.find((c) => c.id.includes('too-short'));
+    expect(tooShortCase).toBeDefined();
+    const tooShortBody = JSON.parse(tooShortCase?.request.body ?? '{}');
+    expect(tooShortBody.username.length).toBe(2);
+
+    // Too long string test: username length > 20
+    const tooLongCase = cases.find((c) => c.id.includes('too-long'));
+    expect(tooLongCase).toBeDefined();
+    const tooLongBody = JSON.parse(tooLongCase?.request.body ?? '{}');
+    expect(tooLongBody.username.length).toBe(21);
   });
 });

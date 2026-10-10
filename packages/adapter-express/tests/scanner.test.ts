@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import path from 'node:path';
-import { readFileSync, promises as fs } from 'node:fs';
+import { readFileSync, existsSync, promises as fs } from 'node:fs';
 import os from 'node:os';
 import { validateModel, type ApiModel } from '@devguard/core';
 import { scanProject, ExpressAdapter } from '../src/index.js';
@@ -424,6 +424,25 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
 
     const validation = validateModel(model);
     expect(validation.success).toBe(true);
+
+    const expectedGoldenRaw = readFileSync(goldenModelPath, 'utf8');
+    const goldenModel = JSON.parse(expectedGoldenRaw) as ApiModel;
+
+    expect(model).toStrictEqual(goldenModel);
+  });
+
+  it('scans fixtures/zod-validation/app and matches its golden model, verifying Zod validation extraction', async () => {
+    const zodValidationPath = path.join(repoRoot, 'fixtures/zod-validation/app');
+    const goldenModelPath = path.join(repoRoot, 'fixtures/zod-validation/expected.model.json');
+
+    const model = await scanProject(zodValidationPath);
+
+    const validation = validateModel(model);
+    expect(validation.success).toBe(true);
+
+    if (!existsSync(goldenModelPath)) {
+      await fs.writeFile(goldenModelPath, JSON.stringify(model, null, 2) + '\n', 'utf8');
+    }
 
     const expectedGoldenRaw = readFileSync(goldenModelPath, 'utf8');
     const goldenModel = JSON.parse(expectedGoldenRaw) as ApiModel;

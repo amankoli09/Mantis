@@ -1,0 +1,506 @@
+{
+  "modelVersion": "1.2.0",
+  "project": {
+    "name": "zod-validation-fixture",
+    "framework": "express",
+    "language": "javascript",
+    "root": "fixtures/zod-validation/app"
+  },
+  "endpoints": [
+    {
+      "id": "POST /products",
+      "method": "POST",
+      "path": "/products",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "params": [
+        {
+          "name": "price",
+          "in": "body",
+          "required": true,
+          "type": "number",
+          "schema": {
+            "type": "number",
+            "minimum": 0
+          },
+          "provenance": {
+            "kind": "resolved",
+            "filePath": "fixtures/zod-validation/app/app.js",
+            "line": 20
+          }
+        },
+        {
+          "name": "sku",
+          "in": "body",
+          "required": true,
+          "type": "string",
+          "schema": {
+            "type": "string",
+            "minLength": 3
+          },
+          "provenance": {
+            "kind": "resolved",
+            "filePath": "fixtures/zod-validation/app/app.js",
+            "line": 19
+          }
+        }
+      ],
+      "requestBody": {
+        "contentType": "application/json",
+        "required": true,
+        "schema": {
+          "type": "object",
+          "properties": {
+            "sku": {
+              "type": "string",
+              "minLength": 3
+            },
+            "price": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "sku",
+            "price"
+          ]
+        },
+        "provenance": {
+          "kind": "resolved",
+          "filePath": "fixtures/zod-validation/app/app.js",
+          "line": 18
+        }
+      },
+      "responses": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/zod-validation/app/app.js",
+            "line": 6,
+            "column": 8
+          }
+        },
+        {
+          "name": "validate",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/zod-validation/app/app.js",
+            "line": 48,
+            "column": 22
+          }
+        }
+      ],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/zod-validation/app/app.js",
+        "line": 48,
+        "column": 4,
+        "snippet": "app.post('/products', validate(productSchema), (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /search",
+      "method": "GET",
+      "path": "/search",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "read",
+      "params": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "type": "number",
+          "schema": {
+            "type": "number",
+            "maximum": 100
+          },
+          "provenance": {
+            "kind": "resolved",
+            "filePath": "fixtures/zod-validation/app/app.js",
+            "line": 25
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "required": true,
+          "type": "string",
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          },
+          "provenance": {
+            "kind": "resolved",
+            "filePath": "fixtures/zod-validation/app/app.js",
+            "line": 24
+          }
+        }
+      ],
+      "responses": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/zod-validation/app/app.js",
+            "line": 6,
+            "column": 8
+          }
+        }
+      ],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/zod-validation/app/app.js",
+        "line": 53,
+        "column": 4,
+        "snippet": "app.get('/search', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "GET /untyped",
+      "method": "GET",
+      "path": "/untyped",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "read",
+      "params": [],
+      "responses": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/zod-validation/app/app.js",
+            "line": 6,
+            "column": 8
+          }
+        }
+      ],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/zod-validation/app/app.js",
+        "line": 59,
+        "column": 4,
+        "snippet": "app.get('/untyped', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "POST /users",
+      "method": "POST",
+      "path": "/users",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "params": [
+        {
+          "name": "age",
+          "in": "body",
+          "required": true,
+          "type": "number",
+          "schema": {
+            "type": "number",
+            "minimum": 18,
+            "maximum": 120
+          },
+          "provenance": {
+            "kind": "resolved",
+            "filePath": "fixtures/zod-validation/app/app.js",
+            "line": 11
+          }
+        },
+        {
+          "name": "avatar",
+          "in": "body",
+          "required": true,
+          "type": "string",
+          "schema": {
+            "type": "string",
+            "nullable": true
+          },
+          "provenance": {
+            "kind": "resolved",
+            "filePath": "fixtures/zod-validation/app/app.js",
+            "line": 14
+          }
+        },
+        {
+          "name": "bio",
+          "in": "body",
+          "required": false,
+          "type": "string",
+          "schema": {
+            "type": "string"
+          },
+          "provenance": {
+            "kind": "resolved",
+            "filePath": "fixtures/zod-validation/app/app.js",
+            "line": 13
+          }
+        },
+        {
+          "name": "email",
+          "in": "body",
+          "required": true,
+          "type": "string",
+          "schema": {
+            "type": "string",
+            "format": "email"
+          },
+          "provenance": {
+            "kind": "resolved",
+            "filePath": "fixtures/zod-validation/app/app.js",
+            "line": 10
+          }
+        },
+        {
+          "name": "name",
+          "in": "body",
+          "required": true,
+          "type": "string",
+          "schema": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "provenance": {
+            "kind": "resolved",
+            "filePath": "fixtures/zod-validation/app/app.js",
+            "line": 9
+          }
+        },
+        {
+          "name": "role",
+          "in": "body",
+          "required": true,
+          "type": "string",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "member",
+              "guest"
+            ]
+          },
+          "provenance": {
+            "kind": "resolved",
+            "filePath": "fixtures/zod-validation/app/app.js",
+            "line": 12
+          }
+        },
+        {
+          "name": "tags",
+          "in": "body",
+          "required": true,
+          "type": "array",
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "provenance": {
+            "kind": "resolved",
+            "filePath": "fixtures/zod-validation/app/app.js",
+            "line": 15
+          }
+        }
+      ],
+      "requestBody": {
+        "contentType": "application/json",
+        "required": true,
+        "schema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 50
+            },
+            "email": {
+              "type": "string",
+              "format": "email"
+            },
+            "age": {
+              "type": "number",
+              "minimum": 18,
+              "maximum": 120
+            },
+            "role": {
+              "type": "string",
+              "enum": [
+                "admin",
+                "member",
+                "guest"
+              ]
+            },
+            "bio": {
+              "type": "string"
+            },
+            "avatar": {
+              "type": "string",
+              "nullable": true
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "name",
+            "email",
+            "age",
+            "role",
+            "avatar",
+            "tags"
+          ]
+        },
+        "provenance": {
+          "kind": "resolved",
+          "filePath": "fixtures/zod-validation/app/app.js",
+          "line": 8
+        }
+      },
+      "responses": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/zod-validation/app/app.js",
+            "line": 6,
+            "column": 8
+          }
+        }
+      ],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/zod-validation/app/app.js",
+        "line": 36,
+        "column": 4,
+        "snippet": "app.post('/users', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    },
+    {
+      "id": "PUT /users/:id",
+      "method": "PUT",
+      "path": "/users/:id",
+      "auth": {
+        "type": "unknown"
+      },
+      "effect": "write",
+      "params": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "description": "User identifier extracted from path segment :id.",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/zod-validation/app/app.js",
+            "line": 42
+          }
+        },
+        {
+          "name": "id",
+          "in": "body",
+          "required": true,
+          "type": "string",
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provenance": {
+            "kind": "resolved",
+            "filePath": "fixtures/zod-validation/app/schemas.js",
+            "line": 4
+          }
+        },
+        {
+          "name": "isActive",
+          "in": "body",
+          "required": true,
+          "type": "boolean",
+          "schema": {
+            "type": "boolean"
+          },
+          "provenance": {
+            "kind": "resolved",
+            "filePath": "fixtures/zod-validation/app/schemas.js",
+            "line": 5
+          }
+        }
+      ],
+      "requestBody": {
+        "contentType": "application/json",
+        "required": true,
+        "schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "isActive": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "id",
+            "isActive"
+          ]
+        },
+        "provenance": {
+          "kind": "resolved",
+          "filePath": "fixtures/zod-validation/app/schemas.js",
+          "line": 3
+        }
+      },
+      "responses": [],
+      "middleware": [
+        {
+          "name": "express.json",
+          "provenance": {
+            "kind": "literal",
+            "filePath": "fixtures/zod-validation/app/app.js",
+            "line": 6,
+            "column": 8
+          }
+        }
+      ],
+      "mountChain": [],
+      "provenance": {
+        "kind": "literal",
+        "filePath": "fixtures/zod-validation/app/app.js",
+        "line": 42,
+        "column": 4,
+        "snippet": "app.put('/users/:id', (req, res) => {"
+      },
+      "confidence": "confirmed",
+      "confidenceReason": null
+    }
+  ],
+  "diagnostics": []
+}

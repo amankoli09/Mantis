@@ -97,12 +97,31 @@ Evidence can **raise** the risk level (`read` < `write` < `destructive`), but **
 ### Parameters vs Request Body Rule (Single Source of Truth)
 
 - **`params` is the single source of truth** for all individual field-level parameter accesses across every location (`'path'`, `'query'`, `'header'`, and `'body'`).
-  - When static analysis infers individual body field accesses from handler code (e.g. `req.body.email` or `const { email } = req.body`), they are recorded in `params` with `in: 'body'`, `required: 'unknown'`, and `type: 'unknown'`.
-- **`requestBody` holds only whole-payload metadata**:
+  - When static analysis infers individual body field accesses from handler code without schemas, they are recorded in `params` with `in: 'body'`, `required: 'unknown'`, and `type: 'unknown'`.
+- **`requestBody` holds whole-payload metadata**:
   - Transport-level metadata (such as `contentType: 'application/json'`).
-  - Top-level schema validation definitions (such as Zod or Joi schemas in Step 8d).
-  - It does **not** duplicate individual field extractions.
+  - Top-level schema validation definitions (such as Zod schemas extracted in Step 8d).
+  - Provenance linking to the schema definition line.
   - If no whole-payload schema or transport metadata is proven by the scanner, the `requestBody` property is omitted.
+
+### Zod Validation Extraction (Step 8d)
+
+When a route handler or middleware uses a Zod schema (`schema.parse(req.body)`, `schema.safeParse(req.query)`, `validate(schema)` middleware, or 1-hop imported schema):
+1. **Authoritative Field Types & Required Status**:
+   - Primitive types (`string`, `number`, `boolean`, `enum`, `array`, `object`) replace inferred `'unknown'` types.
+   - Modifiers (`optional`, `nullable`, `nullish`) resolve `required` to `false` or `true`, setting `nullable: true` when appropriate.
+   - Any unsupported or custom type (`z.custom()`, `z.any()`, `z.date()`) remains `'unknown'`.
+2. **Field-Level JSON Schema Constraints**:
+   - `email` -> `{ format: 'email' }`
+   - `uuid` -> `{ format: 'uuid' }`
+   - `min` / `gte` -> `{ minimum: N }` (numbers), `{ minLength: N }` (strings), `{ minItems: N }` (arrays)
+   - `max` / `lte` -> `{ maximum: N }` (numbers), `{ maxLength: N }` (strings), `{ maxItems: N }` (arrays)
+   - `enum` -> `{ enum: [...] }`
+3. **Resolved Provenance**:
+   - Each parameter's provenance is `{ kind: 'resolved', filePath, line }`, linking directly to the schema definition line of that field.
+   - `requestBody.schema` receives `{ kind: 'resolved', filePath, line }`, linking directly to the schema declaration line.
+4. **Targeted Test Generation**:
+   - Downstream generators (`boundary-values`, `wrong-type`, `valid-baseline`) consume these schema constraints to synthesize targeted boundary tests (e.g. `below-min`, `above-max`, `too-short`, `too-long`, `invalid-email`, `invalid-uuid`, `invalid-enum`).
 
 ---
 

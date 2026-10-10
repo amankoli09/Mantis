@@ -4,7 +4,17 @@ import type { TestCase } from '../schema/test-engine.js';
 import type { GeneratorPlugin } from '../plugins/types.js';
 import { resolveEndpointUrl } from '../helpers/planner-helpers.js';
 
-function getBaselineValue(paramName: string, paramType?: string): unknown {
+function getBaselineValue(paramName: string, paramType?: string, paramSchema?: Record<string, unknown>): unknown {
+  if (paramSchema) {
+    if (Array.isArray(paramSchema.enum) && paramSchema.enum.length > 0) {
+      return paramSchema.enum[0];
+    }
+    if (paramSchema.format === 'email') return 'user@example.com';
+    if (paramSchema.format === 'uuid') return '123e4567-e89b-12d3-a456-426614174000';
+    if (typeof paramSchema.minimum === 'number') return paramSchema.minimum;
+    if (typeof paramSchema.minLength === 'number') return 'test'.padEnd(paramSchema.minLength, 'x');
+  }
+
   const lower = paramName.toLowerCase();
   if (lower.includes('email')) return 'user@example.com';
   if (lower.includes('name')) return 'test-user';
@@ -28,7 +38,7 @@ export const validBaselineGenerator: GeneratorPlugin = {
     if (queryParams.length > 0) {
       const search = new URLSearchParams();
       for (const q of queryParams) {
-        search.set(q.name, String(getBaselineValue(q.name, q.type)));
+        search.set(q.name, String(getBaselineValue(q.name, q.type, q.schema)));
       }
       finalUrl += `?${search.toString()}`;
     }
@@ -53,7 +63,7 @@ export const validBaselineGenerator: GeneratorPlugin = {
         if (b.type === 'unknown') {
           baselineConfidence = 'low';
         }
-        bodyObj[b.name] = getBaselineValue(b.name, b.type);
+        bodyObj[b.name] = getBaselineValue(b.name, b.type, b.schema);
       }
       body = JSON.stringify(bodyObj);
     }

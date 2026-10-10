@@ -1165,3 +1165,49 @@ DevGuard implements pattern matchers for the top Node.js data layer and mutation
 ### Verification and Regression Safety
 - **Fixture First**: Created `fixtures/effect-refinement/` exercising safe read, DB writes behind GET, destructive calls behind GET, POST read-only retention, POST deletion escalation, 1-hop controller resolution, and dynamic unresolvable handlers.
 - **Strict Golden Model Verification**: Schema validation and provenance line checks verified across all 11 golden models with zero regressions.
+
+---
+
+## Step 8d: Zod Validation Extraction (Issue #12)
+
+### Overview
+
+In Step 8d, we implemented Zod validation extraction for Express route handlers and middleware.
+Previously, handler inference could only detect accessed properties (`req.body.x`, `req.query.y`) with `unknown` types and `unknown` required status. When an endpoint validates input using a Zod schema (`schema.parse(req.body)`, `schema.safeParse(req.query)`, `validate(schema)` middleware, or 1-hop imported schema), DevGuard now extracts real types, required status, and constraints, populating `params` and `requestBody.schema` with `resolved` provenance pointing directly to the schema definition line.
+
+---
+
+### Key Architectural Concepts
+
+#### 1. Zod AST Extraction & Scope Resolution (`zod-extractor.ts`)
+- **Direct & Chained Zod Calls**: Unwraps chained calls (e.g. `z.string().min(3).max(50).email().optional()`).
+- **Base Type Extraction**: Supports `string`, `number`, `boolean`, `enum`, `array`, `object`. Any unsupported type (`z.custom()`, `z.any()`, `z.date()`) remains `unknown`.
+- **Modifiers**:
+  - `optional`: Marks `required = false`.
+  - `nullable` / `nullish`: Marks `nullable = true`.
+  - `min` / `gte`: Extracted as `minimum` (numbers), `minLength` (strings), `minItems` (arrays).
+  - `max` / `lte`: Extracted as `maximum` (numbers), `maxLength` (strings), `maxItems` (arrays).
+  - `email`: Extracted as `{ format: 'email' }`.
+  - `uuid`: Extracted as `{ format: 'uuid' }`.
+- **Scope & 1-Hop Import Resolution**: Resolves schema identifiers in local scope and across imported modules via the module graph (`resolveZodSchemaIdentifier`).
+- **Middleware Extraction**: Detects `validate(schema)`, `validateBody(schema)`, `validateQuery(schema)`, and schema maps `validate({ body: bSchema, query: qSchema })`.
+
+#### 2. Authoritative Merge & Resolved Provenance
+- Inferred unknown parameters are merged with authoritative Zod parameters (`mergeZodIntoParams`).
+- Any Zod field defined in the schema is added to `params` even if not referenced directly in handler code.
+- Parameter provenance is set to `{ kind: 'resolved', filePath, line }`, linking directly to the line number where the field is declared.
+- Whole-object schema is populated on `requestBody.schema` with `{ kind: 'resolved', filePath, line }` linking to the schema declaration.
+
+#### 3. Targeted Test Generators (`boundaryValueGenerator`)
+- A new generator `boundary-values` generates targeted tests only for endpoints having fields with schema constraints:
+  - `below-min` / `above-max`: Tests boundary numerical limits.
+  - `too-short` / `too-long`: Tests string min/max length constraints.
+  - `invalid-email` / `invalid-uuid`: Tests format validation.
+  - `invalid-enum`: Tests enum membership validation.
+- Existing generators (`wrong-type`, `valid-baseline`) take `param.schema` constraints into account to produce valid baselines and mismatched types without producing false negatives.
+
+---
+
+### Verification and Regression Safety
+- **Fixture First**: Created `fixtures/zod-validation/` testing inline `schema.parse`, 1-hop imported schema from `schemas.js`, `validate(schema)` middleware, and query parameter validation.
+- **Strict Golden Model & Provenance Line Verification**: Validated across all 12 golden models (`golden-model-validation.test.ts`, `provenance-line-check.test.ts`) with zero regressions.

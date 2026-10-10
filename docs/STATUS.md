@@ -29,6 +29,7 @@ Phase 1 focuses on Node.js/Express backends, parsing JavaScript ASTs to extract 
 | **Step 8a** | Parameter & body-field inference (`req.params`, `req.query`, `req.body`), `DG-I001` unresolvable handler                    | **Done** | PR #4 (`4c71850`)                  |
 | **Step 8b** | Middleware chain order & authentication detection (`bearer`, `apiKey`, `cookie`, `custom`), `DG-I002` unresolved middleware | **Done** | PR #6 (`8c03227`)                  |
 | **Step 8c** | Effect refinement from handler bodies (Prisma, Mongoose, Sequelize, Knex, pg, fs, fetch, monotonic risk rule)              | **Done** | Issue #11                          |
+| **Step 8d** | Zod validation extraction (handler `parse`/`safeParse`, `validate(schema)` middleware, field constraints, resolved provenance, targeted test generators) | **Done** | Issue #12                          |
 | **Step 9**  | Config file, safe HTTP runner, host guard, limits, secret redaction, session recording (`@devguard/runner`)                 | **Done** | PR #15 (`c9d0603`)                 |
 | **Step 10** | Test planner, input generators, response oracles, planted-bugs fixture, Report schema (`@devguard/core`)                    | **Done** | PR #8 (`feat-test-engine-step-10`) |
 | **Step 12** | CLI `devguard scan`, `test`, `report`, and `init` commands with terminal formatting & JSON output (`@devguard/cli`)         | **Done** | PR #9 (`feat-cli-step-12`)         |

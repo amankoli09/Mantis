@@ -31,6 +31,7 @@ const GOLDEN_FILES = [
   'fixtures/router-root-mount/expected.model.json',
   'fixtures/route-factory/expected.model.json',
   'fixtures/effect-refinement/expected.model.json',
+  'fixtures/zod-validation/expected.model.json',
 ] as const;
 
 describe('Golden model files — schema validation', () => {
