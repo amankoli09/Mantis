@@ -8,6 +8,7 @@ import type {
   CallExpression,
   ExportDefaultDeclaration,
   AssignmentExpression,
+  Function as FunctionNode,
 } from '@babel/types';
 import {
   createDiagnostic,
@@ -349,6 +350,37 @@ export function extractFileDeclarations(
           callExpressionRouters.set(right as CallExpression, routerRecord);
           for (const c of res.chainedCalls) {
             callExpressionRouters.set(c, routerRecord);
+          }
+        }
+      }
+    },
+
+    Function(pathNode: NodePath<FunctionNode>) {
+      for (const param of pathNode.node.params) {
+        if (param.type === 'Identifier') {
+          if (param.name === 'app') {
+            const binding = pathNode.scope.getBinding('app');
+            if (binding) {
+              expressAppBindings.add(binding);
+            }
+          } else if (param.name === 'router') {
+            const binding = pathNode.scope.getBinding('router');
+            if (binding && !expressRouterBindings.has(binding)) {
+              const varName = 'router';
+              const routerRecord: ExtractedRouter = {
+                id: `${relFile}:${varName}`,
+                relFile,
+                filePathForProvenance,
+                varName,
+                declLine: param.loc?.start.line ?? 1,
+                declCol: param.loc?.start.column,
+                routes: [],
+                mounts: [],
+                uses: [],
+              };
+              expressRouterBindings.set(binding, routerRecord);
+              routers.set(varName, routerRecord);
+            }
           }
         }
       }
