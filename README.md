@@ -1,4 +1,6 @@
-# DevGuard Core
+<img width="1672" height="941" alt="image" src="https://github.com/user-attachments/assets/b14948a8-b62c-40bb-ad28-a345462afc05" />
+
+# Mantis Core
 
 DevGuard Core is an engine that statically analyzes Node.js + Express backend codebases, produces a trustworthy **API Model** of every endpoint, and tests the running API, linking findings back to exact source lines.
 
