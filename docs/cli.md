@@ -32,12 +32,14 @@ DevGuard uses deterministic, CI-ready exit codes:
 
 ## Commands
 
+> Note: Inside this repository, run commands using `pnpm devguard <cmd>`. npm install instructions will come after publishing.
+
 ### 1. `devguard scan <path>`
 
 Statically analyzes a Node.js Express backend and extracts an `ApiModel` with source code provenances, parameter types, confidence levels, and static diagnostics.
 
 ```bash
-devguard scan ./backend
+pnpm devguard scan ./backend
 ```
 
 #### Options:
@@ -49,7 +51,7 @@ devguard scan ./backend
 #### Example:
 
 ```bash
-devguard scan ./fixtures/simple --verbose
+pnpm devguard scan ./fixtures/simple --verbose
 ```
 
 Terminal output displays confirmed endpoints with `✓` and uncertain endpoints with `?`, along with parameter breakdown and diagnostics.
@@ -61,7 +63,7 @@ Terminal output displays confirmed endpoints with `✓` and uncertain endpoints 
 Plans and executes safe runtime contract tests against a running backend API.
 
 ```bash
-devguard test ./backend --base-url http://127.0.0.1:3000
+pnpm devguard test ./backend --base-url http://127.0.0.1:3000
 ```
 
 #### Options:
@@ -81,10 +83,10 @@ devguard test ./backend --base-url http://127.0.0.1:3000
 
 ```bash
 # Dry run verification
-devguard test ./fixtures/simple --dry-run --base-url http://127.0.0.1:3000
+pnpm devguard test ./fixtures/simple --dry-run --base-url http://127.0.0.1:3000
 
 # Live test with JSON output for CI
-devguard test ./fixtures/simple --base-url http://127.0.0.1:3000 --json --out test-report.json
+pnpm devguard test ./fixtures/simple --base-url http://127.0.0.1:3000 --json --out test-report.json
 ```
 
 All test runs automatically record a sanitized, deterministic session file under `.devguard/sessions/<sessionId>.json`.
@@ -96,7 +98,7 @@ All test runs automatically record a sanitized, deterministic session file under
 Re-evaluates and displays a recorded test session using pure Oracles with **zero network traffic**.
 
 ```bash
-devguard report
+pnpm devguard report
 ```
 
 If no session is specified, DevGuard automatically finds and loads the most recent session from `.devguard/sessions/`.
@@ -109,7 +111,7 @@ If no session is specified, DevGuard automatically finds and loads the most rece
 #### Example:
 
 ```bash
-devguard report .devguard/sessions/abc-123.json
+pnpm devguard report .devguard/sessions/abc-123.json
 ```
 
 ---
@@ -119,7 +121,7 @@ devguard report .devguard/sessions/abc-123.json
 Generates a starter `devguard.config.json` configuration file with recommended safety defaults.
 
 ```bash
-devguard init
+pnpm devguard init
 ```
 
 #### Options:
@@ -184,7 +186,7 @@ jobs:
 
       - name: Run DevGuard Test
         run: |
-          pnpm exec devguard test ./backend \
+          pnpm devguard test ./backend \
             --base-url http://127.0.0.1:3000 \
             --fail-on error \
             --json \

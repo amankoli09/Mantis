@@ -36,6 +36,7 @@ Phase 1 focuses on Node.js/Express backends, parsing JavaScript ASTs to extract 
 | **Step 12** | CLI `devguard scan`, `test`, `report`, and `init` commands with terminal formatting & JSON output (`@devguard/cli`)         | **Done** | PR #9 (`feat-cli-step-12`)         |
 | **Step 13** | Benchmark on real open-source Express repos, precision/recall evaluation, top failure fixes (`benchmarks/`) | **Done** | PR #10 (`10-issue-7-benchmark-on-real-open-source-express-repos-step-13`) |
 | **Phase 1.5** | OpenAPI 3.0 export (`--openapi`), GitHub Action & CI recipes, Diff mode (`devguard diff`), HTML test reports (`--html`), FileSystem abstraction, `DG-R004` split, ADRs 0001-0006 | **Done** | Issue #14 |
+| **Phase 1 Exit Check** | CLI binary execution fix (shebang dedup, root `pnpm devguard` script, built dist tests) | **Done** | Exit Check Day 1 |
 
 ---
 
@@ -171,6 +172,7 @@ When `ExpressAdapter.scan(projectRoot)` (or `scanProject(projectRoot)`) executes
 3. **requestBody Cleanup**: Hand-written, unproven `requestBody` blocks in `fixtures/simple` and `fixtures/nested-routers` have been removed.
 4. **Golden Strength**: A plan is proposed to upgrade all golden files to `modelVersion: "1.1.0"`, populate `mountChain`, and upgrade scan tests to `toStrictEqual()` with full diagnostics checking.
 5. **Diagnostics Documented**: Full reference documentation created in `docs/diagnostics.md`.
+6. **CLI Execution & Shebang Fix**: In pnpm monorepos, a package's own `bin` is not linked to its own `node_modules/.bin`. Workspace root provides `"devguard": "node packages/cli/dist/index.js"` for contributors (`pnpm devguard <cmd>`). Fixed duplicate shebang in `packages/cli/dist/index.js` and `index.cjs` by removing redundant `tsup` banner, and added integration tests in `packages/cli/tests/built-cli.test.ts` asserting executable permissions, shebang validity, and fixture scanning on built artifacts.
 
 ---
 

@@ -20,10 +20,12 @@ DevGuard Core is an engine that statically analyzes Node.js + Express backend co
 
 The `devguard` CLI lets you extract API contracts statically and execute safe runtime tests:
 
+> Note: Inside this repository, run commands using `pnpm devguard <cmd>`. npm install instructions will come after publishing.
+
 ### 1. Initialize Configuration
 
 ```bash
-devguard init
+pnpm devguard init
 ```
 
 ### 2. Scan an Express Backend
@@ -31,9 +33,9 @@ devguard init
 Statically scan an application and extract the full API Model:
 
 ```bash
-devguard scan ./fixtures/simple
+pnpm devguard scan ./fixtures/simple
 # Or output machine-readable JSON:
-devguard scan ./fixtures/simple --json
+pnpm devguard scan ./fixtures/simple --json
 ```
 
 ### 3. Dry-Run Runtime Tests
@@ -41,7 +43,7 @@ devguard scan ./fixtures/simple --json
 Generate test cases and verify execution plan without network traffic:
 
 ```bash
-devguard test ./fixtures/simple --dry-run --base-url http://127.0.0.1:3000
+pnpm devguard test ./fixtures/simple --dry-run --base-url http://127.0.0.1:3000
 ```
 
 ### 4. Execute Live Contract Tests
@@ -49,7 +51,7 @@ devguard test ./fixtures/simple --dry-run --base-url http://127.0.0.1:3000
 Run safe tests against a running backend:
 
 ```bash
-devguard test ./fixtures/simple --base-url http://127.0.0.1:3000
+pnpm devguard test ./fixtures/simple --base-url http://127.0.0.1:3000
 ```
 
 ### 5. Replay and Inspect Session Findings
@@ -57,7 +59,7 @@ devguard test ./fixtures/simple --base-url http://127.0.0.1:3000
 Re-render recorded test sessions using pure Oracles with zero network traffic:
 
 ```bash
-devguard report
+pnpm devguard report
 ```
 
 ---
