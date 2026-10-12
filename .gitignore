@@ -8,3 +8,6 @@ coverage
 .kilo
 .devguard
 benchmarks/.clones
+.next
+out
+.env*.local
