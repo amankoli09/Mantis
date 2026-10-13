@@ -1,4 +1,4 @@
-<img width="1672" height="941" alt="image" src="https://github.com/user-attachments/assets/b14948a8-b62c-40bb-ad28-a345462afc05" />
+<img width="1429" height="804" alt="Banner" src="https://github.com/user-attachments/assets/9b349b86-0d58-41d4-b383-4666c4c8e837" />
 
 # Mantis Core
 
