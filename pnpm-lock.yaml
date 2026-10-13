@@ -8,12 +8,12 @@ importers:
 
   .:
     devDependencies:
-      '@devguard/cli':
-        specifier: workspace:*
-        version: link:packages/cli
       '@eslint/js':
         specifier: ^9.20.0
         version: 9.39.5
+      '@mantis/cli':
+        specifier: workspace:*
+        version: link:packages/cli
       '@types/node':
         specifier: ^26.6.3
         version: 26.6.3
@@ -87,7 +87,7 @@ importers:
       '@babel/types':
         specifier: ^7.29.8
         version: 7.29.8
-      '@devguard/core':
+      '@mantis/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -97,13 +97,13 @@ importers:
 
   packages/cli:
     dependencies:
-      '@devguard/adapter-express':
+      '@mantis/adapter-express':
         specifier: workspace:*
         version: link:../adapter-express
-      '@devguard/core':
+      '@mantis/core':
         specifier: workspace:*
         version: link:../core
-      '@devguard/runner':
+      '@mantis/runner':
         specifier: workspace:*
         version: link:../runner
       commander:
@@ -125,7 +125,7 @@ importers:
 
   packages/runner:
     dependencies:
-      '@devguard/core':
+      '@mantis/core':
         specifier: workspace:*
         version: link:../core
       undici:

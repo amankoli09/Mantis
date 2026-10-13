@@ -1,6 +1,6 @@
 import _traverse, { type Binding, type TraverseOptions } from '@babel/traverse';
 import type { File, Node } from '@babel/types';
-import type { ParamDefinition } from '@devguard/core';
+import type { ParamDefinition } from '@mantis/core';
 
 type TraverseFn = (parent: Node | Node[], opts?: TraverseOptions) => void;
 

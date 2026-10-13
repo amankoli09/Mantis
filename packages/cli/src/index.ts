@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runCli } from './cli.js';
 
-export const PACKAGE_NAME = '@devguard/cli';
+export const PACKAGE_NAME = '@mantis/cli';
 
 export * from './ui/color.js';
 export * from './ui/formatters.js';
@@ -25,7 +25,7 @@ function checkIsEntrypoint(): boolean {
     // Ignore URL parse error
   }
   const binName = path.basename(process.argv[1]);
-  return binName === 'devguard' || (binName === 'index.js' && process.argv[1].includes('cli'));
+  return binName === 'mantis' || (binName === 'index.js' && process.argv[1].includes('cli'));
 }
 
 if (checkIsEntrypoint()) {

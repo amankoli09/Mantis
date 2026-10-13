@@ -2,9 +2,9 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "paths": {
-      "@devguard/core": ["../../packages/core/src/index.ts"],
-      "@devguard/adapter-express": ["../../packages/adapter-express/src/index.ts"],
-      "@devguard/runner": ["../../packages/runner/src/index.ts"]
+      "@mantis/core": ["../../packages/core/src/index.ts"],
+      "@mantis/adapter-express": ["../../packages/adapter-express/src/index.ts"],
+      "@mantis/runner": ["../../packages/runner/src/index.ts"]
     },
     "noEmit": true
   },

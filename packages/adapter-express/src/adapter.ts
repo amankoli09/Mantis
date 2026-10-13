@@ -1,4 +1,4 @@
-import type { ApiModel, FrameworkAdapter } from '@devguard/core';
+import type { ApiModel, FrameworkAdapter } from '@mantis/core';
 import { type FileSystem, nodeFileSystem } from './fs.js';
 import { detectExpress } from './detector.js';
 import { scanProject } from './scanner.js';

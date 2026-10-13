@@ -1,6 +1,6 @@
 import _traverse, { type TraverseOptions } from '@babel/traverse';
 import type { File, Node, CallExpression, MemberExpression, Expression } from '@babel/types';
-import type { Effect, EffectEvidence } from '@devguard/core';
+import type { Effect, EffectEvidence } from '@mantis/core';
 
 type TraverseFn = (parent: Node | Node[], opts?: TraverseOptions) => void;
 

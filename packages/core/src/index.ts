@@ -1,4 +1,4 @@
-export const PACKAGE_NAME = '@devguard/core';
+export const PACKAGE_NAME = '@mantis/core';
 
 // Provenance and Confidence
 export * from './schema/provenance.js';

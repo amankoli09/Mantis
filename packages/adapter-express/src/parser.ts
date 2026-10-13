@@ -1,6 +1,6 @@
 import { parse, type ParseResult } from '@babel/parser';
 import type { File } from '@babel/types';
-import { createDiagnostic, type Diagnostic } from '@devguard/core';
+import { createDiagnostic, type Diagnostic } from '@mantis/core';
 
 export interface ParseFileResult {
   ast: ParseResult<File> | null;
@@ -13,7 +13,7 @@ export interface ParseFileResult {
  *
  * Guarantees:
  * - Tolerates syntax errors with `errorRecovery: true`.
- * - Never throws on syntax errors; emits a `DG-P001` diagnostic instead.
+ * - Never throws on syntax errors; emits a `MT-P001` diagnostic instead.
  */
 export function parseFile(code: string, filePath: string): ParseFileResult {
   try {
@@ -29,7 +29,7 @@ export function parseFile(code: string, filePath: string): ParseFileResult {
       for (const err of ast.errors) {
         diagnostics.push(
           createDiagnostic(
-            'DG-P001',
+            'MT-P001',
             { file: filePath, reason: err.message },
             {
               file: filePath,
@@ -52,7 +52,7 @@ export function parseFile(code: string, filePath: string): ParseFileResult {
       ast: null,
       diagnostics: [
         createDiagnostic(
-          'DG-P001',
+          'MT-P001',
           { file: filePath, reason },
           {
             file: filePath,

@@ -6,7 +6,7 @@ import {
   validateModel,
   type ApiModel,
   type Diagnostic,
-} from '@devguard/core';
+} from '@mantis/core';
 import { type FileSystem, nodeFileSystem } from './fs.js';
 import { walkProjectFiles } from './file-walker.js';
 import { parseFile } from './parser.js';

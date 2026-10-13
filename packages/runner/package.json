@@ -1,5 +1,5 @@
 {
-  "name": "@devguard/runner",
+  "name": "@mantis/runner",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -26,7 +26,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@devguard/core": "workspace:*",
+    "@mantis/core": "workspace:*",
     "undici": "^8.11.2",
     "zod": "^3.25.76"
   }

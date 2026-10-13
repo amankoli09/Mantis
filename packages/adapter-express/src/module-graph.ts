@@ -16,7 +16,7 @@ import {
   createDiagnostic,
   compareStrings,
   type Diagnostic,
-} from '@devguard/core';
+} from '@mantis/core';
 import { type FileSystem, nodeFileSystem } from './fs.js';
 import { walkProjectFiles } from './file-walker.js';
 import { parseFile } from './parser.js';
@@ -185,7 +185,7 @@ export function extractModuleInfo(
       if (!isExternal && sourcePath === null) {
         diagnostics.push(
           createDiagnostic(
-            'DG-R001',
+            'MT-R001',
             { importPath: specifier, sourceFile: filePath },
             { file: filePath, line, column }
           )
@@ -278,7 +278,7 @@ export function extractModuleInfo(
         // Dynamic require(variable)
         diagnostics.push(
           createDiagnostic(
-            'DG-R001',
+            'MT-R001',
             { importPath: '<dynamic>', sourceFile: filePath },
             { file: filePath, line, column }
           )
@@ -303,7 +303,7 @@ export function extractModuleInfo(
       if (!isExternal && sourcePath === null) {
         diagnostics.push(
           createDiagnostic(
-            'DG-R001',
+            'MT-R001',
             { importPath: specifier, sourceFile: filePath },
             { file: filePath, line, column }
           )
@@ -358,7 +358,7 @@ export function extractModuleInfo(
       if (!firstArg || firstArg.type !== 'StringLiteral') {
         diagnostics.push(
           createDiagnostic(
-            'DG-R001',
+            'MT-R001',
             { importPath: '<dynamic>', sourceFile: filePath },
             { file: filePath, line, column }
           )
@@ -372,7 +372,7 @@ export function extractModuleInfo(
       if (!isExternal && sourcePath === null) {
         diagnostics.push(
           createDiagnostic(
-            'DG-R001',
+            'MT-R001',
             { importPath: specifier, sourceFile: filePath },
             { file: filePath, line, column }
           )
@@ -428,7 +428,7 @@ export function extractModuleInfo(
         if (!isExternal && sourcePath === null) {
           diagnostics.push(
             createDiagnostic(
-              'DG-R001',
+              'MT-R001',
               { importPath: specifier, sourceFile: filePath },
               { file: filePath, line, column }
             )
@@ -537,7 +537,7 @@ export function extractModuleInfo(
       if (!isExternal && sourcePath === null) {
         diagnostics.push(
           createDiagnostic(
-            'DG-R001',
+            'MT-R001',
             { importPath: specifier, sourceFile: filePath },
             { file: filePath, line, column }
           )
@@ -594,7 +594,7 @@ export function extractModuleInfo(
             if (!isExternal && sourcePath === null) {
               diagnostics.push(
                 createDiagnostic(
-                  'DG-R001',
+                  'MT-R001',
                   { importPath: specifier, sourceFile: filePath },
                   { file: filePath, line, column }
                 )

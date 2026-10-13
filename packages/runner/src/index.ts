@@ -1,4 +1,4 @@
-export const PACKAGE_NAME = '@devguard/runner';
+export const PACKAGE_NAME = '@mantis/runner';
 
 // Safety engine & host guard
 export * from './safety.js';
@@ -15,7 +15,7 @@ export * from './recorder.js';
 // Runner orchestrator
 export * from './runner.js';
 
-import type { RunnerConfig, RequestPlan, ExecutionResult, TestRunnerEngine } from '@devguard/core';
+import type { RunnerConfig, RequestPlan, ExecutionResult, TestRunnerEngine } from '@mantis/core';
 import { executeRequest } from './http-client.js';
 
 /**

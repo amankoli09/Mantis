@@ -6,7 +6,7 @@ import {
   type Endpoint,
   type HttpMethod,
   type MountEntry,
-} from '@devguard/core';
+} from '@mantis/core';
 import type { ModuleGraph } from '../module-graph.js';
 import {
   joinPaths,
@@ -48,7 +48,7 @@ function resolveExportedRouter(
     // Cycle detected!
     diagnostics.push(
       createDiagnostic(
-        'DG-R002',
+        'MT-R002',
         { mountPath: mountLocation.prefix, routerIdentifier: `<cyclic: ${targetFile}:${exportedName}>` },
         { file: mountLocation.file, line: mountLocation.line, column: mountLocation.column }
       )
@@ -61,7 +61,7 @@ function resolveExportedRouter(
   if (!node) {
     diagnostics.push(
       createDiagnostic(
-        'DG-R002',
+        'MT-R002',
         { mountPath: mountLocation.prefix, routerIdentifier: targetFile },
         { file: mountLocation.file, line: mountLocation.line, column: mountLocation.column }
       )
@@ -84,7 +84,7 @@ function resolveExportedRouter(
         if (imp.isExternal || !imp.sourcePath) {
           diagnostics.push(
             createDiagnostic(
-              'DG-R002',
+              'MT-R002',
               { mountPath: mountLocation.prefix, routerIdentifier: imp.specifier },
               { file: mountLocation.file, line: mountLocation.line, column: mountLocation.column }
             )
@@ -121,7 +121,7 @@ function resolveExportedRouter(
         if (lineImp.isExternal || !lineImp.sourcePath) {
           diagnostics.push(
             createDiagnostic(
-              'DG-R002',
+              'MT-R002',
               { mountPath: mountLocation.prefix, routerIdentifier: lineImp.specifier },
               { file: mountLocation.file, line: mountLocation.line, column: mountLocation.column }
             )
@@ -166,7 +166,7 @@ function resolveExportedRouter(
 
   diagnostics.push(
     createDiagnostic(
-      'DG-R002',
+      'MT-R002',
       { mountPath: mountLocation.prefix, routerIdentifier: `${targetFile}:${exportedName}` },
       { file: mountLocation.file, line: mountLocation.line, column: mountLocation.column }
     )
@@ -174,7 +174,7 @@ function resolveExportedRouter(
   return null;
 
   // Export found, but target is not an Express router (e.g. a plain middleware function or constant)
-  // Non-routers don't emit DG-R002 unless explicitly unresolvable
+  // Non-routers don't emit MT-R002 unless explicitly unresolvable
   return null;
 }
 
@@ -207,7 +207,7 @@ function resolveMountToRouter(
       if (imp.isExternal || !imp.sourcePath) {
         diagnostics.push(
           createDiagnostic(
-            'DG-R002',
+            'MT-R002',
             { mountPath: mount.prefix, routerIdentifier: target.name },
             { file: mountFileForProvenance, line: mount.line, column: mount.column }
           )
@@ -231,7 +231,7 @@ function resolveMountToRouter(
     if (mount.prefix !== '/') {
       diagnostics.push(
         createDiagnostic(
-          'DG-R002',
+          'MT-R002',
           { mountPath: mount.prefix, routerIdentifier: target.name },
           { file: mountFileForProvenance, line: mount.line, column: mount.column }
         )
@@ -248,7 +248,7 @@ function resolveMountToRouter(
       if (imp.isExternal || !imp.sourcePath) {
         diagnostics.push(
           createDiagnostic(
-            'DG-R002',
+            'MT-R002',
             { mountPath: mount.prefix, routerIdentifier: `${target.objectName}.${target.propertyName}` },
             { file: mountFileForProvenance, line: mount.line, column: mount.column }
           )
@@ -269,7 +269,7 @@ function resolveMountToRouter(
 
     diagnostics.push(
       createDiagnostic(
-        'DG-R002',
+        'MT-R002',
         { mountPath: mount.prefix, routerIdentifier: `${target.objectName}.${target.propertyName}` },
         { file: mountFileForProvenance, line: mount.line, column: mount.column }
       )
@@ -295,7 +295,7 @@ function resolveMountToRouter(
 
     diagnostics.push(
       createDiagnostic(
-        'DG-R002',
+        'MT-R002',
         { mountPath: mount.prefix, routerIdentifier: `require('${target.specifier}')` },
         { file: mountFileForProvenance, line: mount.line, column: mount.column }
       )
@@ -403,7 +403,7 @@ export function resolveCrossFileRoutes(
     if (visitedPath.has(currentRouter.id)) {
       diagnostics.push(
         createDiagnostic(
-          'DG-R002',
+          'MT-R002',
           { mountPath: currentPrefix, routerIdentifier: `<cyclic: ${currentRouter.id}>` },
           { file: mountFile, line: mountLine, column: mountCol }
         )
@@ -474,10 +474,10 @@ export function resolveCrossFileRoutes(
     const mountInfos = resolvedRouterMounts.get(router.id);
 
     if (!mountInfos || mountInfos.length === 0) {
-      // Unmounted router: emit DG-R004 and mark all its routes as uncertain
+      // Unmounted router: emit MT-R004 and mark all its routes as uncertain
       diagnostics.push(
         createDiagnostic(
-          'DG-R004',
+          'MT-R004',
           { routerIdentifier: router.varName },
           { file: router.filePathForProvenance, line: router.declLine, column: router.declCol }
         )
@@ -527,7 +527,7 @@ export function resolveCrossFileRoutes(
             ...(route.snippet ? { snippet: route.snippet } : {}),
           },
           confidence: 'uncertain',
-          confidenceReason: 'DG-R004',
+          confidenceReason: 'MT-R004',
         });
       }
     } else {
@@ -554,7 +554,7 @@ export function resolveCrossFileRoutes(
           if (route.isDynamic) {
             diagnostics.push(
               createDiagnostic(
-                'DG-R003',
+                'MT-R003',
                 { rawExpression: route.rawExpr! },
                 { file: router.filePathForProvenance, line: route.startLine, column: route.startCol }
               )
@@ -581,7 +581,7 @@ export function resolveCrossFileRoutes(
                 ...(route.snippet ? { snippet: route.snippet } : {}),
               },
               confidence: 'uncertain',
-              confidenceReason: 'DG-R003',
+              confidenceReason: 'MT-R003',
             });
           } else {
             const finalPath = joinPaths(info.prefix, route.routePath);

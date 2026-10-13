@@ -1,9 +1,9 @@
 {
-  "name": "@devguard/cli",
+  "name": "@mantis/cli",
   "version": "0.1.0",
   "type": "module",
   "bin": {
-    "devguard": "./dist/index.js"
+    "mantis": "./dist/index.js"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -27,12 +27,12 @@
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "devguard": "node ./dist/index.js"
+    "mantis": "node ./dist/index.js"
   },
   "dependencies": {
-    "@devguard/adapter-express": "workspace:*",
-    "@devguard/core": "workspace:*",
-    "@devguard/runner": "workspace:*",
+    "@mantis/adapter-express": "workspace:*",
+    "@mantis/core": "workspace:*",
+    "@mantis/runner": "workspace:*",
     "commander": "^13.1.0",
     "picocolors": "^1.1.1"
   }

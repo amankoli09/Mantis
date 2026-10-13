@@ -1,5 +1,5 @@
 import type { Node } from '@babel/types';
-import type { Diagnostic, Endpoint, ParamDefinition, Provenance, Effect, EffectEvidence, RequestBodyDefinition } from '@devguard/core';
+import type { Diagnostic, Endpoint, ParamDefinition, Provenance, Effect, EffectEvidence, RequestBodyDefinition } from '@mantis/core';
 
 export interface ExtractedMiddleware {
   name: string;

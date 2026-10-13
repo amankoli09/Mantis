@@ -1,5 +1,5 @@
 {
-  "name": "@devguard/adapter-express",
+  "name": "@mantis/adapter-express",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -24,7 +24,7 @@
     "@babel/parser": "^7.29.9",
     "@babel/traverse": "^7.29.8",
     "@babel/types": "^7.29.8",
-    "@devguard/core": "workspace:*"
+    "@mantis/core": "workspace:*"
   },
   "scripts": {
     "build": "tsup",

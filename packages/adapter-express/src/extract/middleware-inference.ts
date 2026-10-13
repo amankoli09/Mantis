@@ -8,7 +8,7 @@ import {
   createDiagnostic,
   type AuthDefinition,
   type Diagnostic,
-} from '@devguard/core';
+} from '@mantis/core';
 import type { ModuleGraph, ModuleImport } from '../module-graph.js';
 import type { ExtractedMiddleware, ExtractedRouter } from './types.js';
 
@@ -174,7 +174,7 @@ export function resolveMiddleware(
           resolved: false,
         },
         diagnostic: createDiagnostic(
-          'DG-I002',
+          'MT-I002',
           { middlewareName: 'expression', reason: 'unresolved call expression' },
           { file: filePathForProvenance, line, column }
         ),
@@ -239,7 +239,7 @@ export function resolveMiddleware(
           resolved: false,
         },
         diagnostic: createDiagnostic(
-          'DG-I002',
+          'MT-I002',
           { middlewareName: varName, reason: 'unresolved identifier' },
           { file: filePathForProvenance, line, column }
         ),
@@ -364,7 +364,7 @@ export function resolveMiddleware(
               resolved: false,
             },
             diagnostic: createDiagnostic(
-              'DG-I002',
+              'MT-I002',
               { middlewareName: varName, reason: 'unresolved identifier' },
               { file: filePathForProvenance, line, column }
             ),
@@ -401,7 +401,7 @@ export function resolveMiddleware(
       resolved: false,
     },
     diagnostic: createDiagnostic(
-      'DG-I002',
+      'MT-I002',
       { middlewareName: 'expression', reason: 'unresolved expression' },
       { file: filePathForProvenance, line, column }
     ),

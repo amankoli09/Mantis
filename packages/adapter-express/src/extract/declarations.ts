@@ -19,7 +19,7 @@ import {
   type EffectEvidence,
   type HttpMethod,
   type ParamDefinition,
-} from '@devguard/core';
+} from '@mantis/core';
 import type { ModuleGraph } from '../module-graph.js';
 import {
   resolvePathConstant,
@@ -442,7 +442,7 @@ export function extractFileDeclarations(
           if (res.capExceeded) {
             diagnostics.push(
               createDiagnostic(
-                'DG-R003',
+                'MT-R003',
                 { rawExpression: `Array product cap exceeded (>100 combinations): ${res.rawExpr || 'expression'}` },
                 { file: filePathForProvenance, line: node.loc?.start.line ?? 1, column: node.loc?.start.column }
               )
@@ -713,10 +713,10 @@ export function extractFileDeclarations(
           handlerResult.handlerCode
         );
       } else {
-        // Unresolvable handler: emit DG-I001
+        // Unresolvable handler: emit MT-I001
         diagnostics.push(
           createDiagnostic(
-            'DG-I001',
+            'MT-I001',
             { handlerName: handlerResult.handlerExprString },
             {
               file: filePathForProvenance,
@@ -877,7 +877,7 @@ export function extractFileDeclarations(
                   : (res.rawExpr || p);
                 diagnostics.push(
                   createDiagnostic(
-                    'DG-R003',
+                    'MT-R003',
                     { rawExpression: diagExpr },
                     { file: filePathForProvenance, line: startLine, column: startCol }
                   )
@@ -904,7 +904,7 @@ export function extractFileDeclarations(
                     ...(snippet ? { snippet } : {}),
                   },
                   confidence: 'uncertain',
-                  confidenceReason: 'DG-R003',
+                  confidenceReason: 'MT-R003',
                 });
               }
             }

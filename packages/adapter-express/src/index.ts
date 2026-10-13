@@ -1,4 +1,4 @@
-export const PACKAGE_NAME = '@devguard/adapter-express';
+export const PACKAGE_NAME = '@mantis/adapter-express';
 
 export * from './file-walker.js';
 export * from './detector.js';

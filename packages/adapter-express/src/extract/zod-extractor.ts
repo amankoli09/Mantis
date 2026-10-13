@@ -6,7 +6,7 @@ import type {
   CallExpression,
   ObjectExpression,
 } from '@babel/types';
-import type { ParamDefinition, RequestBodyDefinition } from '@devguard/core';
+import type { ParamDefinition, RequestBodyDefinition } from '@mantis/core';
 import type { ModuleGraph } from '../module-graph.js';
 
 type TraverseFn = (parent: Node | Node[], opts?: TraverseOptions) => void;

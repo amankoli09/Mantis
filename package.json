@@ -1,23 +1,24 @@
 {
-  "name": "devguard-workspace",
+  "name": "mantis-workspace",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "pnpm --filter '@devguard/*' run build && pnpm --filter mantis-frontend build",
+    "build": "pnpm --filter '@mantis/*' run build && pnpm --filter mantis-frontend build",
     "build:frontend": "pnpm --filter mantis-frontend build",
-    "build:packages": "pnpm --filter '@devguard/*' run build",
-    "gen:schema": "pnpm --filter @devguard/core run gen:schema",
+    "build:packages": "pnpm --filter '@mantis/*' run build",
+    "gen:schema": "pnpm --filter @mantis/core run gen:schema",
     "test": "vitest run",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -b",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "devguard": "node packages/cli/dist/index.js"
+    "mantis": "node packages/cli/dist/index.js",
+    "check:branding": "node scripts/check-branding.js"
   },
   "devDependencies": {
-    "@devguard/cli": "workspace:*",
+    "@mantis/cli": "workspace:*",
     "@eslint/js": "^9.20.0",
     "@types/node": "^26.6.3",
     "eslint": "^9.20.0",
