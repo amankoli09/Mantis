@@ -314,7 +314,7 @@
   ],
   "diagnostics": [
     {
-      "code": "DG-I002",
+      "code": "MT-I002",
       "severity": "info",
       "message": "Middleware could not be statically resolved: expression (unresolved expression)",
       "file": "fixtures/cross-analysis/app/app.js",

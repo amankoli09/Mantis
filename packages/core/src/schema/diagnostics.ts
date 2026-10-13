@@ -2,13 +2,13 @@ import { z } from 'zod';
 import { ProvenanceSchema } from './provenance.js';
 
 export const DiagnosticCodeSchema = z.enum([
-  'DG-P001',
-  'DG-R001',
-  'DG-R002',
-  'DG-R003',
-  'DG-R004',
-  'DG-I001',
-  'DG-I002',
+  'MT-P001',
+  'MT-R001',
+  'MT-R002',
+  'MT-R003',
+  'MT-R004',
+  'MT-I001',
+  'MT-I002',
 ]);
 export type DiagnosticCode = z.infer<typeof DiagnosticCodeSchema>;
 
@@ -36,60 +36,60 @@ export interface DiagnosticDefinition<P = Record<string, unknown>> {
 }
 
 export type DiagnosticParamsMap = {
-  'DG-P001': { file: string; reason: string };
-  'DG-R001': { importPath: string; sourceFile: string };
-  'DG-R002': { mountPath: string; routerIdentifier?: string };
-  'DG-R003': { rawExpression: string };
-  'DG-R004': { routerIdentifier: string };
-  'DG-I001': { handlerName?: string; reason?: string };
-  'DG-I002': { middlewareName?: string; reason?: string };
+  'MT-P001': { file: string; reason: string };
+  'MT-R001': { importPath: string; sourceFile: string };
+  'MT-R002': { mountPath: string; routerIdentifier?: string };
+  'MT-R003': { rawExpression: string };
+  'MT-R004': { routerIdentifier: string };
+  'MT-I001': { handlerName?: string; reason?: string };
+  'MT-I002': { middlewareName?: string; reason?: string };
 };
 
 export const DIAGNOSTICS_REGISTRY = {
-  'DG-P001': {
-    code: 'DG-P001',
+  'MT-P001': {
+    code: 'MT-P001',
     defaultSeverity: 'error',
     title: 'Parse Error',
     template: (params: { file: string; reason: string }) =>
       `Failed to parse file "${params.file}": ${params.reason}`,
   },
-  'DG-R001': {
-    code: 'DG-R001',
+  'MT-R001': {
+    code: 'MT-R001',
     defaultSeverity: 'warning',
     title: 'Unresolved Import',
     template: (params: { importPath: string; sourceFile: string }) =>
       `Could not resolve import "${params.importPath}" from "${params.sourceFile}"`,
   },
-  'DG-R002': {
-    code: 'DG-R002',
+  'MT-R002': {
+    code: 'MT-R002',
     defaultSeverity: 'warning',
     title: 'Unresolved Router Mount',
     template: (params: { mountPath: string; routerIdentifier?: string }) =>
       `Could not resolve router mounted at "${params.mountPath}"${params.routerIdentifier ? ` for identifier "${params.routerIdentifier}"` : ''}`,
   },
-  'DG-R003': {
-    code: 'DG-R003',
+  'MT-R003': {
+    code: 'MT-R003',
     defaultSeverity: 'info',
     title: 'Dynamic Path',
     template: (params: { rawExpression: string }) =>
       `Route path uses dynamic runtime expression: ${params.rawExpression}`,
   },
-  'DG-R004': {
-    code: 'DG-R004',
+  'MT-R004': {
+    code: 'MT-R004',
     defaultSeverity: 'warning',
     title: 'Unmounted Router',
     template: (params: { routerIdentifier: string }) =>
       `Router "${params.routerIdentifier}" is declared but never mounted to the application`,
   },
-  'DG-I001': {
-    code: 'DG-I001',
+  'MT-I001': {
+    code: 'MT-I001',
     defaultSeverity: 'info',
     title: 'Unresolved Handler',
     template: (params: { handlerName?: string; reason?: string }) =>
       `Route handler could not be statically resolved${params.handlerName ? `: ${params.handlerName}` : ''}${params.reason ? ` (${params.reason})` : ''}`,
   },
-  'DG-I002': {
-    code: 'DG-I002',
+  'MT-I002': {
+    code: 'MT-I002',
     defaultSeverity: 'info',
     title: 'Unresolved Middleware',
     template: (params: { middlewareName?: string; reason?: string }) =>

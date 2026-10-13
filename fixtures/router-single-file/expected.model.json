@@ -121,12 +121,12 @@
         "snippet": "orphanRouter.get('/orphan', (req, res) => {"
       },
       "confidence": "uncertain",
-      "confidenceReason": "DG-R004"
+      "confidenceReason": "MT-R004"
     }
   ],
   "diagnostics": [
     {
-      "code": "DG-R004",
+      "code": "MT-R004",
       "severity": "warning",
       "message": "Router \"orphanRouter\" is declared but never mounted to the application",
       "file": "fixtures/router-single-file/app/app.js",

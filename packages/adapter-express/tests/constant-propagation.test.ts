@@ -6,7 +6,7 @@ import { scanProject, formatPlaceholder } from '../src/index.js';
 
 describe('Constant Propagation & Dynamic Paths (Step 7d)', () => {
   it('resolvable forms: resolves string constant path (const BASE = "/api")', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-cp-string-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-cp-string-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -30,7 +30,7 @@ describe('Constant Propagation & Dynamic Paths (Step 7d)', () => {
   });
 
   it('resolvable forms: resolves binary string concatenation path (BASE + "/v1")', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-cp-concat-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-cp-concat-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -55,7 +55,7 @@ describe('Constant Propagation & Dynamic Paths (Step 7d)', () => {
   });
 
   it('resolvable forms: resolves template literal path with embedded constants (`${BASE}/v2`)', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-cp-template-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-cp-template-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -79,7 +79,7 @@ describe('Constant Propagation & Dynamic Paths (Step 7d)', () => {
   });
 
   it('resolvable forms: resolves path array expressions (["/a", "/b"]) generating multiple endpoints', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-cp-array-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-cp-array-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -104,7 +104,7 @@ describe('Constant Propagation & Dynamic Paths (Step 7d)', () => {
   });
 
   it('resolvable forms: resolves imported constant across files (const { API_PREFIX } = require("./config"))', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-cp-import-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-cp-import-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'config.js'),
@@ -134,8 +134,8 @@ describe('Constant Propagation & Dynamic Paths (Step 7d)', () => {
     }
   });
 
-  it('uncertain forms: marks reassigned let variable as uncertain with DG-R003', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-cp-let-'));
+  it('uncertain forms: marks reassigned let variable as uncertain with MT-R003', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-cp-let-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -152,16 +152,16 @@ describe('Constant Propagation & Dynamic Paths (Step 7d)', () => {
       const ep = model.endpoints.find((e) => e.confidence === 'uncertain');
       expect(ep).toBeDefined();
       expect(ep?.path).toBe('/<pathVar>');
-      expect(ep?.confidenceReason).toBe('DG-R003');
+      expect(ep?.confidenceReason).toBe('MT-R003');
       expect(ep?.provenance.kind).toBe('unresolved');
-      expect(model.diagnostics.some((d) => d.code === 'DG-R003')).toBe(true);
+      expect(model.diagnostics.some((d) => d.code === 'MT-R003')).toBe(true);
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   });
 
-  it('uncertain forms: marks process.env path expression as uncertain with DG-R003', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-cp-env-'));
+  it('uncertain forms: marks process.env path expression as uncertain with MT-R003', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-cp-env-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -177,16 +177,16 @@ describe('Constant Propagation & Dynamic Paths (Step 7d)', () => {
       const ep = model.endpoints.find((e) => e.confidence === 'uncertain');
       expect(ep).toBeDefined();
       expect(ep?.path).toBe('/<process.env.BASE_PATH>');
-      expect(ep?.confidenceReason).toBe('DG-R003');
+      expect(ep?.confidenceReason).toBe('MT-R003');
       expect(ep?.provenance.kind).toBe('unresolved');
-      expect(model.diagnostics.some((d) => d.code === 'DG-R003')).toBe(true);
+      expect(model.diagnostics.some((d) => d.code === 'MT-R003')).toBe(true);
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   });
 
-  it('uncertain forms: marks runtime function call as uncertain with DG-R003', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-cp-func-'));
+  it('uncertain forms: marks runtime function call as uncertain with MT-R003', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-cp-func-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -202,16 +202,16 @@ describe('Constant Propagation & Dynamic Paths (Step 7d)', () => {
       const ep = model.endpoints.find((e) => e.confidence === 'uncertain');
       expect(ep).toBeDefined();
       expect(ep?.path).toBe('/<getPath()>');
-      expect(ep?.confidenceReason).toBe('DG-R003');
+      expect(ep?.confidenceReason).toBe('MT-R003');
       expect(ep?.provenance.kind).toBe('unresolved');
-      expect(model.diagnostics.some((d) => d.code === 'DG-R003')).toBe(true);
+      expect(model.diagnostics.some((d) => d.code === 'MT-R003')).toBe(true);
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   });
 
-  it('uncertain forms: marks regex path expression as uncertain with DG-R003', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-cp-regex-'));
+  it('uncertain forms: marks regex path expression as uncertain with MT-R003', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-cp-regex-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -226,16 +226,16 @@ describe('Constant Propagation & Dynamic Paths (Step 7d)', () => {
       const ep = model.endpoints.find((e) => e.confidence === 'uncertain');
       expect(ep).toBeDefined();
       expect(ep?.path).toBe('/</.*regex.*/>');
-      expect(ep?.confidenceReason).toBe('DG-R003');
+      expect(ep?.confidenceReason).toBe('MT-R003');
       expect(ep?.provenance.kind).toBe('unresolved');
-      expect(model.diagnostics.some((d) => d.code === 'DG-R003')).toBe(true);
+      expect(model.diagnostics.some((d) => d.code === 'MT-R003')).toBe(true);
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   });
 
   it('partial resolution: replaces dynamic portion with placeholder and preserves resolvable prefix', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-cp-partial-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-cp-partial-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -251,16 +251,16 @@ describe('Constant Propagation & Dynamic Paths (Step 7d)', () => {
       const ep = model.endpoints.find((e) => e.confidence === 'uncertain');
       expect(ep).toBeDefined();
       expect(ep?.path).toBe('/api/v1/<getDynamicSegment()>');
-      expect(ep?.confidenceReason).toBe('DG-R003');
+      expect(ep?.confidenceReason).toBe('MT-R003');
       expect(ep?.provenance.kind).toBe('unresolved');
-      expect(model.diagnostics.some((d) => d.code === 'DG-R003')).toBe(true);
+      expect(model.diagnostics.some((d) => d.code === 'MT-R003')).toBe(true);
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   });
 
   it('cyclic constants: terminates safely on mutually recursive constants and marks uncertain', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-cp-cycle-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-cp-cycle-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -277,16 +277,16 @@ describe('Constant Propagation & Dynamic Paths (Step 7d)', () => {
       const ep = model.endpoints.find((e) => e.confidence === 'uncertain');
       expect(ep).toBeDefined();
       expect(ep?.path).toBe('/<A>');
-      expect(ep?.confidenceReason).toBe('DG-R003');
+      expect(ep?.confidenceReason).toBe('MT-R003');
       expect(ep?.provenance.kind).toBe('unresolved');
-      expect(model.diagnostics.some((d) => d.code === 'DG-R003')).toBe(true);
+      expect(model.diagnostics.some((d) => d.code === 'MT-R003')).toBe(true);
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   });
 
-  it('array product cap: caps array product (>100 combinations) and emits DG-R003 diagnostic', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-cp-cap-'));
+  it('array product cap: caps array product (>100 combinations) and emits MT-R003 diagnostic', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-cp-cap-'));
     try {
       // 11 prefixes * 10 suffixes = 110 combinations > 100 cap
       await fs.writeFile(
@@ -303,9 +303,9 @@ describe('Constant Propagation & Dynamic Paths (Step 7d)', () => {
       const model = await scanProject(tempDir);
       const ep = model.endpoints.find((e) => e.confidence === 'uncertain');
       expect(ep).toBeDefined();
-      expect(ep?.confidenceReason).toBe('DG-R003');
+      expect(ep?.confidenceReason).toBe('MT-R003');
       expect(ep?.provenance.kind).toBe('unresolved');
-      const capDiag = model.diagnostics.find((d) => d.code === 'DG-R003' && d.message.includes('Array product cap exceeded'));
+      const capDiag = model.diagnostics.find((d) => d.code === 'MT-R003' && d.message.includes('Array product cap exceeded'));
       expect(capDiag).toBeDefined();
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
@@ -328,7 +328,7 @@ describe('Constant Propagation & Dynamic Paths (Step 7d)', () => {
   });
 
   it('placeholder normalization in scanner: collapses multiline whitespace and caps long dynamic expression', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-cp-norm-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-cp-norm-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),

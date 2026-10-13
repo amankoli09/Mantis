@@ -120,7 +120,7 @@
         "snippet": "router.get(PRODUCT_DETAIL_PATH, (req, res) => {"
       },
       "confidence": "uncertain",
-      "confidenceReason": "DG-R003"
+      "confidenceReason": "MT-R003"
     },
     {
       "id": "GET /api/users",
@@ -262,7 +262,7 @@
   ],
   "diagnostics": [
     {
-      "code": "DG-R003",
+      "code": "MT-R003",
       "severity": "info",
       "message": "Route path uses dynamic runtime expression: '/products/' + getDetailSegment()",
       "file": "fixtures/nested-routers/app/routes/products.js",

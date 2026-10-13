@@ -119,7 +119,7 @@ describe('Route Extractor (extractDirectRoutes)', () => {
     expect(endpoints[0]!.id).toBe('GET /direct');
   });
 
-  it('emits DG-R003 and marks endpoint uncertain for dynamic path expressions', () => {
+  it('emits MT-R003 and marks endpoint uncertain for dynamic path expressions', () => {
     const code = [
       "const express = require('express');",
       'const app = express();',
@@ -134,11 +134,11 @@ describe('Route Extractor (extractDirectRoutes)', () => {
 
     expect(endpoints).toHaveLength(1);
     expect(endpoints[0]!.confidence).toBe('uncertain');
-    expect(endpoints[0]!.confidenceReason).toBe('DG-R003');
+    expect(endpoints[0]!.confidenceReason).toBe('MT-R003');
     expect(endpoints[0]!.provenance.kind).toBe('unresolved');
 
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0]!.code).toBe('DG-R003');
+    expect(diagnostics[0]!.code).toBe('MT-R003');
     expect(diagnostics[0]!.file).toBe('src/dynamic.js');
     expect(diagnostics[0]!.line).toBe(4);
   });
@@ -186,7 +186,7 @@ describe('Route Extractor (extractDirectRoutes)', () => {
     });
   });
 
-  it('flags unmounted routers as uncertain with DG-R002 diagnostic', () => {
+  it('flags unmounted routers as uncertain with MT-R002 diagnostic', () => {
     const code = [
       "const express = require('express');",
       'const app = express();',
@@ -200,7 +200,7 @@ describe('Route Extractor (extractDirectRoutes)', () => {
     const { endpoints, diagnostics } = extractDirectRoutes(ast!, 'src/app.js', code);
 
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0]!.code).toBe('DG-R004');
+    expect(diagnostics[0]!.code).toBe('MT-R004');
     expect(diagnostics[0]!.line).toBe(3);
 
     expect(endpoints).toHaveLength(1);
@@ -208,7 +208,7 @@ describe('Route Extractor (extractDirectRoutes)', () => {
       id: 'GET /orphan',
       path: '/orphan',
       confidence: 'uncertain',
-      confidenceReason: 'DG-R004',
+      confidenceReason: 'MT-R004',
       provenance: {
         kind: 'unresolved',
         line: 4,

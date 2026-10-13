@@ -77,7 +77,7 @@ describe('Module Graph (packages/adapter-express)', () => {
   });
 
   it('resolves directory index files (.js, .cjs, .mjs)', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-index-test-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-index-test-'));
     try {
       await fs.mkdir(path.join(tempDir, 'controllers'), { recursive: true });
       await fs.writeFile(
@@ -103,7 +103,7 @@ describe('Module Graph (packages/adapter-express)', () => {
   });
 
   it('resolves extension guessing (.js, .cjs, .mjs)', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-ext-test-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-ext-test-'));
     try {
       await fs.writeFile(path.join(tempDir, 'helper.cjs'), 'exports.help = () => true;');
       await fs.writeFile(
@@ -131,8 +131,8 @@ describe('Module Graph (packages/adapter-express)', () => {
     expect(res2.sourcePath).toBeNull();
   });
 
-  it('emits DG-R001 diagnostic for missing relative file without crashing', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-missing-test-'));
+  it('emits MT-R001 diagnostic for missing relative file without crashing', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-missing-test-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -143,7 +143,7 @@ describe('Module Graph (packages/adapter-express)', () => {
       expect(graph.diagnostics).toHaveLength(1);
 
       const diag = graph.diagnostics[0]!;
-      expect(diag.code).toBe('DG-R001');
+      expect(diag.code).toBe('MT-R001');
       expect(diag.severity).toBe('warning');
       expect(diag.file).toBe('app.js');
       expect(diag.line).toBe(1);
@@ -158,8 +158,8 @@ describe('Module Graph (packages/adapter-express)', () => {
     }
   });
 
-  it('emits DG-R001 diagnostic for require(variable) calls without crashing', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-dynamic-req-'));
+  it('emits MT-R001 diagnostic for require(variable) calls without crashing', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-dynamic-req-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -170,7 +170,7 @@ describe('Module Graph (packages/adapter-express)', () => {
       expect(graph.diagnostics).toHaveLength(1);
 
       const diag = graph.diagnostics[0]!;
-      expect(diag.code).toBe('DG-R001');
+      expect(diag.code).toBe('MT-R001');
       expect(diag.file).toBe('app.js');
       expect(diag.line).toBe(2);
 
@@ -184,7 +184,7 @@ describe('Module Graph (packages/adapter-express)', () => {
   });
 
   it('handles cyclic dependencies cleanly and terminates without infinite loops', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-cycle-test-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-cycle-test-'));
     try {
       // a.js requires b.js
       await fs.writeFile(
@@ -287,7 +287,7 @@ describe('Module Graph (packages/adapter-express)', () => {
   });
 
   it('handles re-export patterns: module.exports = require() and export from', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-reexport-test-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-reexport-test-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'actual-router.js'),
@@ -341,7 +341,7 @@ describe('Module Graph (packages/adapter-express)', () => {
   });
 
   it('strictly prevents resolving paths escaping outside the project root', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-escape-test-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-escape-test-'));
     const subDir = path.join(tempDir, 'project');
     const outsideFile = path.join(tempDir, 'outside-secret.js');
 
@@ -354,9 +354,9 @@ describe('Module Graph (packages/adapter-express)', () => {
       );
 
       const graph = await buildModuleGraph(subDir);
-      // Must not resolve outside file and must emit DG-R001
+      // Must not resolve outside file and must emit MT-R001
       expect(graph.diagnostics).toHaveLength(1);
-      expect(graph.diagnostics[0]!.code).toBe('DG-R001');
+      expect(graph.diagnostics[0]!.code).toBe('MT-R001');
       expect(graph.diagnostics[0]!.file).toBe('app.js');
 
       const appNode = graph.nodes.get('app.js')!;

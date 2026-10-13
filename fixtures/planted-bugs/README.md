@@ -1,6 +1,6 @@
 # Planted Bugs Fixture
 
-This fixture is a runnable Express application designed for Step 10 of DevGuard Core.
+This fixture is a runnable Express application designed for Step 10 of Mantis Core.
 It includes deliberate bugs to test response oracles, as well as clean endpoints to serve as false-positive guards.
 
 ## Endpoints

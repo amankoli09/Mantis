@@ -27,7 +27,7 @@ describe('AST Parser (parseFile)', () => {
     expect(result.diagnostics).toEqual([]);
   });
 
-  it('tolerates syntax errors, never throws, and emits DG-P001 diagnostic', () => {
+  it('tolerates syntax errors, never throws, and emits MT-P001 diagnostic', () => {
     const badCode = `
       const express = require('express')
       const app = express(
@@ -39,7 +39,7 @@ describe('AST Parser (parseFile)', () => {
 
     expect(result.diagnostics.length).toBeGreaterThan(0);
     const diag = result.diagnostics[0]!;
-    expect(diag.code).toBe('DG-P001');
+    expect(diag.code).toBe('MT-P001');
     expect(diag.severity).toBe('error');
     expect(diag.file).toBe('broken.js');
     expect(diag.line).toBeGreaterThanOrEqual(1);

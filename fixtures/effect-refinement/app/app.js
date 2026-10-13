@@ -67,7 +67,7 @@ app.delete('/delete-endpoint', async (req, res) => {
 // 11. 1-hop controller imported -> effect: write
 app.get('/controller-write', createRecord);
 
-// 12. Unresolvable dynamic handler -> stays baseline read, diagnostic DG-I001
+// 12. Unresolvable dynamic handler -> stays baseline read, diagnostic MT-I001
 app.get('/unresolvable-handler', getDynamicHandler());
 
 export default app;

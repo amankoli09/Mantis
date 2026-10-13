@@ -4,25 +4,25 @@ import { createDiagnostic, DIAGNOSTICS_REGISTRY, DiagnosticCodeSchema } from '..
 describe('Diagnostics Registry & Factory', () => {
   it('contains the registered diagnostic codes', () => {
     const codes = DiagnosticCodeSchema.options;
-    expect(codes).toEqual(['DG-P001', 'DG-R001', 'DG-R002', 'DG-R003', 'DG-R004', 'DG-I001', 'DG-I002']);
-    expect(Object.keys(DIAGNOSTICS_REGISTRY)).toEqual(['DG-P001', 'DG-R001', 'DG-R002', 'DG-R003', 'DG-R004', 'DG-I001', 'DG-I002']);
+    expect(codes).toEqual(['MT-P001', 'MT-R001', 'MT-R002', 'MT-R003', 'MT-R004', 'MT-I001', 'MT-I002']);
+    expect(Object.keys(DIAGNOSTICS_REGISTRY)).toEqual(['MT-P001', 'MT-R001', 'MT-R002', 'MT-R003', 'MT-R004', 'MT-I001', 'MT-I002']);
   });
 
-  it('creates DG-P001 parse error diagnostic with default severity', () => {
-    const diag = createDiagnostic('DG-P001', {
+  it('creates MT-P001 parse error diagnostic with default severity', () => {
+    const diag = createDiagnostic('MT-P001', {
       file: 'server.js',
       reason: 'Unexpected token (14:2)',
     });
 
-    expect(diag.code).toBe('DG-P001');
+    expect(diag.code).toBe('MT-P001');
     expect(diag.severity).toBe('error');
     expect(diag.file).toBe('server.js');
     expect(diag.message).toBe('Failed to parse file "server.js": Unexpected token (14:2)');
   });
 
-  it('creates DG-R001 unresolved import diagnostic with provenance and file/line', () => {
+  it('creates MT-R001 unresolved import diagnostic with provenance and file/line', () => {
     const diag = createDiagnostic(
-      'DG-R001',
+      'MT-R001',
       {
         importPath: './routes/users',
         sourceFile: 'app.ts',
@@ -32,7 +32,7 @@ describe('Diagnostics Registry & Factory', () => {
       },
     );
 
-    expect(diag.code).toBe('DG-R001');
+    expect(diag.code).toBe('MT-R001');
     expect(diag.severity).toBe('warning');
     expect(diag.file).toBe('app.ts');
     expect(diag.line).toBe(4);
@@ -40,9 +40,9 @@ describe('Diagnostics Registry & Factory', () => {
     expect(diag.provenance?.filePath).toBe('app.ts');
   });
 
-  it('creates DG-R002 unresolved router mount diagnostic', () => {
+  it('creates MT-R002 unresolved router mount diagnostic', () => {
     const diag = createDiagnostic(
-      'DG-R002',
+      'MT-R002',
       {
         mountPath: '/api/v2',
         routerIdentifier: 'v2Router',
@@ -53,7 +53,7 @@ describe('Diagnostics Registry & Factory', () => {
       },
     );
 
-    expect(diag.code).toBe('DG-R002');
+    expect(diag.code).toBe('MT-R002');
     expect(diag.severity).toBe('warning');
     expect(diag.file).toBe('src/app.js');
     expect(diag.line).toBe(18);
@@ -62,9 +62,9 @@ describe('Diagnostics Registry & Factory', () => {
     );
   });
 
-  it('creates DG-R003 dynamic path diagnostic and allows severity override', () => {
+  it('creates MT-R003 dynamic path diagnostic and allows severity override', () => {
     const diag = createDiagnostic(
-      'DG-R003',
+      'MT-R003',
       {
         rawExpression: 'prefix + "/items"',
       },
@@ -75,16 +75,16 @@ describe('Diagnostics Registry & Factory', () => {
       },
     );
 
-    expect(diag.code).toBe('DG-R003');
+    expect(diag.code).toBe('MT-R003');
     expect(diag.severity).toBe('warning');
     expect(diag.file).toBe('routes/dynamic.js');
     expect(diag.line).toBe(15);
     expect(diag.message).toBe('Route path uses dynamic runtime expression: prefix + "/items"');
   });
 
-  it('creates DG-R004 unmounted router diagnostic', () => {
+  it('creates MT-R004 unmounted router diagnostic', () => {
     const diag = createDiagnostic(
-      'DG-R004',
+      'MT-R004',
       {
         routerIdentifier: 'orphanRouter',
       },
@@ -94,16 +94,16 @@ describe('Diagnostics Registry & Factory', () => {
       },
     );
 
-    expect(diag.code).toBe('DG-R004');
+    expect(diag.code).toBe('MT-R004');
     expect(diag.severity).toBe('warning');
     expect(diag.file).toBe('src/app.js');
     expect(diag.line).toBe(26);
     expect(diag.message).toBe('Router "orphanRouter" is declared but never mounted to the application');
   });
 
-  it('creates DG-I001 unresolved handler diagnostic with handlerName', () => {
+  it('creates MT-I001 unresolved handler diagnostic with handlerName', () => {
     const diag = createDiagnostic(
-      'DG-I001',
+      'MT-I001',
       {
         handlerName: 'customHandler',
         reason: 'external package',
@@ -114,16 +114,16 @@ describe('Diagnostics Registry & Factory', () => {
       },
     );
 
-    expect(diag.code).toBe('DG-I001');
+    expect(diag.code).toBe('MT-I001');
     expect(diag.severity).toBe('info');
     expect(diag.file).toBe('routes/users.js');
     expect(diag.line).toBe(12);
     expect(diag.message).toBe('Route handler could not be statically resolved: customHandler (external package)');
   });
 
-  it('creates DG-I002 unresolved middleware diagnostic with middlewareName', () => {
+  it('creates MT-I002 unresolved middleware diagnostic with middlewareName', () => {
     const diag = createDiagnostic(
-      'DG-I002',
+      'MT-I002',
       {
         middlewareName: 'dynamicMw',
         reason: 'dynamic require',
@@ -134,7 +134,7 @@ describe('Diagnostics Registry & Factory', () => {
       },
     );
 
-    expect(diag.code).toBe('DG-I002');
+    expect(diag.code).toBe('MT-I002');
     expect(diag.severity).toBe('info');
     expect(diag.file).toBe('src/app.js');
     expect(diag.line).toBe(25);

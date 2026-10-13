@@ -401,7 +401,7 @@
   ],
   "diagnostics": [
     {
-      "code": "DG-I001",
+      "code": "MT-I001",
       "severity": "info",
       "message": "Route handler could not be statically resolved: getDynamicHandler()",
       "file": "fixtures/inference-basic/app/app.js",

@@ -1,7 +1,7 @@
 {
   "name": "inference-basic-fixture",
   "version": "1.0.0",
-  "description": "DevGuard parameter and body-field inference test fixture.",
+  "description": "Mantis parameter and body-field inference test fixture.",
   "main": "app.js",
   "dependencies": {
     "express": "^4.18.2"

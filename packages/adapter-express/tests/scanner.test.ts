@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import path from 'node:path';
 import { readFileSync, existsSync, promises as fs } from 'node:fs';
 import os from 'node:os';
-import { validateModel, type ApiModel } from '@devguard/core';
+import { validateModel, type ApiModel } from '@mantis/core';
 import { scanProject, ExpressAdapter } from '../src/index.js';
 
 describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
@@ -24,8 +24,8 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
     expect(model).toStrictEqual(goldenModel);
   });
 
-  it('tolerates broken syntax files and emits DG-P001 while extracting remaining valid routes', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-scan-error-'));
+  it('tolerates broken syntax files and emits MT-P001 while extracting remaining valid routes', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-scan-error-'));
     try {
       // 1. Valid route file
       await fs.writeFile(
@@ -53,9 +53,9 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
       expect(model.endpoints).toHaveLength(1);
       expect(model.endpoints[0]!.id).toBe('GET /valid-route');
 
-      // Captured DG-P001 diagnostic for broken file
+      // Captured MT-P001 diagnostic for broken file
       expect(model.diagnostics.length).toBeGreaterThan(0);
-      const parseDiag = model.diagnostics.find((d: { code: string }) => d.code === 'DG-P001');
+      const parseDiag = model.diagnostics.find((d: { code: string }) => d.code === 'MT-P001');
       expect(parseDiag).toBeDefined();
       expect(parseDiag!.file).toContain('broken.js');
     } finally {
@@ -112,8 +112,8 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
     expect(model).toStrictEqual(goldenModel);
   });
 
-  it('emits DG-R002 and confirms nothing when an imported router cannot be resolved', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-scan-unresolved-'));
+  it('emits MT-R002 and confirms nothing when an imported router cannot be resolved', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-scan-unresolved-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -130,16 +130,16 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
       // No confirmed routes
       expect(model.endpoints.filter((e) => e.confidence === 'confirmed')).toHaveLength(0);
 
-      // Emits DG-R001 (unresolved import) and DG-R002 (unresolved mount)
-      expect(model.diagnostics.some((d) => d.code === 'DG-R001')).toBe(true);
-      expect(model.diagnostics.some((d) => d.code === 'DG-R002')).toBe(true);
+      // Emits MT-R001 (unresolved import) and MT-R002 (unresolved mount)
+      expect(model.diagnostics.some((d) => d.code === 'MT-R001')).toBe(true);
+      expect(model.diagnostics.some((d) => d.code === 'MT-R002')).toBe(true);
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   });
 
-  it('detects cyclic router exports, emits DG-R002, and terminates cleanly', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-scan-cycle-'));
+  it('detects cyclic router exports, emits MT-R002, and terminates cleanly', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-scan-cycle-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'a.js'),
@@ -170,8 +170,8 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
       // No confirmed routes
       expect(model.endpoints.filter((e) => e.confidence === 'confirmed')).toHaveLength(0);
 
-      // Emits DG-R002 for the cycle
-      const cycleDiag = model.diagnostics.find((d) => d.code === 'DG-R002');
+      // Emits MT-R002 for the cycle
+      const cycleDiag = model.diagnostics.find((d) => d.code === 'MT-R002');
       expect(cycleDiag).toBeDefined();
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
@@ -186,7 +186,7 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
   });
 
   it('handles nested router mounts with plain variable bindings and middleware', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-scan-nested-var-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-scan-nested-var-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'sub.js'),
@@ -213,14 +213,14 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
       const route = model.endpoints.find(e => e.id === 'GET /api/info');
       expect(route).toBeDefined();
       expect(route!.confidence).toBe('confirmed');
-      expect(model.diagnostics.filter(d => d.code === 'DG-R002')).toHaveLength(0);
+      expect(model.diagnostics.filter(d => d.code === 'MT-R002')).toHaveLength(0);
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   });
 
-  it('correctly resolves diamond-shaped mounts without false DG-R002 cycles', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-scan-diamond-'));
+  it('correctly resolves diamond-shaped mounts without false MT-R002 cycles', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-scan-diamond-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'shared.js'),
@@ -270,14 +270,14 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
       
       expect(route1).toBeDefined();
       expect(route2).toBeDefined();
-      expect(model.diagnostics.filter(d => d.code === 'DG-R002')).toHaveLength(0);
+      expect(model.diagnostics.filter(d => d.code === 'MT-R002')).toHaveLength(0);
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   });
 
   it('handles unidentifiable router arguments gracefully without crashing', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-scan-unidentifiable-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-scan-unidentifiable-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -292,8 +292,8 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
       const model = await scanProject(tempDir);
       
       expect(model.endpoints).toHaveLength(0);
-      // We expect DG-R002 because config.someUnknownThing couldn't be resolved to a router
-      const r002s = model.diagnostics.filter(d => d.code === 'DG-R002');
+      // We expect MT-R002 because config.someUnknownThing couldn't be resolved to a router
+      const r002s = model.diagnostics.filter(d => d.code === 'MT-R002');
       expect(r002s.length).toBeGreaterThan(0);
       expect(r002s[0]!.message).toContain('config.someUnknownThing');
     } finally {
@@ -302,7 +302,7 @@ describe('Express Scanner (scanProject & ExpressAdapter.scan)', () => {
   });
 
   it('correctly resolves app.route() chaining', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-scan-app-route-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-scan-app-route-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),

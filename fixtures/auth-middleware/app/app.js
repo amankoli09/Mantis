@@ -14,7 +14,7 @@ app.use(express.json());
 // 2. Custom non-auth middleware
 app.use(requestLogger);
 
-// 3. Unresolvable dynamic middleware (emits DG-I002)
+// 3. Unresolvable dynamic middleware (emits MT-I002)
 function getDynamicMiddleware() { return './middleware/dynamic'; }
 const dynamicPath = getDynamicMiddleware();
 const dynamicMw = require(dynamicPath);

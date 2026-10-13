@@ -21,4 +21,4 @@ A multi-file Express application testing deeply nested router mounts, route chai
 
 ## Diagnostics
 
-- **`DG-R003` (Info)**: `Route path uses dynamic runtime expression: '/products/' + getDetailSegment()` emitted for `routes/products.js:17`.
+- **`MT-R003` (Info)**: `Route path uses dynamic runtime expression: '/products/' + getDetailSegment()` emitted for `routes/products.js:17`.

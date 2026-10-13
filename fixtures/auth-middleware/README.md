@@ -7,7 +7,7 @@ Demonstrates deterministic static detection of middleware chains and authenticat
 ## Scenarios Covered
 
 1. **Non-Auth Middleware**: `express.json()` and `requestLogger` apply to subsequent routes but never classify endpoints as authenticated.
-2. **Unresolvable Middleware**: `dynamicMw` (loaded via dynamic expression) cannot be statically resolved, emitting diagnostic `DG-I002` and recording `<unresolved>` middleware.
+2. **Unresolvable Middleware**: `dynamicMw` (loaded via dynamic expression) cannot be statically resolved, emitting diagnostic `MT-I002` and recording `<unresolved>` middleware.
 3. **Registration Order (Public Route)**: `GET /public` is registered before `app.use(sessionGuard)`, so it has no authentication (`auth.type: "unknown"`).
 4. **Route-Level Middleware**: `GET /custom-auth` passes `requireAuth` as a route argument, classifying `auth.type: "custom"` with evidence.
 5. **App-Level Auth Middleware**: `app.use(sessionGuard)` protects routes registered after it (`GET /profile`), classifying `auth.type: "cookie"` with evidence.

@@ -27,7 +27,7 @@
         "snippet": "app.get(/.*regex.*/, (req, res) => res.send('regex'));"
       },
       "confidence": "uncertain",
-      "confidenceReason": "DG-R003"
+      "confidenceReason": "MT-R003"
     },
     {
       "id": "GET /<CYCLIC_A>",
@@ -49,7 +49,7 @@
         "snippet": "app.get(CYCLIC_A, (req, res) => res.send('cycle'));"
       },
       "confidence": "uncertain",
-      "confidenceReason": "DG-R003"
+      "confidenceReason": "MT-R003"
     },
     {
       "id": "GET /<getPath()>",
@@ -71,7 +71,7 @@
         "snippet": "app.get(getPath(), (req, res) => res.send('func'));"
       },
       "confidence": "uncertain",
-      "confidenceReason": "DG-R003"
+      "confidenceReason": "MT-R003"
     },
     {
       "id": "GET /<mutableObj.path>",
@@ -93,7 +93,7 @@
         "snippet": "app.get(mutableObj.path, (req, res) => res.send('mutable'));"
       },
       "confidence": "uncertain",
-      "confidenceReason": "DG-R003"
+      "confidenceReason": "MT-R003"
     },
     {
       "id": "GET /<process.env.MY_ROUTE>",
@@ -115,7 +115,7 @@
         "snippet": "app.get(fromEnv, (req, res) => res.send('env'));"
       },
       "confidence": "uncertain",
-      "confidenceReason": "DG-R003"
+      "confidenceReason": "MT-R003"
     },
     {
       "id": "GET /<reassigned>",
@@ -137,7 +137,7 @@
         "snippet": "app.get(reassigned, (req, res) => res.send('reassigned'));"
       },
       "confidence": "uncertain",
-      "confidenceReason": "DG-R003"
+      "confidenceReason": "MT-R003"
     },
     {
       "id": "GET /a",
@@ -181,7 +181,7 @@
         "snippet": "app.get(PARTIAL, (req, res) => res.send('partial'));"
       },
       "confidence": "uncertain",
-      "confidenceReason": "DG-R003"
+      "confidenceReason": "MT-R003"
     },
     {
       "id": "GET /api/v1/store/items",
@@ -306,7 +306,7 @@
   ],
   "diagnostics": [
     {
-      "code": "DG-R003",
+      "code": "MT-R003",
       "severity": "info",
       "message": "Route path uses dynamic runtime expression: reassigned",
       "file": "fixtures/constant-propagation/app/app.js",
@@ -314,7 +314,7 @@
       "column": 4
     },
     {
-      "code": "DG-R003",
+      "code": "MT-R003",
       "severity": "info",
       "message": "Route path uses dynamic runtime expression: process.env.MY_ROUTE",
       "file": "fixtures/constant-propagation/app/app.js",
@@ -322,7 +322,7 @@
       "column": 4
     },
     {
-      "code": "DG-R003",
+      "code": "MT-R003",
       "severity": "info",
       "message": "Route path uses dynamic runtime expression: /.*regex.*/",
       "file": "fixtures/constant-propagation/app/app.js",
@@ -330,7 +330,7 @@
       "column": 4
     },
     {
-      "code": "DG-R003",
+      "code": "MT-R003",
       "severity": "info",
       "message": "Route path uses dynamic runtime expression: mutableObj.path",
       "file": "fixtures/constant-propagation/app/app.js",
@@ -338,7 +338,7 @@
       "column": 4
     },
     {
-      "code": "DG-R003",
+      "code": "MT-R003",
       "severity": "info",
       "message": "Route path uses dynamic runtime expression: getPath()",
       "file": "fixtures/constant-propagation/app/app.js",
@@ -346,7 +346,7 @@
       "column": 4
     },
     {
-      "code": "DG-R003",
+      "code": "MT-R003",
       "severity": "info",
       "message": "Route path uses dynamic runtime expression: FULL_PREFIX + '/' + getPath()",
       "file": "fixtures/constant-propagation/app/app.js",
@@ -354,7 +354,7 @@
       "column": 4
     },
     {
-      "code": "DG-R003",
+      "code": "MT-R003",
       "severity": "info",
       "message": "Route path uses dynamic runtime expression: CYCLIC_A",
       "file": "fixtures/constant-propagation/app/app.js",

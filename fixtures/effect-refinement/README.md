@@ -15,4 +15,4 @@ This fixture tests Step 8c (Issue #11): **Effect refinement from handler bodies*
 9. `POST /post-delete`: `POST` method baseline is `write`. Handler executes `User.findByIdAndDelete()`. Raised to `destructive` with `effectEvidence` (`mongoose:findByIdAndDelete`).
 10. `DELETE /delete-endpoint`: `DELETE` method baseline is `destructive`. Confirmed with evidence.
 11. `GET /controller-write`: 1-hop imported controller (`createRecord` from `./controller.js`) calling `Record.create()` refined to `write` with provenance pointing to `controller.js`.
-12. `GET /unresolvable-handler`: Unresolvable dynamic handler stays at method baseline (`read`), emitting diagnostic `DG-I001`.
+12. `GET /unresolvable-handler`: Unresolvable dynamic handler stays at method baseline (`read`), emitting diagnostic `MT-I001`.

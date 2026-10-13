@@ -48,7 +48,7 @@ app.get('/api/profile', (req, res) => {
       id: 1,
       username: 'alice',
       passwordHash: 'argon2id$v=19$m=65536,t=3,p=4$fakehash',
-      apiKey: 'devguard_sk_test_987654321',
+      apiKey: 'mantis_sk_test_987654321',
     },
   });
 });

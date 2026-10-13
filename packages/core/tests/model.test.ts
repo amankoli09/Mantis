@@ -166,19 +166,19 @@ describe('ApiModel Validation', () => {
             responses: [],
             middleware: [],
             confidence: 'uncertain',
-            confidenceReason: 'DG-R003',
+            confidenceReason: 'MT-R003',
           },
         ],
         diagnostics: [
           {
-            code: 'DG-R003',
+            code: 'MT-R003',
             severity: 'info',
             message: 'Route path uses dynamic runtime expression: config.apiPrefix + "/dynamic"',
             file: 'routes/dynamic.js',
             line: 15,
           },
           {
-            code: 'DG-R001',
+            code: 'MT-R001',
             severity: 'warning',
             message: 'Could not resolve import "./missing-auth" from "routes/dynamic.js"',
             file: 'routes/dynamic.js',
@@ -191,7 +191,7 @@ describe('ApiModel Validation', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.endpoints[0].confidence).toBe('uncertain');
-        expect(result.data.endpoints[0].confidenceReason).toBe('DG-R003');
+        expect(result.data.endpoints[0].confidenceReason).toBe('MT-R003');
         expect(result.data.diagnostics[0].file).toBe('routes/dynamic.js');
       }
     });
@@ -311,7 +311,7 @@ describe('ApiModel Validation', () => {
         endpoints: [],
         diagnostics: [
           {
-            code: 'DG-UNKNOWN-999',
+            code: 'MT-UNKNOWN-999',
             severity: 'error',
             message: 'Unknown failure',
           },

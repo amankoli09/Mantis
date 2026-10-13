@@ -10,7 +10,7 @@ import {
   mergeZodIntoParams,
 } from '../src/extract/zod-extractor.js';
 import type { ModuleGraph } from '../src/module-graph.js';
-import type { ParamDefinition } from '@devguard/core';
+import type { ParamDefinition } from '@mantis/core';
 
 type TraverseFn = (parent: Node | Node[], opts?: TraverseOptions) => void;
 const traverse: TraverseFn =

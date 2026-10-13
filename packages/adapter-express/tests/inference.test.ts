@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import path from 'node:path';
 import { readFileSync, promises as fs } from 'node:fs';
 import os from 'node:os';
-import { validateModel, type ApiModel } from '@devguard/core';
+import { validateModel, type ApiModel } from '@mantis/core';
 import { scanProject } from '../src/index.js';
 
 describe('Parameter & Body-Field Inference (Step 8a)', () => {
@@ -25,7 +25,7 @@ describe('Parameter & Body-Field Inference (Step 8a)', () => {
   });
 
   it('destructuring with rename extracts original request property key, not the local variable name', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-inference-rename-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-inference-rename-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -54,7 +54,7 @@ describe('Parameter & Body-Field Inference (Step 8a)', () => {
   });
 
   it('binds request by parameter binding regardless of name (request, r, customReq)', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-inference-binding-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-inference-binding-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -80,7 +80,7 @@ describe('Parameter & Body-Field Inference (Step 8a)', () => {
   });
 
   it('handles bracket access with string literals and skips computed keys', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-inference-bracket-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-inference-bracket-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -109,7 +109,7 @@ describe('Parameter & Body-Field Inference (Step 8a)', () => {
   });
 
   it('whole-object passing does not guess fields and leaves body params empty', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-inference-whole-object-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-inference-whole-object-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -134,7 +134,7 @@ describe('Parameter & Body-Field Inference (Step 8a)', () => {
   });
 
   it('handles parameter object pattern destructuring', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-inference-param-destruct-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-inference-param-destruct-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -160,8 +160,8 @@ describe('Parameter & Body-Field Inference (Step 8a)', () => {
     }
   });
 
-  it('emits DG-I001 diagnostic when route handler is unresolvable', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-inference-unresolved-'));
+  it('emits MT-I001 diagnostic when route handler is unresolvable', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-inference-unresolved-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -175,14 +175,14 @@ describe('Parameter & Body-Field Inference (Step 8a)', () => {
       const model = await scanProject(tempDir);
       expect(model.endpoints).toHaveLength(1);
       expect(model.endpoints[0]!.params).toEqual([]);
-      expect(model.diagnostics.some((d) => d.code === 'DG-I001' && d.message.includes("createHandler('arg')"))).toBe(true);
+      expect(model.diagnostics.some((d) => d.code === 'MT-I001' && d.message.includes("createHandler('arg')"))).toBe(true);
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   });
 
   it('sorts parameters deterministically: path -> query -> header -> body then name', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-inference-sort-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-inference-sort-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -216,7 +216,7 @@ describe('Parameter & Body-Field Inference (Step 8a)', () => {
   });
 
   it('extracts req.query.x and req.params.x correctly', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-inference-query-param-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-inference-query-param-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -251,7 +251,7 @@ describe('Parameter & Body-Field Inference (Step 8a)', () => {
   });
 
   it('resolves one-hop imported controller function from another file', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-inference-controller-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-inference-controller-'));
     try {
       await fs.mkdir(path.join(tempDir, 'controllers'), { recursive: true });
       await fs.writeFile(
@@ -287,7 +287,7 @@ describe('Parameter & Body-Field Inference (Step 8a)', () => {
   });
 
   it('resolves handler array picking the last function element', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-inference-handler-array-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-inference-handler-array-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -315,7 +315,7 @@ describe('Parameter & Body-Field Inference (Step 8a)', () => {
   });
 
   it('ignores shadowed req parameter in nested callbacks', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-inference-shadow-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-inference-shadow-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),
@@ -343,7 +343,7 @@ describe('Parameter & Body-Field Inference (Step 8a)', () => {
   });
 
   it('detects header parameters from req.headers', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-inference-headers-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-inference-headers-'));
     try {
       await fs.writeFile(
         path.join(tempDir, 'app.js'),

@@ -18,4 +18,4 @@ A fixture testing the static evaluation of route paths defined through string co
 
 ## Diagnostics
 
-Emits 7 `DG-R003` (Info) diagnostics corresponding to each unresolvable dynamic runtime expression.
+Emits 7 `MT-R003` (Info) diagnostics corresponding to each unresolvable dynamic runtime expression.

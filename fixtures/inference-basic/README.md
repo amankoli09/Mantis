@@ -13,8 +13,8 @@ A multi-file Express application designed to exercise handler static AST inspect
 7. **`POST /posts`**: Imported controller function one hop via module graph (`const { createPost } = require('./controllers/posts')`).
 8. **`POST /comments`**: Variable shadowing where inner callback uses parameter `req` (`items.map(req => req.name)`), correctly ignored by scope checking.
 9. **`POST /webhook`**: Request object named `request` instead of `req` (`app.post('/webhook', (request, res) => { request.body.event })`). Correctly identified by parameter binding.
-10. **`POST /unresolved`**: Handler is a dynamic function call (`app.post('/unresolved', getDynamicHandler())`). Emits `DG-I001` diagnostic.
+10. **`POST /unresolved`**: Handler is a dynamic function call (`app.post('/unresolved', getDynamicHandler())`). Emits `MT-I001` diagnostic.
 
 ## Diagnostics
 
-- **`DG-I001` (Info)**: `Route handler could not be statically resolved: getDynamicHandler()` emitted for `app/app.js:61`.
+- **`MT-I001` (Info)**: `Route handler could not be statically resolved: getDynamicHandler()` emitted for `app/app.js:61`.

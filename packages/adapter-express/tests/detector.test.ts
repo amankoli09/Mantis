@@ -32,7 +32,7 @@ describe('Express Detection (detectExpress & ExpressAdapter)', () => {
     });
 
     it('detects express declared in devDependencies', async () => {
-      const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-devdep-'));
+      const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-devdep-'));
       try {
         await fs.writeFile(
           path.join(tempDir, 'package.json'),
@@ -74,7 +74,7 @@ describe('Express Detection (detectExpress & ExpressAdapter)', () => {
     });
 
     it('detects express via ESM import express in package.json-less folder', async () => {
-      const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-esm-'));
+      const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-esm-'));
       try {
         await fs.writeFile(
           path.join(tempDir, 'index.mjs'),

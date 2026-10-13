@@ -390,7 +390,7 @@
   ],
   "diagnostics": [
     {
-      "code": "DG-R001",
+      "code": "MT-R001",
       "severity": "warning",
       "message": "Could not resolve import \"<dynamic>\" from \"app.js\"",
       "file": "fixtures/auth-middleware/app/app.js",
@@ -398,7 +398,7 @@
       "column": 6
     },
     {
-      "code": "DG-I002",
+      "code": "MT-I002",
       "severity": "info",
       "message": "Middleware could not be statically resolved: dynamicMw (unresolved identifier)",
       "file": "fixtures/auth-middleware/app/app.js",

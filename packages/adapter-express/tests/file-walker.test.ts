@@ -29,7 +29,7 @@ describe('File Walker (walkProjectFiles)', () => {
   });
 
   it('ignores standard ignored directories (node_modules, dist, build, coverage, .git)', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-ignore-test-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-ignore-test-'));
     try {
       // Normal source files
       await fs.mkdir(path.join(tempDir, 'src/routes'), { recursive: true });
@@ -61,7 +61,7 @@ describe('File Walker (walkProjectFiles)', () => {
   });
 
   it('safely skips symlinks without entering infinite recursion loops', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-symlink-test-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-symlink-test-'));
     try {
       await fs.mkdir(path.join(tempDir, 'sub'), { recursive: true });
       await fs.writeFile(path.join(tempDir, 'sub/file.js'), '// real file');
@@ -84,7 +84,7 @@ describe('File Walker (walkProjectFiles)', () => {
   });
 
   it('skips files exceeding maxFileSizeBytes and reports them', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-huge-file-test-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-huge-file-test-'));
     try {
       await fs.writeFile(path.join(tempDir, 'small.js'), 'console.log("small");');
 
