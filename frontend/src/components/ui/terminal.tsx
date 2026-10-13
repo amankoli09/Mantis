@@ -19,7 +19,7 @@ export function Terminal({
   ],
   outputs = {
     0: [
-      'DevGuard Scanner — Express (javascript) | Root: backend',
+      'Mantis Scanner — Express (javascript) | Root: backend',
       'Endpoints (6 discovered: 6 confirmed, 0 uncertain)',
       '  ✓ GET     /health               backend/app.js:10',
       '  ✓ GET     /users                backend/app.js:15',

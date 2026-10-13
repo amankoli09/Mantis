@@ -1,6 +1,6 @@
-# DevGuard Test Engine Architecture (`Step 10`)
+# Mantis Test Engine Architecture (`Step 10`)
 
-The DevGuard Test Engine turns an `ApiModel` into deterministic test plans, executes them safely through `@devguard/runner`, and judges HTTP responses using pluggable Oracles to report code-linked findings.
+The Mantis Test Engine turns an `ApiModel` into deterministic test plans, executes them safely through `@mantis/runner`, and judges HTTP responses using pluggable Oracles to report code-linked findings.
 
 ---
 
@@ -53,7 +53,7 @@ export interface GeneratorPlugin {
 Create `packages/core/src/generators/oversized-string.ts`:
 
 ```typescript
-import type { Endpoint, RunnerConfig, TestCase, GeneratorPlugin } from '@devguard/core';
+import type { Endpoint, RunnerConfig, TestCase, GeneratorPlugin } from '@mantis/core';
 import { resolveEndpointUrl } from '../helpers/planner-helpers.js';
 
 export const oversizedStringGenerator: GeneratorPlugin = {
@@ -124,7 +124,7 @@ export interface OraclePlugin {
 Create `packages/core/src/oracles/status-sanity.ts`:
 
 ```typescript
-import type { Endpoint, ExecutionResult, TestCase, Finding, OraclePlugin } from '@devguard/core';
+import type { Endpoint, ExecutionResult, TestCase, Finding, OraclePlugin } from '@mantis/core';
 
 export const statusSanityOracle: OraclePlugin = {
   id: 'status-sanity',

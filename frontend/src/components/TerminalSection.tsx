@@ -9,7 +9,7 @@ export function TerminalSection() {
   const scanCommands = ['mantis scan ./backend'];
   const scanOutputs = {
     0: [
-      'DevGuard Scanner — Express (javascript) | Root: backend',
+      'Mantis Scanner — Express (javascript) | Root: backend',
       '',
       'Endpoints (6 discovered: 6 confirmed, 0 uncertain):',
       '  ✓ GET     /health               backend/app.js:10',

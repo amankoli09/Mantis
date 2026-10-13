@@ -1,23 +1,23 @@
-# DevGuard Runner Safety Architecture
+# Mantis Runner Safety Architecture
 
-DevGuard sends HTTP requests to running services to verify API contracts, auth enforcement, and parameter validation.
+Mantis sends HTTP requests to running services to verify API contracts, auth enforcement, and parameter validation.
 
-Because automated testing tools have the potential to trigger destructive mutations or hit unintended servers, **safety is the foundational invariant** of `@devguard/runner`.
+Because automated testing tools have the potential to trigger destructive mutations or hit unintended servers, **safety is the foundational invariant** of `@mantis/runner`.
 
 ---
 
 ## 🛡️ Core Safety Principles
 
 1. **Safe Mode by Default**:
-   Only endpoints classified with mutation effect `read` are eligible to run by default. Mutation effects `write` and `destructive` require explicit user opt-in in `devguard.config.json`.
+   Only endpoints classified with mutation effect `read` are eligible to run by default. Mutation effects `write` and `destructive` require explicit user opt-in in `mantis.config.json`.
 2. **Unknown is Never Safe**:
    Endpoints with mutation effect `unknown` or confidence `uncertain` are **never** executed, even if listed in `allowedEffects`.
 3. **No Guessing**:
-   If an endpoint has path parameters (e.g. `GET /users/:id`), DevGuard requires an explicit sample value in `pathParamSamples`. Missing samples result in an immediate structured skip (`no-sample-for-path-param`).
+   If an endpoint has path parameters (e.g. `GET /users/:id`), Mantis requires an explicit sample value in `pathParamSamples`. Missing samples result in an immediate structured skip (`no-sample-for-path-param`).
 4. **Host Guard**:
-   DevGuard refuses to connect to any non-local hostname unless `allowRemote: true` is explicitly configured. Embedded credentials in URLs are rejected outright.
+   Mantis refuses to connect to any non-local hostname unless `allowRemote: true` is explicitly configured. Embedded credentials in URLs are rejected outright.
 5. **Secret Redaction**:
-   Configured secrets and standard authorization headers are never written to disk in `.devguard/sessions/` or printed in `--dry-run` outputs.
+   Configured secrets and standard authorization headers are never written to disk in `.mantis/sessions/` or printed in `--dry-run` outputs.
 
 ---
 
@@ -58,7 +58,7 @@ The `validateBaseUrl()` function enforces the following:
 2. **Payload & URL Redaction**:
    Configured secret values are scanned and replaced with `"[REDACTED]"` in all request and response bodies and URLs.
 3. **Deterministic Persistence**:
-   Sessions saved to `.devguard/sessions/<sessionId>.json` sort all object keys and arrays deterministically, with volatile execution timestamps segregated into the `meta` block.
+   Sessions saved to `.mantis/sessions/<sessionId>.json` sort all object keys and arrays deterministically, with volatile execution timestamps segregated into the `meta` block.
 
 ---
 

@@ -1,6 +1,6 @@
-# DevGuard API Model Specification (`v1.2.0`)
+# Mantis API Model Specification (`v1.2.0`)
 
-The **DevGuard API Model** (`ApiModel`) is the standardized, framework-agnostic data representation produced when DevGuard statically scans a backend codebase.
+The **Mantis API Model** (`ApiModel`) is the standardized, framework-agnostic data representation produced when Mantis statically scans a backend codebase.
 
 It serves as the contract between framework adapters (such as Express, Fastify, or NestJS) and downstream test runners, report generators, and security scanners.
 
@@ -54,7 +54,7 @@ Each item in the `endpoints` array describes a unique HTTP route:
 | `mountChain`       | `MountEntry[]`         |              No               | Ordered list of router mounts from application root to handler, capturing the file and line of each mount step.    |
 | `provenance`       | `Provenance`           |              Yes              | Source code location where this endpoint was defined (file, line number, snippet).                                  |
 | `confidence`       | `enum`                 | Yes (defaults to `confirmed`) | Certainty status: `'confirmed' \| 'uncertain'`.                                                                     |
-| `confidenceReason` | `DiagnosticCode`       |    Required if `uncertain`    | Diagnostic code explaining why the route is uncertain (e.g., `'DG-R002'`).                                          |
+| `confidenceReason` | `DiagnosticCode`       |    Required if `uncertain`    | Diagnostic code explaining why the route is uncertain (e.g., `'MT-R002'`).                                          |
 
 ### Effect Refinement & Monotonic Risk Rule (Step 8c)
 
@@ -70,7 +70,7 @@ Static analysis examines the handler AST (one hop from route declaration or cont
 Evidence can **raise** the risk level (`read` < `write` < `destructive`), but **never lower it**:
 - If evidence indicates a higher risk than the HTTP method suggests (e.g. `User.create()` behind `GET` or `User.delete()` behind `POST`), the effect is raised to `'write'` or `'destructive'`, with `effectEvidence` pointing to the call line and signal.
 - If a `POST` handler only reads data, its effect remains `'write'`.
-- If a handler is unresolvable (`DG-I001`), the effect stays at its HTTP method baseline (or `unknown`).
+- If a handler is unresolvable (`MT-I001`), the effect stays at its HTTP method baseline (or `unknown`).
 - Unknown or arbitrary function calls are not classified.
 
 #### Known-Library Rule Table
@@ -146,19 +146,19 @@ Every fact in the model records where it came from and how it was determined:
 When a route path contains dynamic expressions that cannot be statically resolved, the unresolvable portion is preserved using an `<EXPRESSION>` placeholder:
 - **Whitespace Collapsing**: All consecutive whitespace characters (including newlines and tabs) are collapsed into a single space, and leading/trailing whitespace is trimmed.
 - **Length Cap**: The inner expression text is capped at 60 characters. If the collapsed text exceeds 60 characters, it is truncated with `...` (57 characters + `...`).
-- **Provenance & Confidence**: Any route containing a dynamic placeholder receives `provenance.kind = 'unresolved'`, `confidence = 'uncertain'`, and `confidenceReason = 'DG-R003'`.
+- **Provenance & Confidence**: Any route containing a dynamic placeholder receives `provenance.kind = 'unresolved'`, `confidence = 'uncertain'`, and `confidenceReason = 'MT-R003'`.
 
 ### Confidence (`confidence` & `confidenceReason`)
 
 - `'confirmed'`: Full confidence in the route's path and handler.
-- `'uncertain'`: Ambiguity exists (e.g., dynamic import, unresolvable router mount). **Must** include a `confidenceReason` referencing a registered Diagnostic Code (e.g., `DG-R002`, `DG-R003`).
+- `'uncertain'`: Ambiguity exists (e.g., dynamic import, unresolvable router mount). **Must** include a `confidenceReason` referencing a registered Diagnostic Code (e.g., `MT-R002`, `MT-R003`).
 
 ---
 
 ## 🔒 3. Authentication Detection & Evidence
 
-DevGuard detects authentication requirements statically from active middleware chains and handler inspectable code.
-**Honesty rule**: DevGuard never infers `auth: 'none'`. If no known authentication evidence is discovered, `auth` remains `type: 'unknown'`.
+Mantis detects authentication requirements statically from active middleware chains and handler inspectable code.
+**Honesty rule**: Mantis never infers `auth: 'none'`. If no known authentication evidence is discovered, `auth` remains `type: 'unknown'`.
 
 ### Auth Classification Rule Set
 
@@ -180,16 +180,16 @@ Diagnostics capture issues or ambiguities encountered during analysis without cr
 
 | Code      | Severity  | Description                                                                         |
 | :-------- | :-------: | :---------------------------------------------------------------------------------- |
-| `DG-P001` |  `error`  | **Parse Error**: File syntax error preventing AST generation.                       |
-| `DG-R001` | `warning` | **Unresolved Import**: An imported router or controller file could not be resolved. |
-| `DG-R002` | `warning` | **Unresolved Router Mount**: A router was mounted but its definition was missing.   |
-| `DG-R003` |  `info`   | **Dynamic Path**: Route uses a runtime dynamic expression. Unresolvable segments are replaced with normalized `<EXPRESSION>` placeholders. |
-| `DG-I001` |  `info`   | **Unresolved Handler**: Route handler could not be statically resolved. Inferred fields remain empty. |
-| `DG-I002` |  `info`   | **Unresolved Middleware**: Middleware expression could not be statically resolved. Appears as `<unresolved>` in middleware chain. |
+| `MT-P001` |  `error`  | **Parse Error**: File syntax error preventing AST generation.                       |
+| `MT-R001` | `warning` | **Unresolved Import**: An imported router or controller file could not be resolved. |
+| `MT-R002` | `warning` | **Unresolved Router Mount**: A router was mounted but its definition was missing.   |
+| `MT-R003` |  `info`   | **Dynamic Path**: Route uses a runtime dynamic expression. Unresolvable segments are replaced with normalized `<EXPRESSION>` placeholders. |
+| `MT-I001` |  `info`   | **Unresolved Handler**: Route handler could not be statically resolved. Inferred fields remain empty. |
+| `MT-I002` |  `info`   | **Unresolved Middleware**: Middleware expression could not be statically resolved. Appears as `<unresolved>` in middleware chain. |
 
 Each diagnostic records:
 
-- `code`: Diagnostic code enum (`DG-P001`, `DG-R001`, `DG-R002`, `DG-R003`, `DG-I001`, `DG-I002`).
+- `code`: Diagnostic code enum (`MT-P001`, `MT-R001`, `MT-R002`, `MT-R003`, `MT-I001`, `MT-I002`).
 - `severity`: `'error' | 'warning' | 'info'`.
 - `message`: Formatted human-readable explanation.
 - `file` & `line`: Source location (optional only for project-wide diagnostics).

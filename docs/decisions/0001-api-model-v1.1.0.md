@@ -21,7 +21,7 @@ Bump `modelVersion` to `'1.1.0'` with a backward-compatible schema upgrade:
    - `required`: Allow `boolean | 'unknown'`, defaulting to `'unknown'`.
    - `type`: Add `string`, defaulting to `'unknown'`.
 4. **`Endpoint.mountChain`**: Add optional `mountChain` property: array of `{ filePath: string; line: number }`, defaulting to `[]`.
-5. **Diagnostics**: Register `DG-I001` (`severity: 'info'`): Route handler could not be statically resolved.
+5. **Diagnostics**: Register `MT-I001` (`severity: 'info'`): Route handler could not be statically resolved.
 
 ## Consequences
 

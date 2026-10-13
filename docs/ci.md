@@ -1,17 +1,17 @@
-# DevGuard CI/CD Integration Guide
+# Mantis CI/CD Integration Guide
 
-DevGuard is engineered for zero-friction integration with modern continuous integration pipelines. It provides deterministic exit codes, JSON and HTML reporting, and diff modes for pull request regression checking.
+Mantis is engineered for zero-friction integration with modern continuous integration pipelines. It provides deterministic exit codes, JSON and HTML reporting, and diff modes for pull request regression checking.
 
 ---
 
 ## 1. Exit Code Reference
 
-DevGuard CLI commands (`scan`, `test`, `report`, `diff`) return predictable UNIX exit codes:
+Mantis CLI commands (`scan`, `test`, `report`, `diff`) return predictable UNIX exit codes:
 
 | Exit Code | Meaning | Typical Causes |
 | :---: | :--- | :--- |
 | **`0`** | **Success / Clean** | All tests passed, no policy violations, or clean diff. |
-| **`1`** | **Findings / Policy Violation** | Test assertions failed, security oracle violations detected, or regressions found during `devguard diff`. |
+| **`1`** | **Findings / Policy Violation** | Test assertions failed, security oracle violations detected, or regressions found during `mantis diff`. |
 | **`2`** | **Configuration / Usage Error** | Missing configuration file, invalid CLI flags, unreadable files, or unreachable target URL. |
 | **`3`** | **Internal Error** | Unhandled runtime exception or internal crash. |
 
@@ -28,7 +28,7 @@ name: API Verification
 on: [push, pull_request]
 
 jobs:
-  devguard-scan:
+  mantis-scan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +37,7 @@ jobs:
           node-version: 22
 
       - name: Scan API & Export OpenAPI
-        uses: ./.github/actions/devguard-scan
+        uses: ./.github/actions/mantis-scan
         with:
           path: './server'
           export-openapi: 'true'
@@ -84,15 +84,15 @@ jobs:
 
       - name: Scan Base Branch
         run: |
-          npx --yes @devguard/cli scan ./base --json --out base-model.json
+          npx --yes @mantis/cli scan ./base --json --out base-model.json
 
       - name: Scan PR Branch
         run: |
-          npx --yes @devguard/cli scan ./head --json --out head-model.json
+          npx --yes @mantis/cli scan ./head --json --out head-model.json
 
       - name: Compare API Models
         run: |
-          npx --yes @devguard/cli diff base-model.json head-model.json
+          npx --yes @mantis/cli diff base-model.json head-model.json
 ```
 
 ---
@@ -120,20 +120,20 @@ jobs:
           npm start &
           npx wait-on http://127.0.0.1:3000/health
 
-      - name: Run DevGuard Test Suite
+      - name: Run Mantis Test Suite
         run: |
-          npx --yes @devguard/cli test . \
+          npx --yes @mantis/cli test . \
             --base-url http://127.0.0.1:3000 \
             --html \
-            --out devguard-report.html \
+            --out mantis-report.html \
             --fail-on warning
 
       - name: Upload HTML Test Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: devguard-html-report
-          path: devguard-report.html
+          name: mantis-html-report
+          path: mantis-report.html
 ```
 
 ---
@@ -144,15 +144,15 @@ jobs:
 stages:
   - test
 
-devguard_test:
+mantis_test:
   stage: test
   image: node:22
   before_script:
-    - npm install -g @devguard/cli
+    - npm install -g @mantis/cli
   script:
     - npm run start &
     - sleep 3
-    - devguard test . --base-url http://127.0.0.1:3000 --html --out report.html
+    - mantis test . --base-url http://127.0.0.1:3000 --html --out report.html
   artifacts:
     when: always
     paths:

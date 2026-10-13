@@ -17,7 +17,7 @@ Bump `modelVersion` to `'1.2.0'` with a backward-compatible schema upgrade:
 1. **`modelVersion`**: Accept `'1.0.0'`, `'1.1.0'`, or `'1.2.0'`, emitting `'1.2.0'` by default.
 2. **`Endpoint.middleware`**: Support structured entries `Array<{ name: string; provenance?: Provenance }>` while continuing to accept legacy string arrays (`string[]`).
 3. **`Endpoint.auth.evidence`**: Add optional `evidence` field: `{ filePath: string; line: number; signal: string }`.
-4. **Diagnostics**: Register `DG-I002` (`severity: 'info'`): Middleware could not be statically resolved.
+4. **Diagnostics**: Register `MT-I002` (`severity: 'info'`): Middleware could not be statically resolved.
 
 ## Consequences
 

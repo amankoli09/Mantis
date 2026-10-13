@@ -1,6 +1,6 @@
-# DevGuard Runner Configuration (`devguard.config.json`)
+# Mantis Runner Configuration (`mantis.config.json`)
 
-The `devguard.config.json` file configures the `@devguard/runner` package when sending requests to a running target application.
+The `mantis.config.json` file configures the `@mantis/runner` package when sending requests to a running target application.
 
 By default, the runner operates in **safe mode**: only `read` requests are executed, non-local hosts are blocked, and unknown/uncertain routes are skipped.
 
@@ -13,7 +13,7 @@ By default, the runner operates in **safe mode**: only `read` requests are execu
   "baseUrl": "http://localhost:3000",
   "auth": {
     "header": "Authorization",
-    "envVar": "DEVGUARD_AUTH_TOKEN"
+    "envVar": "MANTIS_AUTH_TOKEN"
   },
   "allowedEffects": ["read"],
   "skip": [
@@ -62,7 +62,7 @@ By default, the runner operates in **safe mode**: only `read` requests are execu
 
 ## Session Output Location
 
-Executed sessions are recorded to `.devguard/sessions/<sessionId>.json`.
+Executed sessions are recorded to `.mantis/sessions/<sessionId>.json`.
 
 > [!IMPORTANT]
-> The `.devguard/` directory is automatically ignored by Git (`.gitignore`). Ensure your version control ignores `.devguard/` so session recordings and local test runs are not committed to source repositories.
+> The `.mantis/` directory is automatically ignored by Git (`.gitignore`). Ensure your version control ignores `.mantis/` so session recordings and local test runs are not committed to source repositories.

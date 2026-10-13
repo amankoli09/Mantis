@@ -1,6 +1,6 @@
-name: 'DevGuard API Scanner'
+name: 'Mantis API Scanner'
 description: 'Statically scan Express API routes, extract ApiModel, and export OpenAPI 3.0 specification'
-author: 'DevGuard Team'
+author: 'Mantis Team'
 branding:
   icon: 'shield'
   color: 'blue'
@@ -19,18 +19,18 @@ inputs:
     required: false
     default: 'openapi.json'
   model-out:
-    description: 'Output filepath for DevGuard ApiModel JSON'
+    description: 'Output filepath for Mantis ApiModel JSON'
     required: false
     default: 'api-model.json'
   fail-on-diagnostics:
-    description: 'Exit with error if unresolvable routes (DG-R002/DG-R003) or warnings are found'
+    description: 'Exit with error if unresolvable routes (MT-R002/MT-R003) or warnings are found'
     required: false
     default: 'false'
 
 runs:
   using: 'composite'
   steps:
-    - name: Run DevGuard Scan
+    - name: Run Mantis Scan
       shell: bash
       run: |
         ARGS=("${{ inputs.path }}")
@@ -40,7 +40,7 @@ runs:
         fi
 
         if [ "${{ inputs.export-openapi }}" = "true" ]; then
-          npx --yes @devguard/cli scan "${{ inputs.path }}" --openapi --out "${{ inputs.openapi-out }}"
+          npx --yes @mantis/cli scan "${{ inputs.path }}" --openapi --out "${{ inputs.openapi-out }}"
         fi
 
-        npx --yes @devguard/cli scan "${ARGS[@]}"
+        npx --yes @mantis/cli scan "${ARGS[@]}"

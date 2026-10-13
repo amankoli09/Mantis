@@ -1,10 +1,10 @@
-# DevGuard Learning Log
+# Mantis Learning Log
 
 ## Step 1: Repo Skeleton & Tooling Setup
 
 ### Overview
 
-In Step 1, we established a foundational TypeScript monorepo workspace for DevGuard Core. The setup prepares 4 core packages (`core`, `adapter-express`, `runner`, `cli`) with unified formatting, linting, type-checking, building, testing, and continuous integration.
+In Step 1, we established a foundational TypeScript monorepo workspace for Mantis Core. The setup prepares 4 core packages (`core`, `adapter-express`, `runner`, `cli`) with unified formatting, linting, type-checking, building, testing, and continuous integration.
 
 ---
 
@@ -14,7 +14,7 @@ In Step 1, we established a foundational TypeScript monorepo workspace for DevGu
 
 - **Why pnpm?**
   - **Fast and storage-efficient**: Uses a content-addressable store and hard links on your machine so the same package version is never duplicated across packages.
-  - **Strict isolation**: Unlike npm or yarn classic, pnpm does not allow phantom dependencies (importing packages not declared in that specific package's `package.json`). This ensures clean modular boundaries between `@devguard/core`, `@devguard/adapter-express`, `@devguard/runner`, and `@devguard/cli`.
+  - **Strict isolation**: Unlike npm or yarn classic, pnpm does not allow phantom dependencies (importing packages not declared in that specific package's `package.json`). This ensures clean modular boundaries between `@mantis/core`, `@mantis/adapter-express`, `@mantis/runner`, and `@mantis/cli`.
   - **Native workspace support**: Configured via `pnpm-workspace.yaml`, allowing us to execute commands across all packages using `pnpm -r <command>`.
 
 #### 2. Compiler & Type Checker: TypeScript Strict Mode (`tsconfig.base.json`)
@@ -48,11 +48,11 @@ In Step 1, we established a foundational TypeScript monorepo workspace for DevGu
 
 ---
 
-## Step 2: Core API Model & Diagnostics (`@devguard/core`)
+## Step 2: Core API Model & Diagnostics (`@mantis/core`)
 
 ### Overview
 
-In Step 2, we designed and implemented the central **API Model** (`ApiModel`) schema, diagnostic registry, adapter interface, deterministic endpoint helpers, and automated JSON Schema generation inside `@devguard/core` aligned with `docs/PLAN.md`.
+In Step 2, we designed and implemented the central **API Model** (`ApiModel`) schema, diagnostic registry, adapter interface, deterministic endpoint helpers, and automated JSON Schema generation inside `@mantis/core` aligned with `docs/PLAN.md`.
 
 ---
 
@@ -72,13 +72,13 @@ In static analysis and developer tooling, **provenance** refers to recording _wh
 **Why is Provenance essential?**
 
 1. **Pillar 1: Evidence-Carrying Model**: Nothing is asserted without evidence. A route or query parameter doesn't just exist in the abstract; the model carries proof of the exact source file and line where it was declared or read.
-2. **Actionable Developer Feedback**: When DevGuard identifies a bug (e.g. `500 on POST /users`), it links the finding directly back to `src/routes/users.js:42`, allowing developers to click straight to the source line in their IDE.
+2. **Actionable Developer Feedback**: When Mantis identifies a bug (e.g. `500 on POST /users`), it links the finding directly back to `src/routes/users.js:42`, allowing developers to click straight to the source line in their IDE.
 3. **Distinguishing Direct vs Inferred Facts**:
    - `literal`: Statically written as a constant (e.g. `router.get('/users', ...)`).
    - `resolved`: Computed deterministically (e.g. `const BASE = '/api'`, router prefix concatenation).
    - `inferred`: Deduced by observing variable usage (e.g. `req.body.email` read in handler body).
    - `unresolved`: Ambiguous runtime patterns that the static scanner could not fully trace.
-4. **Transparent Resolution & Confidence**: When an endpoint has `confidence: "uncertain"`, provenance and the required `confidenceReason` (e.g. `DG-R002` for unresolved router mounts) provide full transparency into analyzer limitations rather than silently dropping or guessing routes.
+4. **Transparent Resolution & Confidence**: When an endpoint has `confidence: "uncertain"`, provenance and the required `confidenceReason` (e.g. `MT-R002` for unresolved router mounts) provide full transparency into analyzer limitations rather than silently dropping or guessing routes.
 
 ---
 
@@ -96,10 +96,10 @@ In static analysis and developer tooling, **provenance** refers to recording _wh
 
 We established the initial set of structured diagnostic codes:
 
-- `DG-P001` (`error`): Parse error when an input source file has syntax errors.
-- `DG-R001` (`warning`): Unresolved import when a route/controller file cannot be found on disk.
-- `DG-R002` (`warning`): Unresolved router mount when a middleware or router identifier cannot be bound.
-- `DG-R003` (`info`): Dynamic path notice when a route uses runtime string variables instead of string literals.
+- `MT-P001` (`error`): Parse error when an input source file has syntax errors.
+- `MT-R001` (`warning`): Unresolved import when a route/controller file cannot be found on disk.
+- `MT-R002` (`warning`): Unresolved router mount when a middleware or router identifier cannot be bound.
+- `MT-R003` (`info`): Dynamic path notice when a route uses runtime string variables instead of string literals.
 
 Every diagnostic captures `code`, `severity`, `message`, and source location (`file`, `line`).
 
@@ -159,10 +159,10 @@ This is the **golden-file discipline**: write down exactly what a correct implem
 - Routes declared on a `express.Router()` and mounted with `app.use('/api', router)` → full path is concatenated at analysis time → `provenance.kind: "resolved"`.
 - `router.route('/users').get(...).post(...)` chaining: each `.get()` and `.post()` call is a separate endpoint; the provenance `line` points to the line of the `.get(` or `.post(` call (not the `router` or `.route(` line).
 - One route uses a **runtime variable** as the path argument (`router.get(PRODUCT_DETAIL_PATH, ...)`). This is the uncertain case:
-  - `confidence: "uncertain"`, `confidenceReason: "DG-R003"`
+  - `confidence: "uncertain"`, `confidenceReason: "MT-R003"`
   - `provenance.kind: "unresolved"`
   - `path` stores the placeholder `"/api/products/<PRODUCT_DETAIL_PATH>"` so the endpoint is still representable in the model.
-  - A `DG-R003` diagnostic is emitted pointing to the exact line.
+  - A `MT-R003` diagnostic is emitted pointing to the exact line.
 
 #### Provenance Line Integrity
 
@@ -201,11 +201,11 @@ This means updating a fixture file and forgetting to update the golden file will
 
 ---
 
-## Step 4: Express Detection & Deterministic File Walking (`@devguard/adapter-express`)
+## Step 4: Express Detection & Deterministic File Walking (`@mantis/adapter-express`)
 
 ### Overview
 
-In Step 4, we implemented the framework detection heuristics and filesystem traversal mechanics in `@devguard/adapter-express`. This provides the foundation for Step 5 (AST parsing) by safely and deterministically finding candidate JavaScript source files and verifying whether a project is an Express application.
+In Step 4, we implemented the framework detection heuristics and filesystem traversal mechanics in `@mantis/adapter-express`. This provides the foundation for Step 5 (AST parsing) by safely and deterministically finding candidate JavaScript source files and verifying whether a project is an Express application.
 
 ---
 
@@ -216,7 +216,7 @@ Static analysis and developer tooling must be **reproducible across machines, op
 1. **OS-dependent directory iteration**: Different operating systems and filesystems (APFS on macOS, NTFS on Windows, ext4 on Linux) return directory entries (`readdir`) in arbitrary, non-guaranteed orders (often inode order or hash table order).
 2. **Deterministic diagnostics and graph building**: If file `A.js` and file `B.js` both define or export routers, processing them in different orders across CI runs could lead to non-deterministic diagnostic order or module graph resolution races.
 3. **Flaky tests and snapshot stability**: When tests or golden files assert ordered lists of scanned files, routes, or warnings, any non-determinism leads to flaky CI builds.
-4. **Code-point sorting guarantee**: By strictly sorting all file paths using unicode code-point ordering (`a < b ? -1 : a > b ? 1 : 0`), we guarantee byte-for-byte identical output regardless of what OS or filesystem executes DevGuard.
+4. **Code-point sorting guarantee**: By strictly sorting all file paths using unicode code-point ordering (`a < b ? -1 : a > b ? 1 : 0`), we guarantee byte-for-byte identical output regardless of what OS or filesystem executes Mantis.
 
 ---
 
@@ -261,15 +261,15 @@ Static analysis and developer tooling must be **reproducible across machines, op
 
 ### Next Step Preview (Per `docs/PLAN.md`)
 
-- **Step 5: Parsing and direct routes**: Parse JavaScript files to AST (tolerant of syntax errors with `DG-P001`); extract `app.get/post/put/patch/delete('/path', ...)` with method, path, file, and line; verify `simple` fixture output matches its golden file.
+- **Step 5: Parsing and direct routes**: Parse JavaScript files to AST (tolerant of syntax errors with `MT-P001`); extract `app.get/post/put/patch/delete('/path', ...)` with method, path, file, and line; verify `simple` fixture output matches its golden file.
 
 ---
 
-## Step 5: AST Parsing & Scope-Aware Direct Route Extraction (`@devguard/adapter-express`)
+## Step 5: AST Parsing & Scope-Aware Direct Route Extraction (`@mantis/adapter-express`)
 
 ### Overview
 
-In Step 5, we implemented AST parsing and direct Express route extraction inside `@devguard/adapter-express`. We wired this into `ExpressAdapter.prototype.scan(projectRoot)`, generating a fully validated `ApiModel` that matches all 6 routes in the `fixtures/simple` baseline fixture.
+In Step 5, we implemented AST parsing and direct Express route extraction inside `@mantis/adapter-express`. We wired this into `ExpressAdapter.prototype.scan(projectRoot)`, generating a fully validated `ApiModel` that matches all 6 routes in the `fixtures/simple` baseline fixture.
 
 ---
 
@@ -297,12 +297,12 @@ Babel tracks identifier declarations and lexical scopes. We use a 3-phase analys
 
 1. **Parser (`parseFile`)**:
    - Parses code using `@babel/parser` with `sourceType: 'unambiguous'` (supporting CJS and ESM) and `errorRecovery: true`.
-   - On syntax errors, catches the error and emits a `DG-P001` diagnostic (`severity: 'error'`) with line/column coordinates without crashing the scan.
+   - On syntax errors, catches the error and emits a `MT-P001` diagnostic (`severity: 'error'`) with line/column coordinates without crashing the scan.
 2. **Route Extractor (`extractDirectRoutes`)**:
    - Extracts direct `app.get/post/put/patch/delete/head/options('/path', ...)` routes.
    - Sets HTTP method and default `effect` (`GET/HEAD/OPTIONS` $\to$ `read`, `POST/PUT/PATCH` $\to$ `write`, `DELETE` $\to$ `destructive`).
    - Extracts path parameter definitions (`:id` segments $\to$ `in: 'path'`, `required: true`).
-   - Non-literal dynamic path expressions emit `DG-R003` diagnostics and mark endpoints as `uncertain`.
+   - Non-literal dynamic path expressions emit `MT-R003` diagnostics and mark endpoints as `uncertain`.
 3. **Scanner (`scanProject` / `ExpressAdapter.scan`)**:
    - Walks project files, parses ASTs, extracts direct routes, sorts with `sortEndpoints()`, and validates with `validateModel()`.
 
@@ -315,7 +315,7 @@ Babel tracks identifier declarations and lexical scopes. We use a 3-phase analys
 - `pnpm test` ✅ (15 test suites passed, 74/74 tests — 11 new Step 5 tests)
 - `pnpm build` ✅ (Clean dual ESM/CJS/DTS builds across all 4 packages)
 - Scanned `fixtures/simple/app` extracts all 6 endpoints correctly matching golden file ✅
-- Syntax errors in source files emit `DG-P001` without crashing ✅
+- Syntax errors in source files emit `MT-P001` without crashing ✅
 - Non-express objects named `app` are cleanly ignored ✅
 
 ---
@@ -326,11 +326,11 @@ Babel tracks identifier declarations and lexical scopes. We use a 3-phase analys
 
 ---
 
-## Step 6: Deterministic Module Graph Construction (`@devguard/adapter-express`)
+## Step 6: Deterministic Module Graph Construction (`@mantis/adapter-express`)
 
 ### Overview
 
-In Step 6, we implemented cross-file module resolution and graph construction in `@devguard/adapter-express`. The module graph tracks imports and exports across CommonJS and ESM syntax, maps relative specifiers to real project files (with extension and index probing), distinguishes external dependencies from local files, and handles cyclic dependencies without infinite recursion.
+In Step 6, we implemented cross-file module resolution and graph construction in `@mantis/adapter-express`. The module graph tracks imports and exports across CommonJS and ESM syntax, maps relative specifiers to real project files (with extension and index probing), distinguishes external dependencies from local files, and handles cyclic dependencies without infinite recursion.
 
 ---
 
@@ -362,8 +362,8 @@ Without a module graph:
    - Candidate probing order: exact path $\to$ `.js`, `.cjs`, `.mjs` $\to$ `<dir>/index.js`, `<dir>/index.cjs`, `<dir>/index.mjs`.
    - Security check: Never resolves outside the project root directory.
 2. **Diagnostics for Unresolved / Dynamic Specifiers**:
-   - Missing relative files emit `DG-R001` (`severity: 'warning'`) with file and line.
-   - Dynamic `require(variable)` or `require(expr)` calls emit `DG-R001` with file and line.
+   - Missing relative files emit `MT-R001` (`severity: 'warning'`) with file and line.
+   - Dynamic `require(variable)` or `require(expr)` calls emit `MT-R001` with file and line.
    - The scan never throws or crashes on missing or dynamic imports.
 3. **Exports Tracking**:
    - CommonJS: `module.exports = x`, `module.exports = { a, b }`, `exports.a = x`, `module.exports.a = x`.
@@ -393,11 +393,11 @@ Without a module graph:
 
 ---
 
-## Step 7a: Single-File Routers & Mounts Resolution (`@devguard/adapter-express`)
+## Step 7a: Single-File Routers & Mounts Resolution (`@mantis/adapter-express`)
 
 ### Overview
 
-In Step 7a, we implemented single-file Express router detection and mount resolution in `@devguard/adapter-express`. We identified `express.Router()` and `require('express').Router()` instances via lexical scope bindings, extracted routes defined on routers, resolved `app.use('/prefix', router)` and `app.use(router)` mounts within the same file, and flagged unmounted routers as `uncertain` (`DG-R002`) rather than silently dropping them.
+In Step 7a, we implemented single-file Express router detection and mount resolution in `@mantis/adapter-express`. We identified `express.Router()` and `require('express').Router()` instances via lexical scope bindings, extracted routes defined on routers, resolved `app.use('/prefix', router)` and `app.use(router)` mounts within the same file, and flagged unmounted routers as `uncertain` (`MT-R002`) rather than silently dropping them.
 
 ---
 
@@ -421,7 +421,7 @@ In Express, endpoints do not exist as flat, independent strings. Instead, the fi
 
 3. **Unmounted & Orphan Subgraphs**:
    - A router node with in-degree 0 (no incoming `app.use()` edges from a reachable entry point) represents an unmounted / dead router.
-   - Graph reachability analysis immediately identifies these orphan nodes, enabling DevGuard to report them as `confidence: "uncertain"` with reason `DG-R002` instead of guessing or silently dropping them.
+   - Graph reachability analysis immediately identifies these orphan nodes, enabling Mantis to report them as `confidence: "uncertain"` with reason `MT-R002` instead of guessing or silently dropping them.
 
 4. **Cross-File Edge Traversals (Preview for 7b+)**:
    - In multi-file projects, the mount edges span across module boundaries via the Module Graph constructed in Step 6. Resolving prefixes across files is therefore a depth-first or topological traversal combining the module dependency graph with the router mount hierarchy.
@@ -442,8 +442,8 @@ In Express, endpoints do not exist as flat, independent strings. Instead, the fi
    - `app.use('/prefix', router)` prepends `'/prefix'`.
    - `app.use(router)` defaults to root prefix `'/'`.
    - Provenance line is recorded at the `.get(` / `.post(` call line.
-4. **Unmounted Routers (`DG-R002`)**:
-   - Routers with zero mounts emit `DG-R002` (`severity: 'warning'`) and emit their routes with `confidence: "uncertain"`, `confidenceReason: "DG-R002"`, and `provenance.kind: "unresolved"`.
+4. **Unmounted Routers (`MT-R002`)**:
+   - Routers with zero mounts emit `MT-R002` (`severity: 'warning'`) and emit their routes with `confidence: "uncertain"`, `confidenceReason: "MT-R002"`, and `provenance.kind: "unresolved"`.
 
 ---
 
@@ -464,11 +464,11 @@ In Express, endpoints do not exist as flat, independent strings. Instead, the fi
 
 ---
 
-## Step 7b: Cross-File Router & Mount Resolution (`@devguard/adapter-express`)
+## Step 7b: Cross-File Router & Mount Resolution (`@mantis/adapter-express`)
 
 ### Overview
 
-In Step 7b, we implemented cross-file Express router and mount resolution in `@devguard/adapter-express`. We linked `app.use('/prefix', importedRouter)` mounts across file boundaries using the Module Graph constructed in Step 6, supported all CommonJS and ESM export styles (default exports, named exports in object literals, direct `exports.name` assignments, destructured requires, namespace member access `mod.router`, and one-level re-exports like `module.exports = require('./router')`), detected cycles with explicit `DG-R002` diagnostics without looping or crashing, generated routes correctly when a router is mounted at multiple prefixes, and maintained route provenance at the definition line in the router's source file.
+In Step 7b, we implemented cross-file Express router and mount resolution in `@mantis/adapter-express`. We linked `app.use('/prefix', importedRouter)` mounts across file boundaries using the Module Graph constructed in Step 6, supported all CommonJS and ESM export styles (default exports, named exports in object literals, direct `exports.name` assignments, destructured requires, namespace member access `mod.router`, and one-level re-exports like `module.exports = require('./router')`), detected cycles with explicit `MT-R002` diagnostics without looping or crashing, generated routes correctly when a router is mounted at multiple prefixes, and maintained route provenance at the definition line in the router's source file.
 
 ---
 
@@ -507,7 +507,7 @@ To resolve `usersRouter` across this boundary, static analysis must bridge two i
 5. **Indirection, Re-exports, and Cycles**:
    When files re-export other modules (e.g. `module.exports = require('./admin')`), this resolution chain becomes a recursive graph traversal:
    $$\text{Mount} \longrightarrow \text{Import} \longrightarrow \text{Target File} \longrightarrow \text{Re-export} \longrightarrow \text{Final Router}$$
-   To guarantee termination in cyclic codebases (e.g., File A exports B, File B exports A), the resolver maintains a `visited` set of `(file, symbol)` pairs. If a cycle is detected, traversal aborts cleanly, emits `DG-R002`, and avoids infinite loops or invalid confirmations.
+   To guarantee termination in cyclic codebases (e.g., File A exports B, File B exports A), the resolver maintains a `visited` set of `(file, symbol)` pairs. If a cycle is detected, traversal aborts cleanly, emits `MT-R002`, and avoids infinite loops or invalid confirmations.
 
 ---
 
@@ -522,13 +522,13 @@ To resolve `usersRouter` across this boundary, static analysis must bridge two i
    - **One-Level Re-exports**: `module.exports = require('./admin')` and `export { a } from './b'`.
 2. **Cycle Protection**:
    - `visited` set records `Set<"${targetFile}:${exportedName}">`.
-   - Emits `DG-R002` diagnostic (`severity: 'warning'`) when a cycle is encountered, terminating recursion safely.
+   - Emits `MT-R002` diagnostic (`severity: 'warning'`) when a cycle is encountered, terminating recursion safely.
 3. **Multiple Mounts**:
    - Routers mounted at multiple prefixes (e.g. `app.use('/v1', shared); app.use('/v2', shared);`) record multiple mounts and emit endpoints under both prefixes (`GET /v1/ping` and `GET /v2/ping`).
 4. **Provenance Integrity**:
    - Route provenance stays at the `.get(` / `.post(` definition line in the router's own file (`routes/users.js:6`), not at the `app.use` line.
 5. **Fail-Safe Diagnostics**:
-   - Unresolvable imports (`imp.sourcePath === null`), missing exports, dynamic requires, or cycles emit `DG-R002` without crashing.
+   - Unresolvable imports (`imp.sourcePath === null`), missing exports, dynamic requires, or cycles emit `MT-R002` without crashing.
 
 ---
 
@@ -539,8 +539,8 @@ To resolve `usersRouter` across this boundary, static analysis must bridge two i
 - `pnpm test` ✅ (16 test suites passed, 106/106 tests)
   - `fixtures/router-cross-file` hand-written golden model validates and matches all 6 export patterns ✅
   - `fixtures/nested-routers` confirmed routes match with correct `/api` prefixes (`GET /api/users/:id` and `GET /api/products`) ✅
-  - Unresolved imports emit `DG-R001` and `DG-R002` with 0 confirmed routes ✅
-  - Cyclic router exports detect cycles and emit `DG-R002` ✅
+  - Unresolved imports emit `MT-R001` and `MT-R002` with 0 confirmed routes ✅
+  - Cyclic router exports detect cycles and emit `MT-R002` ✅
   - Multiple mounts on same router produce distinct routes under both prefixes ✅
   - Deterministic output across repeated runs ✅
 - `pnpm build` ✅ (Clean builds across all packages)
@@ -555,11 +555,11 @@ To resolve `usersRouter` across this boundary, static analysis must bridge two i
 
 ---
 
-## Step 7c: Nested Routers & Route Chaining (`@devguard/adapter-express`)
+## Step 7c: Nested Routers & Route Chaining (`@mantis/adapter-express`)
 
 ### Overview
 
-In Step 7c, we implemented resolution for deeply nested routers (`router.use('/prefix', otherRouter)`) spanning across multiple files, and added parsing support for route chaining (`router.route('/path').get().post()`). By moving to a proper graph traversal algorithm (Depth-First Search) for prefix concatenation, DevGuard can now correctly construct endpoints for "diamond" mount structures (where a single router is reached via multiple paths) while still detecting and breaking cycles without false positives.
+In Step 7c, we implemented resolution for deeply nested routers (`router.use('/prefix', otherRouter)`) spanning across multiple files, and added parsing support for route chaining (`router.route('/path').get().post()`). By moving to a proper graph traversal algorithm (Depth-First Search) for prefix concatenation, Mantis can now correctly construct endpoints for "diamond" mount structures (where a single router is reached via multiple paths) while still detecting and breaking cycles without false positives.
 
 ---
 
@@ -586,7 +586,7 @@ In this scenario, `shared.js` is reached via two distinct paths:
 1. `app` $\to$ `/v1` $\to$ `/shared` $\to$ `/ping` (`GET /v1/shared/ping`)
 2. `app` $\to$ `/v2` $\to$ `/shared` $\to$ `/ping` (`GET /v2/shared/ping`)
 
-A naive cycle detection mechanism (like a global `visited` set) would flag the second traversal of `shared.js` as a cycle (`DG-R002`) and drop it! To solve this, cycle detection must be **path-specific**: the `visitedPath` set is cloned for each branch in the DFS, allowing a node to be visited multiple times as long as it doesn't appear twice within the *same* branch.
+A naive cycle detection mechanism (like a global `visited` set) would flag the second traversal of `shared.js` as a cycle (`MT-R002`) and drop it! To solve this, cycle detection must be **path-specific**: the `visitedPath` set is cloned for each branch in the DFS, allowing a node to be visited multiple times as long as it doesn't appear twice within the *same* branch.
 
 ---
 
@@ -612,7 +612,7 @@ A naive cycle detection mechanism (like a global `visited` set) would flag the s
 - `pnpm test` ✅ (16 test suites passed, 108/108 tests)
   - `fixtures/nested-routers` outputs confirmed routes with multi-level `/api/admin/metrics` prefixes ✅
   - `router.route()` chaining extracts correct line numbers ✅
-  - Diamond-shaped mounts resolve both paths with 0 false-positive `DG-R002` diagnostics ✅
+  - Diamond-shaped mounts resolve both paths with 0 false-positive `MT-R002` diagnostics ✅
   - Unidentifiable router arguments and `app.route` chains tested successfully ✅
 - `pnpm build` ✅ (Clean builds across all packages)
 
@@ -624,21 +624,21 @@ A naive cycle detection mechanism (like a global `visited` set) would flag the s
 
 ---
 
-## Step 7d: Constant Propagation & Dynamic Paths (\`@devguard/adapter-express\`)
+## Step 7d: Constant Propagation & Dynamic Paths (\`@mantis/adapter-express\`)
 
 ### Overview
 
-In Step 7d, we implemented constant propagation for route paths and mount prefixes. The static analyzer now tracks \`const\` bindings across local scope and module boundaries to resolve paths like \`app.use(BASE, router)\` or \`app.get(['/a', '/b'] + '/c')\`. Paths that include purely static strings, array expressions, binary string concatenation, and template literals are now resolved properly, greatly reducing false \`DG-R003\` (uncertain path) diagnostics in real-world Express apps. Dynamic paths that cannot be statically resolved now correctly emit a placeholder (e.g. \`<getDetailSegment()>\`) and preserve the endpoint as \`uncertain\`.
+In Step 7d, we implemented constant propagation for route paths and mount prefixes. The static analyzer now tracks \`const\` bindings across local scope and module boundaries to resolve paths like \`app.use(BASE, router)\` or \`app.get(['/a', '/b'] + '/c')\`. Paths that include purely static strings, array expressions, binary string concatenation, and template literals are now resolved properly, greatly reducing false \`MT-R003\` (uncertain path) diagnostics in real-world Express apps. Dynamic paths that cannot be statically resolved now correctly emit a placeholder (e.g. \`<getDetailSegment()>\`) and preserve the endpoint as \`uncertain\`.
 
 ---
 
 ### 🧠 Core Concept: Static Evaluation & Cross-file Resolution
 
-Real Express applications heavily use constants (e.g. \`const API_PREFIX = '/api/v1'\`) exported from configuration files to mount routers or define routes. To accurately track these routes without executing the code, DevGuard must:
+Real Express applications heavily use constants (e.g. \`const API_PREFIX = '/api/v1'\`) exported from configuration files to mount routers or define routes. To accurately track these routes without executing the code, Mantis must:
 
 1. **Statically Evaluate AST nodes**: Recursively compute values for \`StringLiteral\`, \`ArrayExpression\`, \`BinaryExpression\` (concatenation), and \`TemplateLiteral\` nodes.
-2. **Track Local Const Bindings**: When an \`Identifier\` is encountered, DevGuard verifies if it is bound as a true \`const\` in the local scope, and evaluates its initialization expression.
-3. **Cross-file Constant Resolution**: If the \`Identifier\` originates from an import/require, DevGuard traverses the Module Graph (built in Step 6), locates the corresponding export in the target AST, and resolves it across file boundaries.
+2. **Track Local Const Bindings**: When an \`Identifier\` is encountered, Mantis verifies if it is bound as a true \`const\` in the local scope, and evaluates its initialization expression.
+3. **Cross-file Constant Resolution**: If the \`Identifier\` originates from an import/require, Mantis traverses the Module Graph (built in Step 6), locates the corresponding export in the target AST, and resolves it across file boundaries.
 
 A unified recursive evaluator \`resolvePathConstant\` evaluates these nodes, handling both successful resolutions and partial resolutions (injecting placeholders for dynamic portions).
 
@@ -654,7 +654,7 @@ A unified recursive evaluator \`resolvePathConstant\` evaluates these nodes, han
    - \`scanner.ts\` was updated to perform a two-pass extraction. In the first pass, ASTs are parsed and cached (\`astCache: Map<string, { ast: File, code: string }>\`).
    - In the second pass, \`extractFileDeclarations\` uses the \`astCache\` and \`moduleGraph\` to evaluate constants imported from other files efficiently without re-parsing.
 3. **Array Prefix Support**:
-   - \`app.use(['/a', '/b'], router)\` is now correctly mapped to multiple prefixes, allowing DevGuard to emit routes for both mount points.
+   - \`app.use(['/a', '/b'], router)\` is now correctly mapped to multiple prefixes, allowing Mantis to emit routes for both mount points.
 4. **Provenance Precision**:
    - The scanner now accurately distinguishes between \`literal\` paths (no variable substitution) and \`resolved\` paths (evaluated from constants or interpolations).
 
@@ -686,17 +686,17 @@ A unified recursive evaluator \`resolvePathConstant\` evaluates these nodes, han
 
 ---
 
-## Step 8a: Parameter & Body-Field Inference (@devguard/adapter-express)
+## Step 8a: Parameter & Body-Field Inference (@mantis/adapter-express)
 
 ### Overview
 
-In Step 8a, we implemented parameter and body-field inference in `@devguard/adapter-express`. The scanner now resolves route handlers (inline functions, 1-hop imported controller identifiers via the module graph, and handler arrays where the last element is the handler). It identifies the request object binding (`fnNode.params[0]`, regardless of identifier name such as `req`, `request`, or `r`), tracks parameter accesses (`req.params`, `req.query`, `req.body`, bracket string literals, and destructuring with renames), records inferred parameters with provenance, and emits `DG-I001` (Unresolved Handler) when a handler expression cannot be statically resolved.
+In Step 8a, we implemented parameter and body-field inference in `@mantis/adapter-express`. The scanner now resolves route handlers (inline functions, 1-hop imported controller identifiers via the module graph, and handler arrays where the last element is the handler). It identifies the request object binding (`fnNode.params[0]`, regardless of identifier name such as `req`, `request`, or `r`), tracks parameter accesses (`req.params`, `req.query`, `req.body`, bracket string literals, and destructuring with renames), records inferred parameters with provenance, and emits `MT-I001` (Unresolved Handler) when a handler expression cannot be statically resolved.
 
 ---
 
 ### 🧠 Core Concept: Why Static Inference Uses `required: 'unknown'` Instead of Guessing
 
-A central architectural decision in DevGuard is that static AST extraction must report **truthful ground truth, not speculative guesses**:
+A central architectural decision in Mantis is that static AST extraction must report **truthful ground truth, not speculative guesses**:
 
 1. **Member Access Does Not Imply Requirement**:
    When JavaScript code contains `const email = req.body.email;`, the runtime will evaluate `req.body.email` to `undefined` if `email` was omitted by the caller (assuming body parsing middleware initialized `req.body` to an object). Without an explicit guard (e.g. `if (!req.body.email) return res.status(400)`) or a validation schema like Zod/Joi, the static analyzer cannot know whether `email` is optional or required.
@@ -718,13 +718,13 @@ A central architectural decision in DevGuard is that static AST extraction must 
    - Added `'body'` to `ParamLocation`.
    - Added `required: z.union([z.boolean(), z.literal('unknown')])`.
    - Added `mountChain?: MountEntry[]` to endpoints tracking the exact sequence of router mounts from the root application.
-   - Added diagnostic code `DG-I001` (Unresolved Handler).
+   - Added diagnostic code `MT-I001` (Unresolved Handler).
 2. **Handler Identification**:
    - Resolves inline functions (`FunctionExpression`, `ArrowFunctionExpression`).
    - Resolves local function declarations / variable declarators.
    - Resolves 1-hop imported functions via `moduleGraph` and `astCache` (ESM named/default exports and CJS exports).
    - Handles arrays of handlers by picking the last handler element.
-   - Emits `DG-I001` when the handler candidate is dynamic or unresolvable (e.g. `getDynamicHandler()`).
+   - Emits `MT-I001` when the handler candidate is dynamic or unresolvable (e.g. `getDynamicHandler()`).
 3. **Scope-Aware Request Object Binding**:
    - Binds the handler's first parameter (`fnNode.params[0]`) regardless of name (`req`, `request`, `r`).
    - Verifies identifier references via Babel scope binding equality (`scope.getBinding(id.name)?.identifier === reqParamNode`).
@@ -799,7 +799,7 @@ app.get('/health', h); // logger applies; auth does NOT
 app.use(sessionGuard); // Applies to all routes registered after this line
 app.get('/users', h);  // BOTH logger and sessionGuard apply
 ```
-DevGuard captures this registration sequence across 4 tiers:
+Mantis captures this registration sequence across 4 tiers:
 1. Application-level: `app.use(mw)`
 2. Mount-level: `app.use('/prefix', mw, router)`
 3. Router-level: `router.use(mw)`
@@ -809,7 +809,7 @@ DevGuard captures this registration sequence across 4 tiers:
 
 ### 🧠 Core Concept to Understand: Why "No Auth Middleware Found" != "No Auth"
 
-A fundamental principle of DevGuard static analysis is the **honesty rule**:
+A fundamental principle of Mantis static analysis is the **honesty rule**:
 *Never claim an endpoint is unauthenticated (`auth: 'none'`) without concrete proof.*
 
 1. **Absence of Evidence is Not Evidence of Absence**:
@@ -822,9 +822,9 @@ A fundamental principle of DevGuard static analysis is the **honesty rule**:
 
 2. **Express Registration Order Dictates Active Middleware**:
    Unlike declarative frameworks (such as NestJS or Spring) where middleware/guards are bound to classes or methods via annotations regardless of line order, Express is purely imperative and order-dependent. A middleware registered at line 50 does *not* apply to a route registered at line 40, even within the same file. To model this faithfully:
-   - DevGuard tracks source line numbers of every `.use()` call and route registration.
+   - Mantis tracks source line numbers of every `.use()` call and route registration.
    - Routes inherit only those application- and router-level middlewares that were registered *before* the route or mount in code order.
-   - Unresolvable middleware expressions (e.g. `app.use(dynamicRequire())`) emit informational diagnostic `DG-I002` and appear in the chain as `<unresolved>`, preserving the accurate count and ordering of the pipeline.
+   - Unresolvable middleware expressions (e.g. `app.use(dynamicRequire())`) emit informational diagnostic `MT-I002` and appear in the chain as `<unresolved>`, preserving the accurate count and ordering of the pipeline.
 
 ---
 
@@ -851,11 +851,11 @@ Every classified authentication requirement records `auth.evidence` with `{ file
 
 ---
 
-## Step 9: Runner, Safety Engine, Config & Session Recording (`@devguard/runner`)
+## Step 9: Runner, Safety Engine, Config & Session Recording (`@mantis/runner`)
 
 ### Overview
 
-In Step 9, we built the `@devguard/runner` package. For the first time in DevGuard's lifecycle, the tool transitions from purely inspecting static ASTs to actively sending HTTP requests to running services.
+In Step 9, we built the `@mantis/runner` package. For the first time in Mantis's lifecycle, the tool transitions from purely inspecting static ASTs to actively sending HTTP requests to running services.
 
 ---
 
@@ -866,25 +866,25 @@ When building automated security and API testing software, engineers often worry
 1. **The Danger of Unguarded Automated Requests**:
    - Sending blind `DELETE`, `PUT`, or `POST` requests can permanently purge live databases, corrupt tenant state, trigger third-party billing charges (e.g. Stripe, Twilio), or deadlock backend workers.
    - Targeting the wrong base URL (due to misconfiguration, typos, or DNS rebinding) can accidentally attack external servers or unauthorized infrastructure.
-   - For these reasons, DevGuard establishes **safe mode by default**: only `read` requests are eligible to run, non-local network calls are blocked by host guards, and unknown mutation effects are treated as hazardous by default.
+   - For these reasons, Mantis establishes **safe mode by default**: only `read` requests are eligible to run, non-local network calls are blocked by host guards, and unknown mutation effects are treated as hazardous by default.
 
 2. **Why Every Skipped Request Must Have a Structured Reason**:
    - In automated testing, silently dropping a test is worse than a test failure. If an endpoint is omitted without notice, users assume the route was tested and certified safe.
-   - In DevGuard, nothing is ever silently dropped. Every endpoint evaluated by the safety engine that cannot run receives a structured `SkipReason` containing a machine-readable code and a human-readable explanation:
+   - In Mantis, nothing is ever silently dropped. Every endpoint evaluated by the safety engine that cannot run receives a structured `SkipReason` containing a machine-readable code and a human-readable explanation:
      - `disallowed-effect-unknown`: the scanner could not prove whether the endpoint mutates state.
      - `uncertain-endpoint`: the route path contains dynamic `<EXPRESSION>` placeholders that cannot resolve to a concrete URL.
      - `effect-not-allowed`: the endpoint performs writes or destructive operations not opted into via `allowedEffects`.
      - `no-sample-for-path-param`: an explicit sample for a path segment (e.g. `:id`) was not provided, preventing arbitrary parameter guessing.
-     - `explicitly-skipped`: matches a user-defined skip pattern in `devguard.config.json`.
-   - Recording all skip reasons directly into `.devguard/sessions/<sessionId>.json` guarantees that security audits and test reports can transparently explain test coverage gaps without re-running against the live server.
+     - `explicitly-skipped`: matches a user-defined skip pattern in `mantis.config.json`.
+   - Recording all skip reasons directly into `.mantis/sessions/<sessionId>.json` guarantees that security audits and test reports can transparently explain test coverage gaps without re-running against the live server.
 
 ---
 
-## Step 10: Test Planner, Input Generators & Response Oracles (`@devguard/core`)
+## Step 10: Test Planner, Input Generators & Response Oracles (`@mantis/core`)
 
 ### Overview
 
-In Step 10, we implemented the core test planner, modular input generators, response oracles, and test orchestration engine in `@devguard/core`. The engine turns the static `ApiModel` into deterministic test plans, executes them through an injected test runner interface, and evaluates responses using pluggable oracles to generate code-linked, provenance-backed findings.
+In Step 10, we implemented the core test planner, modular input generators, response oracles, and test orchestration engine in `@mantis/core`. The engine turns the static `ApiModel` into deterministic test plans, executes them through an injected test runner interface, and evaluates responses using pluggable oracles to generate code-linked, provenance-backed findings.
 
 ---
 
@@ -909,8 +909,8 @@ When testing REST backends without executing user code beforehand, there is a fu
    - The generator attempts to construct a "valid" baseline request based on static AST inference.
    - However, static analysis cannot see live database state, foreign keys, or complex domain validation rules (e.g. requiring a pre-existing organization ID or specific email domain).
    - If our guessed baseline request returns a 500, did the server fail due to a real server bug, or did it fail because our static guess violated an unmodeled prerequisite?
-   - Therefore, DevGuard separates this into `server-error-on-valid-input` and assigns it `confidence: 'low'`.
-   - This prevents false accusations and ensures developers trust DevGuard's findings.
+   - Therefore, Mantis separates this into `server-error-on-valid-input` and assigns it `confidence: 'low'`.
+   - This prevents false accusations and ensures developers trust Mantis's findings.
 
 ---
 
@@ -932,58 +932,58 @@ In automated security and software testing, a test oracle is the mechanism used 
 
 The most critical insight in Step 10 is the asymmetry between input signals:
 
-"5xx on Bad Input" is a Strong Signal (high confidence): When DevGuard sends an intentionally malformed request (an empty body, an omitted field, or an inverted data type), the HTTP contract dictates that the server should reject the request with a client error (4xx, such as 400 Bad Request or 422 Unprocessable Entity). If the server responds with a 500 Internal Server Error, it almost certainly means an unhandled runtime exception occurred in the handler code (such as attempting .trim() or .toLowerCase() on an undefined value). Because the input was designed to test input validation, a 500 response is unambiguous proof of a missing validation guard.
+"5xx on Bad Input" is a Strong Signal (high confidence): When Mantis sends an intentionally malformed request (an empty body, an omitted field, or an inverted data type), the HTTP contract dictates that the server should reject the request with a client error (4xx, such as 400 Bad Request or 422 Unprocessable Entity). If the server responds with a 500 Internal Server Error, it almost certainly means an unhandled runtime exception occurred in the handler code (such as attempting .trim() or .toLowerCase() on an undefined value). Because the input was designed to test input validation, a 500 response is unambiguous proof of a missing validation guard.
 
-"5xx on Our Guessed Valid Input" is a Weak Signal (low confidence): When DevGuard generates a "valid" baseline request, it does so through static AST inference without seeing the live database or runtime environment. The server might return a 500 not because the endpoint has an unhandled bug, but because our static guess lacked an unmodeled prerequisite (such as an existing database entity or a valid external API token). If DevGuard claimed this was a definitive bug, developers would dismiss the tool due to false alarms. By reporting it as server-error-on-valid-input with confidence: 'low', DevGuard stays honest and trustworthy.
+"5xx on Our Guessed Valid Input" is a Weak Signal (low confidence): When Mantis generates a "valid" baseline request, it does so through static AST inference without seeing the live database or runtime environment. The server might return a 500 not because the endpoint has an unhandled bug, but because our static guess lacked an unmodeled prerequisite (such as an existing database entity or a valid external API token). If Mantis claimed this was a definitive bug, developers would dismiss the tool due to false alarms. By reporting it as server-error-on-valid-input with confidence: 'low', Mantis stays honest and trustworthy.
 
 ---
 
-## Step 12: DevGuard CLI (`devguard scan`, `devguard test`, `devguard report`, and `devguard init`)
+## Step 12: Mantis CLI (`mantis scan`, `mantis test`, `mantis report`, and `mantis init`)
 
 ### Context and Goal
 
-Until Step 12, DevGuard was an ecosystem of libraries (`@devguard/core`, `@devguard/adapter-express`, `@devguard/runner`). Step 12 delivers the actual user-facing product: the unified `devguard` CLI binary.
+Until Step 12, Mantis was an ecosystem of libraries (`@mantis/core`, `@mantis/adapter-express`, `@mantis/runner`). Step 12 delivers the actual user-facing product: the unified `mantis` CLI binary.
 
 A developer or CI runner can invoke:
 ```bash
-devguard scan ./backend
-devguard test ./backend --base-url http://127.0.0.1:3000
-devguard report
+mantis scan ./backend
+mantis test ./backend --base-url http://127.0.0.1:3000
+mantis report
 ```
 
 ### Architecture: The Thin CLI Principle
 
-The cardinal architectural rule for `@devguard/cli` is that **zero analysis, scanning, testing, or judgment logic resides in the CLI package**:
+The cardinal architectural rule for `@mantis/cli` is that **zero analysis, scanning, testing, or judgment logic resides in the CLI package**:
 - Argument parsing and flag validation: Commander.
 - Terminal styling: `picocolors` with full `NO_COLOR`, `--no-color`, and non-TTY fallback.
-- Static scanning: delegates 100% to `@devguard/adapter-express` (`detectExpress`, `scanProject`).
-- Test planning, generation, and execution: delegates to `@devguard/core` (`planTests`, `runTests`) and `@devguard/runner` (`loadConfig`, `validateBaseUrl`, `createTestRunner`, `saveSession`).
-- Offline session reporting: delegates to `@devguard/runner` (`loadSession`) and `@devguard/core` (`BUILTIN_ORACLES`).
+- Static scanning: delegates 100% to `@mantis/adapter-express` (`detectExpress`, `scanProject`).
+- Test planning, generation, and execution: delegates to `@mantis/core` (`planTests`, `runTests`) and `@mantis/runner` (`loadConfig`, `validateBaseUrl`, `createTestRunner`, `saveSession`).
+- Offline session reporting: delegates to `@mantis/runner` (`loadSession`) and `@mantis/core` (`BUILTIN_ORACLES`).
 
 This ensures that every capability provided by the CLI is completely accessible programmatically by other tools, IDE extensions, or SDKs without shell wrapping.
 
 ### Commands Implemented
 
-1. **`devguard scan <path>`**:
+1. **`mantis scan <path>`**:
    - Validates directory existence and Express framework detection (exiting 2 if absent).
    - Extracts `ApiModel` and formats human-readable terminal output (`✓` confirmed, `?` uncertain, parameter types and provenances).
    - Supports `--json` for machine-readable output and `--out <file>`.
 
-2. **`devguard test [path]`**:
-   - Resolves `devguard.config.json` (or accepts `--base-url`).
+2. **`mantis test [path]`**:
+   - Resolves `mantis.config.json` (or accepts `--base-url`).
    - Enforces **Host Guard**: non-local URLs without `--allow-remote` immediately exit 2.
    - Enforces **Destructive Safety**: `--allow-destructive` prompts interactively; in non-TTY/CI environments, requires `--yes` or exits 2.
    - Supports `--dry-run`: plans test cases and outputs summary without sending any HTTP requests.
-   - Saves session recording into `.devguard/sessions/<sessionId>.json`.
+   - Saves session recording into `.mantis/sessions/<sessionId>.json`.
    - Supports `--fail-on <severity>` (`error`, `warning`, `info`) for configurable CI gating.
 
-3. **`devguard report [session]`**:
+3. **`mantis report [session]`**:
    - Re-evaluates recorded sessions using pure Oracles with **zero network traffic**.
-   - If no session is specified, automatically loads the most recent session from `.devguard/sessions/`.
+   - If no session is specified, automatically loads the most recent session from `.mantis/sessions/`.
    - Exits 0 if clean, 1 if failures or findings exist, 2 if session file is missing/corrupted.
 
-4. **`devguard init`**:
-   - Writes starter `devguard.config.json` with safe defaults (`allowedEffects: ['read']`, loopback `baseUrl`).
+4. **`mantis init`**:
+   - Writes starter `mantis.config.json` with safe defaults (`allowedEffects: ['read']`, loopback `baseUrl`).
    - Uses atomic `wx` flag to refuse overwriting existing configurations (exits 2).
 
 ### Exit Codes Contract
@@ -1012,7 +1012,7 @@ This ensures that every capability provided by the CLI is completely accessible 
 
 1. **Why CLIs Must Stay Thin**:
    A common antipattern in software engineering is putting business logic, validation rules, or orchestration inside CLI action handlers. When that happens, the logic becomes trapped in standard I/O (stdout, stdin, process exit codes) and cannot be unit-tested without mocking terminal processes. Furthermore, if you later want to build a VS Code extension, a GitHub Action, or a Web UI, you are forced to either shell out to the binary or duplicate the logic.
-   By keeping `@devguard/cli` strictly thin—doing nothing more than parsing arguments, calling library functions, and formatting output—all core functionality remains modular, portable, and easily tested.
+   By keeping `@mantis/cli` strictly thin—doing nothing more than parsing arguments, calling library functions, and formatting output—all core functionality remains modular, portable, and easily tested.
 
 2. **Why Exit Codes Matter in CI**:
    In automated CI/CD pipelines (like GitHub Actions, GitLab CI, or Jenkins), the exit status code of a process is the single source of truth determining pipeline success or failure.
@@ -1022,7 +1022,7 @@ This ensures that every capability provided by the CLI is completely accessible 
    - `1`: The tests executed properly and found real defects; pipeline fails with actionable test findings.
    - `2`: A configuration error or safety guard prevented tests from running; pipeline fails fast so the developer can fix their setup.
    - `3`: The tool crashed internally; pipeline alerts the tool maintainers.
-   This contract makes DevGuard robust and predictable in enterprise pipelines.
+   This contract makes Mantis robust and predictable in enterprise pipelines.
 
 ---
 
@@ -1030,10 +1030,10 @@ This ensures that every capability provided by the CLI is completely accessible 
 
 ### Context & Objective
 
-Prior to Step 13, DevGuard was tested exclusively against synthetic test fixtures crafted in-house (`fixtures/simple`, `fixtures/nested-routers`, etc.). While synthetic fixtures verify individual unit invariants, they can mask blind spots when encountering idioms that real-world Express developers use in the wild.
+Prior to Step 13, Mantis was tested exclusively against synthetic test fixtures crafted in-house (`fixtures/simple`, `fixtures/nested-routers`, etc.). While synthetic fixtures verify individual unit invariants, they can mask blind spots when encountering idioms that real-world Express developers use in the wild.
 
 The goal of Step 13 was to:
-1. Benchmark DevGuard against 5 real open-source Express repositories with varied architectures (small APIs, MVC controllers, ES6/Babel, TypeScript, array iteration mounts).
+1. Benchmark Mantis against 5 real open-source Express repositories with varied architectures (small APIs, MVC controllers, ES6/Babel, TypeScript, array iteration mounts).
 2. Measure ground truth precision and recall per repository and overall.
 3. Diagnose and rank failure causes, then fix the top three failure patterns as distinct, golden-tested commits without regressions.
 
@@ -1088,7 +1088,7 @@ The evaluation script `scripts/run-benchmarks.ts` clones missing repositories at
 ### Top Three Failure Patterns & Scanner Fixes
 
 1. **Fix 1 — Wildcard HTTP Verb Support (`app.all()` and `router.all()`)**:
-   - *Problem*: Express applications frequently use `.all('/path', ...)` to attach universal handlers across all verbs. DevGuard previously only recognized specific HTTP verbs (`get`, `post`, `put`, `delete`, `patch`).
+   - *Problem*: Express applications frequently use `.all('/path', ...)` to attach universal handlers across all verbs. Mantis previously only recognized specific HTTP verbs (`get`, `post`, `put`, `delete`, `patch`).
    - *Solution*: Added `'all'` to the candidate method set and expanded any `.all()` declaration into canonical standard HTTP verbs (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`), ensuring complete contract coverage.
    - *Verification*: Fixture `fixtures/route-all` and golden model `fixtures/route-all/expected.model.json`.
 
@@ -1119,7 +1119,7 @@ When developing static analysis engines:
 ### Overview
 
 In Step 8c, we replaced "effect from HTTP method only" with evidence-based effect refinement derived directly from route handler function bodies (including 1-hop imported controllers and 1-hop local helper calls).
-Previously, DevGuard relied solely on HTTP methods (`GET` -> `read`, `POST`/`PUT`/`PATCH` -> `write`, `DELETE` -> `destructive`). However, real-world backends often conceal mutations behind `GET` endpoints (e.g. creating logs, updating counters, deleting records, writing to disk, or proxying writes). Step 8c detects these mutations with AST evidence and provenance, governed by a strict monotonic risk rule.
+Previously, Mantis relied solely on HTTP methods (`GET` -> `read`, `POST`/`PUT`/`PATCH` -> `write`, `DELETE` -> `destructive`). However, real-world backends often conceal mutations behind `GET` endpoints (e.g. creating logs, updating counters, deleting records, writing to disk, or proxying writes). Step 8c detects these mutations with AST evidence and provenance, governed by a strict monotonic risk rule.
 
 ---
 
@@ -1130,11 +1130,11 @@ Static analysis must **never make a route look safer than its HTTP method sugges
 $$\text{Risk Rank: } \text{unknown (0)} < \text{read (1)} < \text{write (2)} < \text{destructive (3)}$$
 - **Raising Risk**: If the handler AST yields evidence of a higher risk rank than the baseline HTTP verb (e.g. `Prisma.user.create()` behind `GET` or `Prisma.user.delete()` behind `POST`), the route's effect is raised to `write` or `destructive`, and `effectEvidence` (`{ filePath, line, signal }`) is attached.
 - **Never Lowering Risk**: If a `POST` handler only performs read operations (e.g. `User.findById()`), its effect remains `write` from HTTP baseline. Safe runners and security policies can rely on the HTTP verb guarantee.
-- **Unresolvable Handlers**: When a handler cannot be resolved statically (e.g. dynamic invocation `getDynamicHandler()`), the effect remains at its HTTP method baseline (or `unknown`), and diagnostic `DG-I001` is emitted.
+- **Unresolvable Handlers**: When a handler cannot be resolved statically (e.g. dynamic invocation `getDynamicHandler()`), the effect remains at its HTTP method baseline (or `unknown`), and diagnostic `MT-I001` is emitted.
 - **Unclassified Calls**: Arbitrary functions (`foo()`, `helper()`) or built-in object methods (`Object.create()`, `Map.delete()`) are not classified as database mutations.
 
 #### 2. Known-Library Rule Table
-DevGuard implements pattern matchers for the top Node.js data layer and mutation libraries:
+Mantis implements pattern matchers for the top Node.js data layer and mutation libraries:
 - **Prisma**:
   - `create`, `createMany`, `update`, `updateMany`, `upsert`, `$executeRaw` -> `write` (`prisma:<method>`)
   - `delete`, `deleteMany` -> `destructive` (`prisma:<method>`)
@@ -1173,7 +1173,7 @@ DevGuard implements pattern matchers for the top Node.js data layer and mutation
 ### Overview
 
 In Step 8d, we implemented Zod validation extraction for Express route handlers and middleware.
-Previously, handler inference could only detect accessed properties (`req.body.x`, `req.query.y`) with `unknown` types and `unknown` required status. When an endpoint validates input using a Zod schema (`schema.parse(req.body)`, `schema.safeParse(req.query)`, `validate(schema)` middleware, or 1-hop imported schema), DevGuard now extracts real types, required status, and constraints, populating `params` and `requestBody.schema` with `resolved` provenance pointing directly to the schema definition line.
+Previously, handler inference could only detect accessed properties (`req.body.x`, `req.query.y`) with `unknown` types and `unknown` required status. When an endpoint validates input using a Zod schema (`schema.parse(req.body)`, `schema.safeParse(req.query)`, `validate(schema)` middleware, or 1-hop imported schema), Mantis now extracts real types, required status, and constraints, populating `params` and `requestBody.schema` with `resolved` provenance pointing directly to the schema definition line.
 
 ---
 
@@ -1218,7 +1218,7 @@ Previously, handler inference could only detect accessed properties (`req.body.x
 
 ### Overview
 
-Step 11 introduces cross-analysis capabilities that correlate static source code AST extraction with live HTTP test runner observations. While static analysis identifies routes, parameters, authentication requirements, and mutation effects from code, runtime testing observes actual server responses. By cross-referencing both layers, DevGuard detects deep discrepancies:
+Step 11 introduces cross-analysis capabilities that correlate static source code AST extraction with live HTTP test runner observations. While static analysis identifies routes, parameters, authentication requirements, and mutation effects from code, runtime testing observes actual server responses. By cross-referencing both layers, Mantis detects deep discrepancies:
 1. **Dead routes** (defined in code but returning 404 live).
 2. **Shadow / unmodeled routes** (responding live but not detected in static code AST).
 3. **API consistency deviations** across endpoints (divergent error response JSON shapes or unexpected status code differences for similar client errors).
@@ -1269,23 +1269,23 @@ Step 11 introduces cross-analysis capabilities that correlate static source code
 
 ### Problem & Objectives
 Following the stabilization of Phase 1 (Steps 1 through 13), several operational, integration, and developer experience gaps identified during benchmarking and production usage needed resolution:
-1. **OpenAPI 3.0 Export**: Allow developers to convert DevGuard ApiModels directly into standardized OpenAPI 3.0.3 documents (`devguard scan --openapi`).
+1. **OpenAPI 3.0 Export**: Allow developers to convert Mantis ApiModels directly into standardized OpenAPI 3.0.3 documents (`mantis scan --openapi`).
 2. **CI/CD Integration & Recipes**: Provide standard CI recipes, a composite GitHub Action, and document deterministic exit codes (0, 1, 2, 3).
-3. **Diff Mode**: Compare two ApiModels or two test Reports (`devguard diff <fileA> <fileB>`) to surface regressions, added/removed routes, and new failures in PR reviews.
-4. **HTML Test Reports**: Generate standalone, responsive HTML test reports from `report.json` with embedded CSS and zero external network dependencies (`devguard test --html`, `devguard report --html`).
+3. **Diff Mode**: Compare two ApiModels or two test Reports (`mantis diff <fileA> <fileB>`) to surface regressions, added/removed routes, and new failures in PR reviews.
+4. **HTML Test Reports**: Generate standalone, responsive HTML test reports from `report.json` with embedded CSS and zero external network dependencies (`mantis test --html`, `mantis report --html`).
 5. **Scanner Gaps**:
-   - Split `DG-R002` into unresolved router mount (`DG-R002`) and unmounted orphan router (`DG-R004`).
-   - Retain `DG-R003` (dynamic path expressions) as `info` severity to prevent false-positive CI breakages on valid architectures.
+   - Split `MT-R002` into unresolved router mount (`MT-R002`) and unmounted orphan router (`MT-R004`).
+   - Retain `MT-R003` (dynamic path expressions) as `info` severity to prevent false-positive CI breakages on valid architectures.
    - Expand `app.all()` / `router.all()` to all standard HTTP methods.
    - Support multi-hop barrel re-exports (`export *`, `export { default as X }`, inline `require()` in `module.exports = { x: require('./x') }`).
 6. **FileSystem Abstraction**: Pluggable `FileSystem` interface (`nodeFileSystem` vs `MemoryFileSystem`) for in-memory scanning and browser playground readiness.
 7. **ADR Index & Diagnostics Cleanup**: Comprehensive Architecture Decision Records (ADRs 0001–0006) and refreshed diagnostic code documentation.
 
 ### Key Architectural Learnings
-- **OpenAPI Schema Fidelity**: DevGuard's Zod extraction already captures structured JSON schemas and constraints. Emitting these directly into `components.schemas` and `requestBody.content['application/json'].schema` enables full OpenAPI 3.0.3 fidelity without external tooling.
+- **OpenAPI Schema Fidelity**: Mantis's Zod extraction already captures structured JSON schemas and constraints. Emitting these directly into `components.schemas` and `requestBody.content['application/json'].schema` enables full OpenAPI 3.0.3 fidelity without external tooling.
 - **Diff Mode Determinism**: Comparing models via endpoint identity keys (`METHOD /path`) and diagnostic keys (`code:file:line:message`) yields instantaneous, clear change summaries (`+1 added, -1 removed, ~1 modified`). In report diff mode, non-zero exit codes immediately alert PR reviewers to regressions.
 - **Self-Contained HTML**: CI environments often run without external internet access or CDN availability. Generating standalone HTML with embedded CSS and vanilla JS makes test reports portable as CI artifacts.
-- **Diagnostic Granularity**: Distinguishing unmounted routers (`DG-R004`) from unresolved mounts (`DG-R002`) clarifies developer guidance: `DG-R004` indicates dead/orphan code, whereas `DG-R002` indicates broken mount logic.
+- **Diagnostic Granularity**: Distinguishing unmounted routers (`MT-R004`) from unresolved mounts (`MT-R002`) clarifies developer guidance: `MT-R004` indicates dead/orphan code, whereas `MT-R002` indicates broken mount logic.
 
 ---
 
@@ -1293,18 +1293,18 @@ Following the stabilization of Phase 1 (Steps 1 through 13), several operational
 
 ### Overview
 
-During the Phase 1 exit check, running `pnpm --filter @devguard/cli exec devguard --help` failed with `ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL Command "devguard" not found`. Investigation revealed two distinct issues: (1) fundamental package manager semantics regarding binary linking in monorepos, and (2) duplicate shebang headers generated by the build tool.
+During the Phase 1 exit check, running `pnpm --filter @mantis/cli exec mantis --help` failed with `ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL Command "mantis" not found`. Investigation revealed two distinct issues: (1) fundamental package manager semantics regarding binary linking in monorepos, and (2) duplicate shebang headers generated by the build tool.
 
 ---
 
 ### 🧠 Core Concept: Why a Package's Own `bin` Is Not on Its Own PATH
 
-When configuring an npm package with a `"bin"` field in `package.json` (e.g. `"bin": { "devguard": "./dist/index.js" }`), package managers (`npm`, `pnpm`, `yarn`) link that executable into the `node_modules/.bin` directory of **consumer packages that declare it as a dependency**.
+When configuring an npm package with a `"bin"` field in `package.json` (e.g. `"bin": { "mantis": "./dist/index.js" }`), package managers (`npm`, `pnpm`, `yarn`) link that executable into the `node_modules/.bin` directory of **consumer packages that declare it as a dependency**.
 
 However, inside the package itself:
 1. **No Self-Linking**: A package is never its own dependency. Package managers do not link a package's own `"bin"` entries into its own local `node_modules/.bin`.
-2. **`pnpm exec` Semantics**: The command `pnpm exec <cmd>` explicitly searches the local `node_modules/.bin` of the targeted package (or root) for executables installed from declared dependencies. Because `devguard` is the package's own output rather than an installed dependency, `pnpm exec` cannot find it.
-3. **Monorepo Contributor Ergonomics**: In a monorepo workspace, root developers require an easy, deterministic way to execute the CLI before publishing to npm. The clean solution is a root script `"devguard": "node packages/cli/dist/index.js"` in the root `package.json`, allowing contributors to run `pnpm devguard <cmd> [args]` directly. Once published, downstream users install and invoke the binary via npm using the `"bin"` entry.
+2. **`pnpm exec` Semantics**: The command `pnpm exec <cmd>` explicitly searches the local `node_modules/.bin` of the targeted package (or root) for executables installed from declared dependencies. Because `mantis` is the package's own output rather than an installed dependency, `pnpm exec` cannot find it.
+3. **Monorepo Contributor Ergonomics**: In a monorepo workspace, root developers require an easy, deterministic way to execute the CLI before publishing to npm. The clean solution is a root script `"mantis": "node packages/cli/dist/index.js"` in the root `package.json`, allowing contributors to run `pnpm mantis <cmd> [args]` directly. Once published, downstream users install and invoke the binary via npm using the `"bin"` entry.
 
 ---
 

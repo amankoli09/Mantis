@@ -95,7 +95,7 @@ public User getUser(@PathVariable String id) { ... }`,
     version: '^7.29.9',
     role: 'Static AST Traversal Engine',
     description:
-      'Mantis uses Babel in @devguard/adapter-express to parse your JavaScript code into an abstract syntax tree. It identifies every endpoint and router mount without executing untrusted code.',
+      'Mantis uses Babel in @mantis/adapter-express to parse your JavaScript code into an abstract syntax tree. It identifies every endpoint and router mount without executing untrusted code.',
     codeSnippet: `import { parse } from '@babel/parser';
 import traverse from '@babel/traverse';
 
@@ -116,7 +116,7 @@ traverse(ast, {
     version: '^3.24.2',
     role: 'Runtime Contract Synthesis',
     description:
-      'In @devguard/core, Mantis synthesizes runtime schema contracts from AST parameter types, ensuring response payloads never violate contract invariants.',
+      'In @mantis/core, Mantis synthesizes runtime schema contracts from AST parameter types, ensuring response payloads never violate contract invariants.',
     codeSnippet: `export const UserContract = z.object({
   id: z.string().uuid(),
   status: z.enum(['active', 'pending'])
@@ -185,7 +185,7 @@ packages:
     version: '^8.11.2',
     role: 'High-Throughput HTTP Client',
     description:
-      'Used inside @devguard/runner for fast connection pooling and synthetic contract requests against running server endpoints.',
+      'Used inside @mantis/runner for fast connection pooling and synthetic contract requests against running server endpoints.',
     codeSnippet: `import { Client } from 'undici';
 const client = new Client('http://localhost:3000');
 const { statusCode } = await client.request({
@@ -198,7 +198,7 @@ const { statusCode } = await client.request({
     name: 'Mantis Core',
     category: 'Engine',
     logoUrl: '/assets/icons/Mantisicon.png',
-    packageName: '@devguard/core',
+    packageName: '@mantis/core',
     version: '0.1.0 (Alpha)',
     role: 'Spec-Free Testing Architecture',
     description:
@@ -224,7 +224,7 @@ Line provenance: routes/user.js:20`,
       'Mantis is 100% open source under the MIT license. Check out the source code, contribute adapters, and audit our AST engine on GitHub.',
     codeSnippet: `git clone https://github.com/amankoli1206/Mantis.git
 cd Mantis && pnpm install
-pnpm devguard --help`,
+pnpm mantis --help`,
   },
 ];
 

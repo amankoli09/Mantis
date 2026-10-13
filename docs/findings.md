@@ -1,6 +1,6 @@
-# DevGuard Finding Rules Reference
+# Mantis Finding Rules Reference
 
-This document catalogs the finding rule IDs emitted by the DevGuard Test Engine response oracles (`Step 10`).
+This document catalogs the finding rule IDs emitted by the Mantis Test Engine response oracles (`Step 10`).
 
 ---
 
@@ -26,7 +26,7 @@ This document catalogs the finding rule IDs emitted by the DevGuard Test Engine 
 ### 2. `server-error-on-valid-input`
 - **What it checks**: Checks whether the baseline request (presumed valid) returned HTTP 500.
 - **Why it matters**: Indicates the server crashed even on normal traffic.
-- **Why confidence is `low`**: Because DevGuard infers baseline inputs statically without executing the server code or consulting full database state, our generated "valid" payload might be missing business-logic requirements (such as an existing foreign key or valid auth token). Claiming an unhandled bug with high confidence would be an overclaim.
+- **Why confidence is `low`**: Because Mantis infers baseline inputs statically without executing the server code or consulting full database state, our generated "valid" payload might be missing business-logic requirements (such as an existing foreign key or valid auth token). Claiming an unhandled bug with high confidence would be an overclaim.
 
 ### 3. `no-stack-trace-leak`
 - **What it checks**: Inspects the response body for stack trace signatures:
@@ -42,4 +42,4 @@ This document catalogs the finding rule IDs emitted by the DevGuard Test Engine 
 - **What it checks**: Recursively inspects response JSON objects and arrays for sensitive field names:
   - `password`, `passwordHash`, `token`, `secret`, `__v`, `apiKey`, `access_token`, `refresh_token`, `private_key`.
 - **Why it matters**: Returning secret tokens or password hashes—even in hashed form—in public or client-facing endpoints is a critical information disclosure vulnerability.
-- **Redaction Guarantee**: DevGuard **never** prints or logs the value of a sensitive field. Findings report only the JSON path (e.g., `user.passwordHash`), and evidence snippets have all secret values replaced with `"[REDACTED]"`.
+- **Redaction Guarantee**: Mantis **never** prints or logs the value of a sensitive field. Findings report only the JSON path (e.g., `user.passwordHash`), and evidence snippets have all secret values replaced with `"[REDACTED]"`.

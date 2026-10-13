@@ -2,30 +2,30 @@
 
 # Mantis Core
 
-DevGuard Core is an engine that statically analyzes Node.js + Express backend codebases, produces a trustworthy **API Model** of every endpoint, and tests the running API, linking findings back to exact source lines.
+Mantis Core is an engine that statically analyzes Node.js + Express backend codebases, produces a trustworthy **API Model** of every endpoint, and tests the running API, linking findings back to exact source lines.
 
 ---
 
 ## 📖 Documentation & Tracking
 
-- 📋 **[Build Plan](file:///Users/amankoli/Desktop/DevGuard/docs/PLAN.md)**: Full 13-step architecture and implementation roadmap.
-- 💻 **[CLI Reference](file:///Users/amankoli/Desktop/DevGuard/docs/cli.md)**: Command reference, flags, exit codes, and CI integration guide.
-- 📅 **[Daily Progress Tracker](file:///Users/amankoli/Desktop/DevGuard/docs/daily-tracking.md)**: Dated log tracking daily activities, completed tasks, and testing results.
-- 📐 **[API Model Specification](file:///Users/amankoli/Desktop/DevGuard/docs/api-model.md)**: Details on every field in the versioned API Model schema (`v1.0.0`).
-- 💡 **[Learning Log](file:///Users/amankoli/Desktop/DevGuard/docs/learning-log.md)**: Architectural and tooling decisions explained in plain language.
+- 📋 **[Build Plan](docs/PLAN.md)**: Full 13-step architecture and implementation roadmap.
+- 💻 **[CLI Reference](docs/cli.md)**: Command reference, flags, exit codes, and CI integration guide.
+- 📅 **[Daily Progress Tracker](docs/daily-tracking.md)**: Dated log tracking daily activities, completed tasks, and testing results.
+- 📐 **[API Model Specification](docs/api-model.md)**: Details on every field in the versioned API Model schema (`v1.0.0`).
+- 💡 **[Learning Log](docs/learning-log.md)**: Architectural and tooling decisions explained in plain language.
 
 ---
 
-## ⚡ Quick Start with `devguard` CLI
+## ⚡ Quick Start with `mantis` CLI
 
-The `devguard` CLI lets you extract API contracts statically and execute safe runtime tests:
+The `mantis` CLI lets you extract API contracts statically and execute safe runtime tests:
 
-> Note: Inside this repository, run commands using `pnpm devguard <cmd>`. npm install instructions will come after publishing.
+> Note: Inside this repository, run commands using `pnpm mantis <cmd>`. npm install instructions will come after publishing.
 
 ### 1. Initialize Configuration
 
 ```bash
-pnpm devguard init
+pnpm mantis init
 ```
 
 ### 2. Scan an Express Backend
@@ -33,9 +33,9 @@ pnpm devguard init
 Statically scan an application and extract the full API Model:
 
 ```bash
-pnpm devguard scan ./fixtures/simple
+pnpm mantis scan ./fixtures/simple
 # Or output machine-readable JSON:
-pnpm devguard scan ./fixtures/simple --json
+pnpm mantis scan ./fixtures/simple --json
 ```
 
 ### 3. Dry-Run Runtime Tests
@@ -43,7 +43,7 @@ pnpm devguard scan ./fixtures/simple --json
 Generate test cases and verify execution plan without network traffic:
 
 ```bash
-pnpm devguard test ./fixtures/simple --dry-run --base-url http://127.0.0.1:3000
+pnpm mantis test ./fixtures/simple --dry-run --base-url http://127.0.0.1:3000
 ```
 
 ### 4. Execute Live Contract Tests
@@ -51,7 +51,7 @@ pnpm devguard test ./fixtures/simple --dry-run --base-url http://127.0.0.1:3000
 Run safe tests against a running backend:
 
 ```bash
-pnpm devguard test ./fixtures/simple --base-url http://127.0.0.1:3000
+pnpm mantis test ./fixtures/simple --base-url http://127.0.0.1:3000
 ```
 
 ### 5. Replay and Inspect Session Findings
@@ -59,7 +59,7 @@ pnpm devguard test ./fixtures/simple --base-url http://127.0.0.1:3000
 Re-render recorded test sessions using pure Oracles with zero network traffic:
 
 ```bash
-pnpm devguard report
+pnpm mantis report
 ```
 
 ---
@@ -70,10 +70,10 @@ The repository is structured as a `pnpm` monorepo containing the following packa
 
 | Package                     | Path                       | Purpose                                                              |
 | :-------------------------- | :------------------------- | :------------------------------------------------------------------- |
-| `@devguard/core`            | `packages/core`            | Core shared data models, schema definitions, diagnostics, and engine |
-| `@devguard/adapter-express` | `packages/adapter-express` | Express.js AST parser and route extractor                            |
-| `@devguard/runner`          | `packages/runner`          | Test runner and HTTP client executor                                 |
-| `@devguard/cli`             | `packages/cli`             | Command-line interface for running scans and test suites             |
+| `@mantis/core`            | `packages/core`            | Core shared data models, schema definitions, diagnostics, and engine |
+| `@mantis/adapter-express` | `packages/adapter-express` | Express.js AST parser and route extractor                            |
+| `@mantis/runner`          | `packages/runner`          | Test runner and HTTP client executor                                 |
+| `@mantis/cli`             | `packages/cli`             | Command-line interface for running scans and test suites             |
 
 ---
 
@@ -136,7 +136,7 @@ pnpm format:check
 
 ## 📊 Real-World Open-Source Express Benchmarks
 
-To measure the accuracy of DevGuard's scanner in real-world scenarios, we benchmarked the engine against diverse open-source Express repositories with hand-curated ground truth endpoints:
+To measure the accuracy of Mantis's scanner in real-world scenarios, we benchmarked the engine against diverse open-source Express repositories with hand-curated ground truth endpoints:
 
 | Repository | Style | License | Truth | Found | Precision | Recall | Uncertain | Diagnostics |
 |---|---|---|---:|---:|---:|---:|---:|---:|

@@ -1,8 +1,8 @@
-# DevGuard Core — Build Plan (Phase 1: Node.js + Express)
+# Mantis Core — Build Plan (Phase 1: Node.js + Express)
 
 ## 0. Mission
 
-Build **DevGuard Core**: an engine that reads a backend's source code, produces a trustworthy **API Model** of every endpoint, then tests the running API and explains where it breaks, linking each problem back to the source line.
+Build **Mantis Core**: an engine that reads a backend's source code, produces a trustworthy **API Model** of every endpoint, then tests the running API and explains where it breaks, linking each problem back to the source line.
 
 Phase 1 supports **JavaScript/Node.js + Express only**. Do not add other languages or frameworks yet. The core must stay framework-agnostic so they can be added later as adapters.
 
@@ -10,7 +10,7 @@ No AI dependency. Everything is deterministic.
 
 ---
 
-## 1. What makes DevGuard Core different (design pillars)
+## 1. What makes Mantis Core different (design pillars)
 
 We are not competing with Postman or spec-based tools. These are the ideas that define the engine:
 
@@ -45,14 +45,14 @@ We are not competing with Postman or spec-based tools. These are the ideas that 
 | Lint/format          | **ESLint + Prettier**                                    | Standard                                       |
 | Commits/versioning   | **Conventional Commits + Changesets**                    | Clean history and releases                     |
 | CI                   | **GitHub Actions**                                       | Run tests and fixture goldens on every push    |
-| Storage              | **JSON files** (in `.devguard/`)                         | No database in Phase 1                         |
+| Storage              | **JSON files** (in `.mantis/`)                         | No database in Phase 1                         |
 
 ---
 
 ## 3. Folder structure
 
 ```text
-devguard/
+mantis/
 ├─ package.json
 ├─ pnpm-workspace.yaml
 ├─ tsconfig.base.json
@@ -60,7 +60,7 @@ devguard/
 ├─ docs/
 │  ├─ architecture.md
 │  ├─ api-model.md
-│  ├─ diagnostics.md            # all DG-xxxx codes explained
+│  ├─ diagnostics.md            # all MT-xxxx codes explained
 │  └─ decisions/                # ADRs: 0001-use-babel.md, ...
 ├─ packages/
 │  ├─ core/                     # NO Express-specific code allowed here
@@ -156,13 +156,13 @@ Versioned (`"modelVersion": "1.0.0"`), validated with Zod and JSON Schema. Draft
       "effect": "read", // "read" | "write" | "destructive" | "unknown"
       "handler": { "file": "src/routes/users.js", "line": 40 },
       "confidence": "confirmed", // or "uncertain"
-      "confidenceReason": null, // e.g. "DG-R002"
+      "confidenceReason": null, // e.g. "MT-R002"
       "middleware": ["authenticate"],
     },
   ],
   "diagnostics": [
     {
-      "code": "DG-R002",
+      "code": "MT-R002",
       "severity": "warning",
       "message": "Router mount could not be resolved (dynamic import)",
       "file": "src/app.js",
@@ -194,7 +194,7 @@ Complete each step, with tests passing, before starting the next. Every step end
 ### Step 2: Model and diagnostics (in `core`)
 
 - Zod schema for the API Model, exported JSON Schema, `validateModel()` function
-- Diagnostic code registry (`DG-Rxxx` resolver, `DG-Pxxx` parser, `DG-Ixxx` inference, `DG-Txxx` testing)
+- Diagnostic code registry (`MT-Rxxx` resolver, `MT-Pxxx` parser, `MT-Ixxx` inference, `MT-Txxx` testing)
 - Define the `Adapter` interface: `detect(root)` and `scan(root) → ApiModel`
 - **Done when:** valid and invalid model samples are tested, and the schema file is generated.
 
@@ -211,7 +211,7 @@ Complete each step, with tests passing, before starting the next. Every step end
 
 ### Step 5: Parsing and direct routes
 
-- Parse to AST (tolerant of syntax errors: report `DG-P001`, continue)
+- Parse to AST (tolerant of syntax errors: report `MT-P001`, continue)
 - Extract `app.get/post/put/patch/delete('/path', ...)`, with method, path, file, line
 - **Done when:** the `simple` fixture output matches its golden file.
 
@@ -240,11 +240,11 @@ Complete each step, with tests passing, before starting the next. Every step end
 
 ### Step 9: Runner and safety
 
-- `devguard.config.json`: base URL, auth headers, skip list, allowed effects
+- `mantis.config.json`: base URL, auth headers, skip list, allowed effects
 - Safe mode by default (`read` only), `--dry-run`, refuse non-local hosts unless `--allow-remote`
 - Timeouts, max response size, retry limit, concurrency limit
-- The user starts the app; DevGuard only takes the base URL
-- Record every request and response to `.devguard/sessions/`
+- The user starts the app; Mantis only takes the base URL
+- Record every request and response to `.mantis/sessions/`
 - **Done when:** the runner hits a fixture app and records results, and safety rules are unit-tested.
 
 ### Step 10: Generators and oracles
@@ -268,9 +268,9 @@ Complete each step, with tests passing, before starting the next. Every step end
 
 ### Step 12: CLI and reporting
 
-- `devguard scan <path>` (`--json`)
-- `devguard test` (`--dry-run`, `--config`, `--allow-remote`)
-- `devguard report` (re-render from a recorded session)
+- `mantis scan <path>` (`--json`)
+- `mantis test` (`--dry-run`, `--config`, `--allow-remote`)
+- `mantis report` (re-render from a recorded session)
 - Terminal report, `report.json`, exit code 1 on failures
 - **Done when:** the example output from the roadmap is reproduced on the fixtures.
 
@@ -309,4 +309,4 @@ Complete each step, with tests passing, before starting the next. Every step end
 - Safe mode is the default and is tested
 - Precision and recall are measured on real projects and published
 
-**First milestone:** a developer points DevGuard at a Node.js + Express backend, and it discovers the endpoints and tests them safely, with findings linked to source lines.
+**First milestone:** a developer points Mantis at a Node.js + Express backend, and it discovers the endpoints and tests them safely, with findings linked to source lines.

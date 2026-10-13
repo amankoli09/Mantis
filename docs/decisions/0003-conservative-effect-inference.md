@@ -14,7 +14,7 @@ We established the **Conservative Risk Elevation Rule** for effect inference:
 2. **Provenance tracking**:
    - Any elevated effect must attach `effectEvidence` linking the exact call expression, library rule (e.g. `Prisma.create`, `Mongoose.save`, `fs.writeFile`), source file, and line number.
 3. **Unknown stays unknown**:
-   - If the handler cannot be statically resolved, the effect remains `unknown` (or the HTTP method baseline) with diagnostic `DG-I001`.
+   - If the handler cannot be statically resolved, the effect remains `unknown` (or the HTTP method baseline) with diagnostic `MT-I001`.
 
 ## Consequences
 

@@ -39,3 +39,6 @@ jobs:
 
       - name: Run tests
         run: pnpm test
+
+      - name: Verify repository branding
+        run: pnpm check:branding

@@ -1,4 +1,4 @@
-# DevGuard Status Report
+# Mantis Status Report
 
 _Status as of October 8, 2026._
 
@@ -6,7 +6,7 @@ _Status as of October 8, 2026._
 
 ## 1. Project Goal
 
-DevGuard is an automated, framework-agnostic static analysis security and testing tool for backend REST APIs.
+Mantis is an automated, framework-agnostic static analysis security and testing tool for backend REST APIs.
 It statically inspects backend source code (without running or executing application code) to reconstruct an exhaustive, deterministic API Model capturing all HTTP routes, parameters, authentication requirements, and mutation effects.
 Phase 1 focuses on Node.js/Express backends, parsing JavaScript ASTs to extract direct routes, subrouters, cross-file mounts, constant propagation, and request body/parameter accesses.
 
@@ -17,7 +17,7 @@ Phase 1 focuses on Node.js/Express backends, parsing JavaScript ASTs to extract 
 | Step        | Scope                                                                                                                       |  Status  | Commit / Reference                 |
 | :---------- | :-------------------------------------------------------------------------------------------------------------------------- | :------: | :--------------------------------- |
 | **Step 1**  | Monorepo setup, tooling (pnpm, tsup, vitest, eslint, typescript), directory layout                                          | **Done** | `223c316`                          |
-| **Step 2**  | API Model specification & Zod schemas (`@devguard/core`)                                                                    | **Done** | `dd9559c`                          |
+| **Step 2**  | API Model specification & Zod schemas (`@mantis/core`)                                                                    | **Done** | `dd9559c`                          |
 | **Step 3**  | Fixture creation: simple single-file Express app                                                                            | **Done** | `b01ee3e`                          |
 | **Step 4**  | AST parsing pipeline, deterministic file walker, and Express detector                                                       | **Done** | `8ebfdb4`                          |
 | **Step 5**  | Direct route extraction (`app.get`, `app.post`, etc.)                                                                       | **Done** | `4b71946`                          |
@@ -26,24 +26,24 @@ Phase 1 focuses on Node.js/Express backends, parsing JavaScript ASTs to extract 
 | **Step 7b** | Nested routers, deep mounts (`app.use -> router.use -> subrouter`), and route chaining (`app.route()`)                      | **Done** | `2ec27ff`                          |
 | **Step 7c** | Constant propagation (literal strings, templates, binary `+`, path arrays, cyclic guard)                                    | **Done** | `2ca4f41`                          |
 | **Step 7d** | Uncertain expressions, placeholder normalization (`<EXPRESSION>`), line-level provenance checks                             | **Done** | `3cf5f84`                          |
-| **Step 8a** | Parameter & body-field inference (`req.params`, `req.query`, `req.body`), `DG-I001` unresolvable handler                    | **Done** | PR #4 (`4c71850`)                  |
-| **Step 8b** | Middleware chain order & authentication detection (`bearer`, `apiKey`, `cookie`, `custom`), `DG-I002` unresolved middleware | **Done** | PR #6 (`8c03227`)                  |
+| **Step 8a** | Parameter & body-field inference (`req.params`, `req.query`, `req.body`), `MT-I001` unresolvable handler                    | **Done** | PR #4 (`4c71850`)                  |
+| **Step 8b** | Middleware chain order & authentication detection (`bearer`, `apiKey`, `cookie`, `custom`), `MT-I002` unresolved middleware | **Done** | PR #6 (`8c03227`)                  |
 | **Step 8c** | Effect refinement from handler bodies (Prisma, Mongoose, Sequelize, Knex, pg, fs, fetch, monotonic risk rule)              | **Done** | Issue #11                          |
 | **Step 8d** | Zod validation extraction (handler `parse`/`safeParse`, `validate(schema)` middleware, field constraints, resolved provenance, targeted test generators) | **Done** | Issue #12                          |
-| **Step 9**  | Config file, safe HTTP runner, host guard, limits, secret redaction, session recording (`@devguard/runner`)                 | **Done** | PR #15 (`c9d0603`)                 |
-| **Step 10** | Test planner, input generators, response oracles, planted-bugs fixture, Report schema (`@devguard/core`)                    | **Done** | PR #8 (`feat-test-engine-step-10`) |
+| **Step 9**  | Config file, safe HTTP runner, host guard, limits, secret redaction, session recording (`@mantis/runner`)                 | **Done** | PR #15 (`c9d0603`)                 |
+| **Step 10** | Test planner, input generators, response oracles, planted-bugs fixture, Report schema (`@mantis/core`)                    | **Done** | PR #8 (`feat-test-engine-step-10`) |
 | **Step 11** | Cross-analysis static vs runtime (404 in code, live unmodeled routes, error consistency, auth-enforced oracle)               | **Done** | Issue #13                          |
-| **Step 12** | CLI `devguard scan`, `test`, `report`, and `init` commands with terminal formatting & JSON output (`@devguard/cli`)         | **Done** | PR #9 (`feat-cli-step-12`)         |
+| **Step 12** | CLI `mantis scan`, `test`, `report`, and `init` commands with terminal formatting & JSON output (`@mantis/cli`)         | **Done** | PR #9 (`feat-cli-step-12`)         |
 | **Step 13** | Benchmark on real open-source Express repos, precision/recall evaluation, top failure fixes (`benchmarks/`) | **Done** | PR #10 (`10-issue-7-benchmark-on-real-open-source-express-repos-step-13`) |
-| **Phase 1.5** | OpenAPI 3.0 export (`--openapi`), GitHub Action & CI recipes, Diff mode (`devguard diff`), HTML test reports (`--html`), FileSystem abstraction, `DG-R004` split, ADRs 0001-0006 | **Done** | Issue #14 |
-| **Phase 1 Exit Check** | CLI binary execution fix (shebang dedup, root `pnpm devguard` script, built dist tests) | **Done** | Exit Check Day 1 |
+| **Phase 1.5** | OpenAPI 3.0 export (`--openapi`), GitHub Action & CI recipes, Diff mode (`mantis diff`), HTML test reports (`--html`), FileSystem abstraction, `MT-R004` split, ADRs 0001-0006 | **Done** | Issue #14 |
+| **Phase 1 Exit Check** | CLI binary execution fix (shebang dedup, root `pnpm mantis` script, built dist tests) | **Done** | Exit Check Day 1 |
 
 ---
 
 ## 3. Repository Structure
 
 ```
-DevGuard/
+Mantis/
 ├── packages/
 │   ├── core/                  # Core API Model definitions, Zod validation schemas, diagnostics registry
 │   │   ├── src/schema/        # model.ts, endpoint.ts, params.ts, diagnostics.ts, provenance.ts
@@ -51,7 +51,7 @@ DevGuard/
 │   ├── adapter-express/       # Express AST analyzer and static route extractor
 │   │   ├── src/detector.ts    # Detects Express project framework and entrypoints
 │   │   ├── src/file-walker.ts # Deterministic file traversal excluding node_modules/git
-│   │   ├── src/parser.ts      # Babel AST parser with tolerant error recovery (DG-P001)
+│   │   ├── src/parser.ts      # Babel AST parser with tolerant error recovery (MT-P001)
 │   │   ├── src/module-graph.ts# Multi-file dependency graph and export resolver
 │   │   ├── src/extract/       # Focused route extraction engine
 │   │   │   ├── types.ts           # Shared domain interfaces (PendingRouterRoute, ExtractedMount, etc.)
@@ -83,12 +83,12 @@ When `ExpressAdapter.scan(projectRoot)` (or `scanProject(projectRoot)`) executes
 
 1. **Project Identification (`scanner.ts`)**: Resolves project name from `package.json` (or root directory name) and establishes relative paths.
 2. **Deterministic File Walk (`file-walker.ts`)**: Discovers all `.js`, `.cjs`, `.mjs`, `.ts` files, skipping `node_modules`, hidden files, and build directories.
-3. **Module Graph Construction (`module-graph.ts`)**: Resolves imports and requires across project files, indexing CommonJS and ESM export bindings. Emits `DG-R001` if an import target cannot be located.
-4. **AST Parsing (`parser.ts`)**: Parses each discovered file using Babel parser. If syntax errors occur, captures a `DG-P001` diagnostic and continues scanning.
-5. **Local Declarations Extraction (`extract/declarations.ts`)**: Extracts routes, router instances, and local mounts for each file. Evaluates paths via `extract/path-evaluator.ts`. If paths contain runtime expressions, formats `<EXPRESSION>` placeholders and emits `DG-R003`.
-6. **Handler Parameter Inference (`extract/param-inference.ts` via `extract/handler-resolver.ts`)**: Locates the route handler (inline function, local function, single-hop imported identifier, or array of middleware). Identifies the request parameter binding (regardless of parameter name) and extracts `req.params.x`, `req.query.x`, `req.body.x`, bracket accesses, and destructuring with renames. If unresolvable, emits `DG-I001`.
-7. **Cross-File Route Resolution (`extract/mount-resolver.ts`)**: Traverses the mount hierarchy using depth-first search, tracking `mountChain` (file and line of each mount step) from application root down to subrouters. Emits `DG-R002` for unresolved or cyclic mounts.
-8. **Sorting and Validation (`scanner.ts`)**: Sorts endpoints deterministically by HTTP method and normalized path, sorts diagnostics, validates against `validateModel()` in `@devguard/core`, and returns the final `ApiModel`.
+3. **Module Graph Construction (`module-graph.ts`)**: Resolves imports and requires across project files, indexing CommonJS and ESM export bindings. Emits `MT-R001` if an import target cannot be located.
+4. **AST Parsing (`parser.ts`)**: Parses each discovered file using Babel parser. If syntax errors occur, captures a `MT-P001` diagnostic and continues scanning.
+5. **Local Declarations Extraction (`extract/declarations.ts`)**: Extracts routes, router instances, and local mounts for each file. Evaluates paths via `extract/path-evaluator.ts`. If paths contain runtime expressions, formats `<EXPRESSION>` placeholders and emits `MT-R003`.
+6. **Handler Parameter Inference (`extract/param-inference.ts` via `extract/handler-resolver.ts`)**: Locates the route handler (inline function, local function, single-hop imported identifier, or array of middleware). Identifies the request parameter binding (regardless of parameter name) and extracts `req.params.x`, `req.query.x`, `req.body.x`, bracket accesses, and destructuring with renames. If unresolvable, emits `MT-I001`.
+7. **Cross-File Route Resolution (`extract/mount-resolver.ts`)**: Traverses the mount hierarchy using depth-first search, tracking `mountChain` (file and line of each mount step) from application root down to subrouters. Emits `MT-R002` for unresolved or cyclic mounts.
+8. **Sorting and Validation (`scanner.ts`)**: Sorts endpoints deterministically by HTTP method and normalized path, sorts diagnostics, validates against `validateModel()` in `@mantis/core`, and returns the final `ApiModel`.
 
 ---
 
@@ -115,7 +115,7 @@ When `ExpressAdapter.scan(projectRoot)` (or `scanProject(projectRoot)`) executes
 - Schema validation inference: Zod, Joi, or express-validator integration (Step 8d).
 - Whole-object passing: passing `req.body` to another function does not guess fields.
 - Computed dynamic keys (e.g., `req.body[computedVar]`).
-- Complex multi-hop re-export chains or dynamic handler factory functions (emits `DG-I001`).
+- Complex multi-hop re-export chains or dynamic handler factory functions (emits `MT-I001`).
 
 ---
 
@@ -133,26 +133,26 @@ When `ExpressAdapter.scan(projectRoot)` (or `scanProject(projectRoot)`) executes
 - `mountChain`: Ordered list of router mounts from application root to handler (`filePath`, `line`).
 - `provenance`: Origin tracking (`kind: 'literal' | 'resolved' | 'inferred' | 'unresolved'`, `filePath`, `line`, `column`, `snippet`).
 - `confidence`: `'confirmed' | 'uncertain'`.
-- `confidenceReason`: Diagnostic code if uncertain (`DG-R002`, `DG-R003`).
+- `confidenceReason`: Diagnostic code if uncertain (`MT-R002`, `MT-R003`).
 
 ### Diagnostic Codes
 
-- **`DG-P001`**: Parse Error (`error`) — File syntax error preventing AST parsing.
-- **`DG-R001`**: Unresolved Import (`warning`) — Missing imported file in module graph.
-- **`DG-R002`**: Unresolved Router Mount (`warning`) — Mounted router identifier cannot be resolved or forms a cycle.
-- **`DG-R003`**: Dynamic Path (`info`) — Path uses runtime variable/expression; replaced with `<EXPRESSION>`.
-- **`DG-I001`**: Unresolved Handler (`info`) — Handler is not an inline function, local function, single-hop import, or handler array.
+- **`MT-P001`**: Parse Error (`error`) — File syntax error preventing AST parsing.
+- **`MT-R001`**: Unresolved Import (`warning`) — Missing imported file in module graph.
+- **`MT-R002`**: Unresolved Router Mount (`warning`) — Mounted router identifier cannot be resolved or forms a cycle.
+- **`MT-R003`**: Dynamic Path (`info`) — Path uses runtime variable/expression; replaced with `<EXPRESSION>`.
+- **`MT-I001`**: Unresolved Handler (`info`) — Handler is not an inline function, local function, single-hop import, or handler array.
 
 ---
 
 ## 7. Fixtures Summary
 
 1. **`fixtures/simple`**: Single-file Express app testing direct route extraction, path parameters, and body inference. Golden model updated to remove unproven `requestBody` blocks.
-2. **`fixtures/router-single-file`**: Single-file app testing `express.Router()` mounts and unmounted orphan router emitting `DG-R002`.
+2. **`fixtures/router-single-file`**: Single-file app testing `express.Router()` mounts and unmounted orphan router emitting `MT-R002`.
 3. **`fixtures/router-cross-file`**: Multi-file app testing CommonJS exports, named exports, re-exports, and shared routers across multiple mount prefixes.
-4. **`fixtures/nested-routers`**: Deeply nested routers (`app -> users -> admin`), route chaining (`.route()`), and dynamic path expressions emitting `DG-R003`. Unproven `requestBody` block removed.
+4. **`fixtures/nested-routers`**: Deeply nested routers (`app -> users -> admin`), route chaining (`.route()`), and dynamic path expressions emitting `MT-R003`. Unproven `requestBody` block removed.
 5. **`fixtures/constant-propagation`**: Path constant propagation, string concatenation, template literals, array mounts, and cyclic variable protection.
-6. **`fixtures/inference-basic`**: 10 routes testing parameter and body-field inference (`req.params`, `req.query`, `req.body`), destructuring, renames, non-req names (`request`, `r`), imported controllers, handler arrays, shadowing, and `DG-I001`.
+6. **`fixtures/inference-basic`**: 10 routes testing parameter and body-field inference (`req.params`, `req.query`, `req.body`), destructuring, renames, non-req names (`request`, `r`), imported controllers, handler arrays, shadowing, and `MT-I001`.
 
 ---
 
@@ -172,7 +172,7 @@ When `ExpressAdapter.scan(projectRoot)` (or `scanProject(projectRoot)`) executes
 3. **requestBody Cleanup**: Hand-written, unproven `requestBody` blocks in `fixtures/simple` and `fixtures/nested-routers` have been removed.
 4. **Golden Strength**: A plan is proposed to upgrade all golden files to `modelVersion: "1.1.0"`, populate `mountChain`, and upgrade scan tests to `toStrictEqual()` with full diagnostics checking.
 5. **Diagnostics Documented**: Full reference documentation created in `docs/diagnostics.md`.
-6. **CLI Execution & Shebang Fix**: In pnpm monorepos, a package's own `bin` is not linked to its own `node_modules/.bin`. Workspace root provides `"devguard": "node packages/cli/dist/index.js"` for contributors (`pnpm devguard <cmd>`). Fixed duplicate shebang in `packages/cli/dist/index.js` and `index.cjs` by removing redundant `tsup` banner, and added integration tests in `packages/cli/tests/built-cli.test.ts` asserting executable permissions, shebang validity, and fixture scanning on built artifacts.
+6. **CLI Execution & Shebang Fix**: In pnpm monorepos, a package's own `bin` is not linked to its own `node_modules/.bin`. Workspace root provides `"mantis": "node packages/cli/dist/index.js"` for contributors (`pnpm mantis <cmd>`). Fixed duplicate shebang in `packages/cli/dist/index.js` and `index.cjs` by removing redundant `tsup` banner, and added integration tests in `packages/cli/tests/built-cli.test.ts` asserting executable permissions, shebang validity, and fixture scanning on built artifacts.
 
 ---
 
@@ -182,7 +182,7 @@ When `ExpressAdapter.scan(projectRoot)` (or `scanProject(projectRoot)`) executes
 - **Step 8c**: Handler mutation effects (read vs write vs destructive).
 - **Step 8d**: Schema validation inference (Zod, Joi, express-validator schemas into requestBody/params).
 - **Step 9**: Runner engine architecture & safe execution harness.
-- **Step 10**: CLI commands (`devguard scan`, `devguard test`).
+- **Step 10**: CLI commands (`mantis scan`, `mantis test`).
 - **Step 11**: End-to-end integration and dogfooding.
 - **Step 12**: Performance optimization and caching.
 - **Step 13**: Final documentation and release packaging.
