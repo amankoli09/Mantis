@@ -1,6 +1,6 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { RunnerConfigSchema, type RunnerConfig } from '@devguard/core';
+import { RunnerConfigSchema, type RunnerConfig } from '@mantis/core';
 
 /**
  * Validates a raw configuration object against RunnerConfigSchema.
@@ -21,14 +21,14 @@ export function validateConfig(raw: unknown): RunnerConfig {
 }
 
 /**
- * Loads and validates a devguard.config.json file.
+ * Loads and validates a mantis.config.json file.
  * Automatically resolves environment variables for auth secrets.
  */
 export async function loadConfig(
   configPath?: string,
   env: Record<string, string | undefined> = process.env
 ): Promise<RunnerConfig> {
-  const resolvedPath = path.resolve(configPath ?? 'devguard.config.json');
+  const resolvedPath = path.resolve(configPath ?? 'mantis.config.json');
 
   let rawContent: string;
   try {

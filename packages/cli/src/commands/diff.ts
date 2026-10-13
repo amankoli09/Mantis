@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
-import { validateModel, validateReport } from '@devguard/core';
+import { validateModel, validateReport } from '@mantis/core';
 import {
   diffApiModels,
   diffReports,
@@ -113,7 +113,7 @@ export async function diffCommand(
   }
 
   console.error(
-    'Error: Files must either both be valid DevGuard ApiModels or both be valid DevGuard Reports.',
+    'Error: Files must either both be valid Mantis ApiModels or both be valid Mantis Reports.',
   );
   return 2;
 }

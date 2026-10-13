@@ -10,9 +10,9 @@ export function createCli(): Command {
   const program = new Command();
 
   program
-    .name('devguard')
+    .name('mantis')
     .description(
-      'DevGuard — Evidence-backed API Model extractor and safety-first runtime test engine',
+      'Mantis — Evidence-backed API Model extractor and safety-first runtime test engine',
     )
     .version('0.1.0')
     .option('--no-color', 'Disable colored terminal output')
@@ -43,7 +43,7 @@ export function createCli(): Command {
     .command('test')
     .description('Execute safe runtime tests against target API')
     .argument('[path]', 'Path to backend application root directory', '.')
-    .option('--config <file>', 'Path to devguard.config.json')
+    .option('--config <file>', 'Path to mantis.config.json')
     .option('--base-url <url>', 'Override target API base URL')
     .option('--dry-run', 'Generate test plan and exit without sending HTTP requests')
     .option('--allow-write', 'Permit write mutation effects')
@@ -91,7 +91,7 @@ export function createCli(): Command {
 
   program
     .command('init')
-    .description('Generate starter devguard.config.json configuration')
+    .description('Generate starter mantis.config.json configuration')
     .option('--out <file>', 'Custom configuration output file path')
     .action(async (options) => {
       const exitCode = await initCommand(options);

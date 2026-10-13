@@ -8,7 +8,7 @@ describe('Runner Config Loader & Validator', () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-config-test-'));
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-config-test-'));
   });
 
   afterEach(async () => {
@@ -43,7 +43,7 @@ describe('Runner Config Loader & Validator', () => {
   });
 
   it('loads valid configuration file from disk', async () => {
-    const configPath = path.join(tempDir, 'devguard.config.json');
+    const configPath = path.join(tempDir, 'mantis.config.json');
     await fs.writeFile(
       configPath,
       JSON.stringify({
@@ -69,7 +69,7 @@ describe('Runner Config Loader & Validator', () => {
   });
 
   it('resolves auth token from environment variable', async () => {
-    const configPath = path.join(tempDir, 'devguard.config.json');
+    const configPath = path.join(tempDir, 'mantis.config.json');
     await fs.writeFile(
       configPath,
       JSON.stringify({
@@ -86,7 +86,7 @@ describe('Runner Config Loader & Validator', () => {
   });
 
   it('throws friendly error when auth envVar is missing from environment', async () => {
-    const configPath = path.join(tempDir, 'devguard.config.json');
+    const configPath = path.join(tempDir, 'mantis.config.json');
     await fs.writeFile(
       configPath,
       JSON.stringify({
@@ -101,7 +101,7 @@ describe('Runner Config Loader & Validator', () => {
   });
 
   it('throws friendly error when config file contains invalid JSON', async () => {
-    const configPath = path.join(tempDir, 'devguard.config.json');
+    const configPath = path.join(tempDir, 'mantis.config.json');
     await fs.writeFile(configPath, '{ invalid JSON');
 
     await expect(loadConfig(configPath)).rejects.toThrowError(/malformed JSON/i);

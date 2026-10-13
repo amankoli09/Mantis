@@ -1,4 +1,4 @@
-import type { Endpoint, AllowedEffect, SkipReason } from '@devguard/core';
+import type { Endpoint, AllowedEffect, SkipReason } from '@mantis/core';
 
 export interface SafetyEvaluation {
   runnable: boolean;
@@ -45,7 +45,7 @@ export function validateBaseUrl(rawUrl: string, allowRemote = false): URL {
 
   if (!isLocal && !allowRemote) {
     throw new Error(
-      `Refusing non-local baseUrl "${rawUrl}". By default, DevGuard only executes against local hosts. To allow remote hosts, set allowRemote: true in config.`
+      `Refusing non-local baseUrl "${rawUrl}". By default, Mantis only executes against local hosts. To allow remote hosts, set allowRemote: true in config.`
     );
   }
 

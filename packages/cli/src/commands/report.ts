@@ -7,8 +7,8 @@ import {
   type Report,
   validateReport,
   BUILTIN_ORACLES,
-} from '@devguard/core';
-import { loadSession } from '@devguard/runner';
+} from '@mantis/core';
+import { loadSession } from '@mantis/runner';
 import { formatSessionTerminal, formatTestTerminal } from '../ui/formatters.js';
 import { generateHtmlReport } from '../ui/html-report.js';
 
@@ -43,14 +43,14 @@ async function findLatestSession(sessionsDir: string): Promise<string | null> {
 }
 
 /**
- * Executes the `devguard report [session|report.json]` command.
+ * Executes the `mantis report [session|report.json]` command.
  * Re-renders recorded test session findings or existing report with zero network traffic.
  */
 export async function reportCommand(
   targetArg?: string,
   options: ReportCliOptions = {},
 ): Promise<number> {
-  const sessionsDir = path.resolve('.devguard/sessions');
+  const sessionsDir = path.resolve('.mantis/sessions');
 
   let filePath: string;
   if (targetArg) {
@@ -63,7 +63,7 @@ export async function reportCommand(
     const latest = await findLatestSession(sessionsDir);
     if (!latest) {
       console.error(
-        'Error: No recorded sessions found in ".devguard/sessions/". Run "devguard test" first.',
+        'Error: No recorded sessions found in ".mantis/sessions/". Run "mantis test" first.',
       );
       return 2;
     }

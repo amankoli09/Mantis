@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
-import { exportOpenApi } from '@devguard/core';
-import { detectExpress, scanProject } from '@devguard/adapter-express';
+import { exportOpenApi } from '@mantis/core';
+import { detectExpress, scanProject } from '@mantis/adapter-express';
 import { formatScanTerminal } from '../ui/formatters.js';
 
 export interface ScanCliOptions {
@@ -12,7 +12,7 @@ export interface ScanCliOptions {
 }
 
 /**
- * Executes the `devguard scan <path>` command.
+ * Executes the `mantis scan <path>` command.
  * Exits with:
  * - 0 on successful scan
  * - 2 on detection failure or invalid path
@@ -39,7 +39,7 @@ export async function scanCommand(
   const detection = await detectExpress(resolvedPath);
   if (!detection.detected) {
     console.error(
-      `Error: No Express backend detected at "${targetPath}". DevGuard Phase 1 supports Node.js + Express apps.`,
+      `Error: No Express backend detected at "${targetPath}". Mantis Phase 1 supports Node.js + Express apps.`,
     );
     return 2;
   }

@@ -1,4 +1,4 @@
-import type { Report, Finding, TestResult } from '@devguard/core';
+import type { Report, Finding, TestResult } from '@mantis/core';
 
 function escapeHtml(str: string): string {
   return str
@@ -80,7 +80,7 @@ export function generateHtmlReport(report: Report): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DevGuard Test Report</title>
+  <title>Mantis Test Report</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -207,7 +207,7 @@ export function generateHtmlReport(report: Report): string {
   <div class="container">
     <header>
       <div>
-        <div class="logo">🛡️ DevGuard</div>
+        <div class="logo">Mantis</div>
         <p style="color: var(--text-muted); font-size: 0.9rem;">API Security & Behavioral Test Report</p>
       </div>
       <div class="meta-info">

@@ -3,20 +3,20 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { ApiModelSchema } from '@devguard/core';
+import { ApiModelSchema } from '@mantis/core';
 import { runCli } from '../src/cli.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const FIXTURES_DIR = path.resolve(__dirname, '../../../fixtures');
 
-describe('devguard scan', () => {
+describe('mantis scan', () => {
   let tempDir: string;
   let stdoutChunks: string[] = [];
   let stderrChunks: string[] = [];
 
   beforeEach(async () => {
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-scan-test-'));
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-scan-test-'));
     stdoutChunks = [];
     stderrChunks = [];
     vi.spyOn(console, 'log').mockImplementation((...args) => {
@@ -34,17 +34,17 @@ describe('devguard scan', () => {
 
   it('scans fixtures/simple successfully and exits 0', async () => {
     const fixturePath = path.join(FIXTURES_DIR, 'simple');
-    const exitCode = await runCli(['node', 'devguard', 'scan', fixturePath]);
+    const exitCode = await runCli(['node', 'mantis', 'scan', fixturePath]);
 
     expect(exitCode).toBe(0);
     const combinedOutput = stdoutChunks.join('\n');
-    expect(combinedOutput).toContain('DevGuard Scanner');
+    expect(combinedOutput).toContain('Mantis Scanner');
     expect(combinedOutput).toContain('/users');
   });
 
   it('fails with exit code 2 when directory does not exist', async () => {
     const nonExistent = path.join(tempDir, 'does-not-exist');
-    const exitCode = await runCli(['node', 'devguard', 'scan', nonExistent]);
+    const exitCode = await runCli(['node', 'mantis', 'scan', nonExistent]);
 
     expect(exitCode).toBe(2);
     expect(stderrChunks.join('\n')).toContain('does not exist');
@@ -52,7 +52,7 @@ describe('devguard scan', () => {
 
   it('fails with exit code 2 when target is not an Express app', async () => {
     const notExpressPath = path.join(FIXTURES_DIR, 'not-express');
-    const exitCode = await runCli(['node', 'devguard', 'scan', notExpressPath]);
+    const exitCode = await runCli(['node', 'mantis', 'scan', notExpressPath]);
 
     expect(exitCode).toBe(2);
     expect(stderrChunks.join('\n')).toContain('No Express backend detected');
@@ -60,7 +60,7 @@ describe('devguard scan', () => {
 
   it('outputs valid ApiModel JSON when --json is provided', async () => {
     const fixturePath = path.join(FIXTURES_DIR, 'simple');
-    const exitCode = await runCli(['node', 'devguard', 'scan', fixturePath, '--json']);
+    const exitCode = await runCli(['node', 'mantis', 'scan', fixturePath, '--json']);
 
     expect(exitCode).toBe(0);
     const rawJson = stdoutChunks.join('\n');
@@ -80,7 +80,7 @@ describe('devguard scan', () => {
 
     const exitCode = await runCli([
       'node',
-      'devguard',
+      'mantis',
       'scan',
       fixturePath,
       '--json',
@@ -101,11 +101,11 @@ describe('devguard scan', () => {
 
   it('supports --verbose flag in terminal output', async () => {
     const fixturePath = path.join(FIXTURES_DIR, 'simple');
-    const exitCode = await runCli(['node', 'devguard', 'scan', fixturePath, '--verbose']);
+    const exitCode = await runCli(['node', 'mantis', 'scan', fixturePath, '--verbose']);
 
     expect(exitCode).toBe(0);
     const output = stdoutChunks.join('\n');
-    expect(output).toContain('DevGuard Scanner');
+    expect(output).toContain('Mantis Scanner');
     expect(output).toContain('param email');
   });
 
@@ -115,7 +115,7 @@ describe('devguard scan', () => {
 
     const exitCode = await runCli([
       'node',
-      'devguard',
+      'mantis',
       'scan',
       fixturePath,
       '--openapi',

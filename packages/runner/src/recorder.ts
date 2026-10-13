@@ -1,6 +1,6 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { SessionSchema, type Session, type ExecutionResult } from '@devguard/core';
+import { SessionSchema, type Session, type ExecutionResult } from '@mantis/core';
 
 const SENSITIVE_HEADER_NAMES = new Set([
   'authorization',
@@ -170,9 +170,9 @@ export function serializeDeterministicSession(session: Session, includeMeta = tr
 }
 
 /**
- * Saves a session to a deterministic JSON file in .devguard/sessions/<sessionId>.json.
+ * Saves a session to a deterministic JSON file in .mantis/sessions/<sessionId>.json.
  */
-export async function saveSession(session: Session, outputDir = '.devguard/sessions'): Promise<string> {
+export async function saveSession(session: Session, outputDir = '.mantis/sessions'): Promise<string> {
   await fs.mkdir(outputDir, { recursive: true });
   const filename = `${session.meta.sessionId}.json`;
   const filePath = path.join(outputDir, filename);

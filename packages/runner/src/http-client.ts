@@ -1,5 +1,5 @@
 import { request } from 'undici';
-import type { RequestPlan, ExecutionResult, RunnerLimits } from '@devguard/core';
+import type { RequestPlan, ExecutionResult, RunnerLimits } from '@mantis/core';
 
 export interface ExecuteRequestOptions {
   plan: RequestPlan;

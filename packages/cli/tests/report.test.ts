@@ -2,17 +2,17 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import type { Session } from '@devguard/core';
+import type { Session } from '@mantis/core';
 import { runCli } from '../src/cli.js';
 
-describe('devguard report', () => {
+describe('mantis report', () => {
   let tempDir: string;
   let originalCwd: string;
   let stdoutChunks: string[] = [];
   let stderrChunks: string[] = [];
 
   beforeEach(async () => {
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-report-test-'));
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-report-test-'));
     originalCwd = process.cwd();
     process.chdir(tempDir);
     stdoutChunks = [];
@@ -126,13 +126,13 @@ describe('devguard report', () => {
   };
 
   it('fails with exit code 2 when no sessions exist and no session argument is provided', async () => {
-    const exitCode = await runCli(['node', 'devguard', 'report']);
+    const exitCode = await runCli(['node', 'mantis', 'report']);
     expect(exitCode).toBe(2);
     expect(stderrChunks.join('\n')).toContain('No recorded sessions found');
   });
 
   it('fails with exit code 2 when specified session file does not exist', async () => {
-    const exitCode = await runCli(['node', 'devguard', 'report', 'missing-session.json']);
+    const exitCode = await runCli(['node', 'mantis', 'report', 'missing-session.json']);
     expect(exitCode).toBe(2);
     expect(stderrChunks.join('\n')).toContain('Error loading session file');
   });
@@ -141,11 +141,11 @@ describe('devguard report', () => {
     const sessionFile = path.join(tempDir, 'clean-session.json');
     await fs.writeFile(sessionFile, JSON.stringify(sampleCleanSession, null, 2), 'utf-8');
 
-    const exitCode = await runCli(['node', 'devguard', 'report', sessionFile]);
+    const exitCode = await runCli(['node', 'mantis', 'report', sessionFile]);
     expect(exitCode).toBe(0);
 
     const output = stdoutChunks.join('\n');
-    expect(output).toContain('DevGuard Session Replay');
+    expect(output).toContain('Mantis Session Replay');
     expect(output).toContain('session-clean-123');
     expect(output).not.toContain('Evaluated Findings');
   });
@@ -154,24 +154,24 @@ describe('devguard report', () => {
     const sessionFile = path.join(tempDir, 'bug-session.json');
     await fs.writeFile(sessionFile, JSON.stringify(sampleBugSession, null, 2), 'utf-8');
 
-    const exitCode = await runCli(['node', 'devguard', 'report', sessionFile]);
+    const exitCode = await runCli(['node', 'mantis', 'report', sessionFile]);
     expect(exitCode).toBe(1);
 
     const output = stdoutChunks.join('\n');
-    expect(output).toContain('DevGuard Session Replay');
+    expect(output).toContain('Mantis Session Replay');
     expect(output).toContain('session-bug-456');
     expect(output).toContain('server-error-on-valid-input');
     expect(output).toContain('Evaluated Findings (1):');
   });
 
-  it('automatically discovers latest session from .devguard/sessions/', async () => {
-    const sessionsDir = path.join(tempDir, '.devguard/sessions');
+  it('automatically discovers latest session from .mantis/sessions/', async () => {
+    const sessionsDir = path.join(tempDir, '.mantis/sessions');
     await fs.mkdir(sessionsDir, { recursive: true });
 
     const sessionFile = path.join(sessionsDir, 'session-clean.json');
     await fs.writeFile(sessionFile, JSON.stringify(sampleCleanSession, null, 2), 'utf-8');
 
-    const exitCode = await runCli(['node', 'devguard', 'report']);
+    const exitCode = await runCli(['node', 'mantis', 'report']);
     expect(exitCode).toBe(0);
 
     const output = stdoutChunks.join('\n');
@@ -185,7 +185,7 @@ describe('devguard report', () => {
     const outFile = path.join(tempDir, 'replayed-report.json');
     const exitCode = await runCli([
       'node',
-      'devguard',
+      'mantis',
       'report',
       sessionFile,
       '--json',
@@ -213,7 +213,7 @@ describe('devguard report', () => {
     const htmlOut = path.join(tempDir, 'report.html');
     const exitCode = await runCli([
       'node',
-      'devguard',
+      'mantis',
       'report',
       sessionFile,
       '--html',
@@ -224,7 +224,7 @@ describe('devguard report', () => {
     expect(exitCode).toBe(1);
     const content = await fs.readFile(htmlOut, 'utf-8');
     expect(content).toContain('<!DOCTYPE html>');
-    expect(content).toContain('DevGuard Test Report');
+    expect(content).toContain('Mantis Test Report');
     expect(content).toContain('Findings');
   });
 
@@ -264,7 +264,7 @@ describe('devguard report', () => {
     const htmlOut = path.join(tempDir, 'report-from-json.html');
     const exitCode = await runCli([
       'node',
-      'devguard',
+      'mantis',
       'report',
       reportJsonPath,
       '--html',

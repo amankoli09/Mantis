@@ -1,4 +1,4 @@
-import type { ApiModel, Endpoint, Diagnostic, Report, Finding } from '@devguard/core';
+import type { ApiModel, Endpoint, Diagnostic, Report, Finding } from '@mantis/core';
 import { getColors } from '../ui/color.js';
 
 export interface EndpointDiffItem {

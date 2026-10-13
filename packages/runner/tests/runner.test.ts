@@ -3,7 +3,7 @@ import http from 'node:http';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import type { ApiModel, RunnerConfig } from '@devguard/core';
+import type { ApiModel, RunnerConfig } from '@mantis/core';
 import { runPlan } from '../src/runner.js';
 import { loadSession } from '../src/recorder.js';
 
@@ -50,7 +50,7 @@ describe('Runner Orchestrator (runPlan & dry-run)', () => {
 
   beforeEach(async () => {
     requestCounter = 0;
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-runner-test-'));
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-runner-test-'));
   });
 
   afterEach(async () => {
@@ -125,7 +125,7 @@ describe('Runner Orchestrator (runPlan & dry-run)', () => {
         effect: 'read',
         auth: { type: 'unknown' },
         confidence: 'uncertain',
-        confidenceReason: 'DG-R003',
+        confidenceReason: 'MT-R003',
         params: [],
         responses: [],
         middleware: [],

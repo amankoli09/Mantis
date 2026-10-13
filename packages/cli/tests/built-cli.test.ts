@@ -16,7 +16,7 @@ describe('built CLI binary (dist verification)', () => {
   beforeAll(() => {
     // Ensure built artifacts exist on a fresh clone when running plain `pnpm test`
     if (!fs.existsSync(distJsPath) || !fs.existsSync(distCjsPath)) {
-      execSync('pnpm --filter @devguard/cli build', {
+      execSync('pnpm --filter @mantis/cli build', {
         cwd: repoRoot,
         stdio: 'pipe',
       });
@@ -59,7 +59,7 @@ describe('built CLI binary (dist verification)', () => {
       env: cleanEnv,
     });
     expect(res.status).toBe(0);
-    expect(res.stdout).toContain('Usage: devguard [options] [command]');
+    expect(res.stdout).toContain('Usage: mantis [options] [command]');
     expect(res.stdout).toContain('scan [options] <path>');
     expect(res.stdout).toContain('test [options] [path]');
     expect(res.stdout).toContain('report [options] [session]');
@@ -72,7 +72,7 @@ describe('built CLI binary (dist verification)', () => {
       env: cleanEnv,
     });
     expect(res.status).toBe(0);
-    expect(res.stdout).toContain('DevGuard Scanner');
+    expect(res.stdout).toContain('Mantis Scanner');
     expect(res.stdout).toContain('Framework: Express (javascript) | Root: fixtures/simple');
     expect(res.stdout).toContain('Endpoints (6 discovered: 6 confirmed, 0 uncertain)');
     expect(res.stdout).toContain('GET     /health');
@@ -91,7 +91,7 @@ describe('built CLI binary (dist verification)', () => {
     });
     expect(res.status).toBe(0);
     expect(res.stdout).toContain('Endpoints (6 discovered: 5 confirmed, 1 uncertain)');
-    expect(res.stdout).toContain('[DG-R003]');
+    expect(res.stdout).toContain('[MT-R003]');
   });
 
   it('fails if build output is missing or corrupt', () => {

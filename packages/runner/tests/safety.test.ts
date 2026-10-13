@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { Endpoint } from '@devguard/core';
+import type { Endpoint } from '@mantis/core';
 import { validateBaseUrl, evaluateEndpointSafety } from '../src/safety.js';
 
 describe('Safety Engine - Host Guard (validateBaseUrl)', () => {
@@ -84,7 +84,7 @@ describe('Safety Engine - Decision Table (evaluateEndpointSafety)', () => {
       id: 'GET /items/<dynamic>',
       path: '/items/<dynamic>',
       confidence: 'uncertain',
-      confidenceReason: 'DG-R003',
+      confidenceReason: 'MT-R003',
     };
     const decision = evaluateEndpointSafety(ep, {
       allowedEffects: ['read'],

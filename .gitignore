@@ -6,7 +6,7 @@ coverage
 .turbo
 *.tsbuildinfo
 .kilo
-.devguard
+.mantis
 benchmarks/.clones
 .next
 out

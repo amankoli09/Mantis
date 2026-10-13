@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import http from 'node:http';
 import { executeRequest } from '../src/http-client.js';
-import type { RequestPlan, RunnerLimits } from '@devguard/core';
+import type { RequestPlan, RunnerLimits } from '@mantis/core';
 
 describe('Safe HTTP Client (Undici Wrapper)', () => {
   let server: http.Server;

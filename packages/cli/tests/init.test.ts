@@ -4,12 +4,12 @@ import path from 'node:path';
 import os from 'node:os';
 import { runCli } from '../src/cli.js';
 
-describe('devguard init', () => {
+describe('mantis init', () => {
   let tempDir: string;
   let originalCwd: string;
 
   beforeEach(async () => {
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-init-test-'));
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-init-test-'));
     originalCwd = process.cwd();
     process.chdir(tempDir);
   });
@@ -19,11 +19,11 @@ describe('devguard init', () => {
     await fs.rm(tempDir, { recursive: true, force: true });
   });
 
-  it('generates devguard.config.json with starter configuration', async () => {
-    const exitCode = await runCli(['node', 'devguard', 'init']);
+  it('generates mantis.config.json with starter configuration', async () => {
+    const exitCode = await runCli(['node', 'mantis', 'init']);
     expect(exitCode).toBe(0);
 
-    const configPath = path.join(tempDir, 'devguard.config.json');
+    const configPath = path.join(tempDir, 'mantis.config.json');
     const exists = await fs
       .stat(configPath)
       .then(() => true)
@@ -39,17 +39,17 @@ describe('devguard init', () => {
 
   it('fails with exit code 2 when config file already exists', async () => {
     // First creation succeeds
-    const exitCode1 = await runCli(['node', 'devguard', 'init']);
+    const exitCode1 = await runCli(['node', 'mantis', 'init']);
     expect(exitCode1).toBe(0);
 
     // Second creation must refuse to overwrite and exit 2
-    const exitCode2 = await runCli(['node', 'devguard', 'init']);
+    const exitCode2 = await runCli(['node', 'mantis', 'init']);
     expect(exitCode2).toBe(2);
   });
 
   it('supports custom output path with --out', async () => {
     const customOut = path.join(tempDir, 'custom-config.json');
-    const exitCode = await runCli(['node', 'devguard', 'init', '--out', customOut]);
+    const exitCode = await runCli(['node', 'mantis', 'init', '--out', customOut]);
     expect(exitCode).toBe(0);
 
     const exists = await fs

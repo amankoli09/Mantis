@@ -167,7 +167,7 @@ export async function runCrossAnalysis(options: CrossAnalysisOptions): Promise<F
               },
             },
             source: {
-              file: model.project?.root || 'devguard.config.json',
+              file: model.project?.root || 'mantis.config.json',
               line: 1,
             },
             confidence: 'high',

@@ -23,7 +23,7 @@ const DEFAULT_CONFIG_TEMPLATE = `{
 `;
 
 export async function initCommand(options: { out?: string } = {}): Promise<number> {
-  const targetFile = path.resolve(options.out ?? 'devguard.config.json');
+  const targetFile = path.resolve(options.out ?? 'mantis.config.json');
 
   try {
     // Flag 'wx' ensures atomic failure if file already exists

@@ -7,7 +7,7 @@ import type {
   Session,
   DryRunResult,
   ExecutionResult,
-} from '@devguard/core';
+} from '@mantis/core';
 import { validateBaseUrl, evaluateEndpointSafety } from './safety.js';
 import { executeRequest } from './http-client.js';
 import { saveSession, redactHeaders, redactSecretValue } from './recorder.js';
@@ -47,7 +47,7 @@ async function mapConcurrent<T, R>(items: T[], limit: number, fn: (item: T) => P
  *
  * When dryRun is false:
  * - Executes requests respecting concurrency and request caps.
- * - Collects results and saves a deterministic, redacted session file to .devguard/sessions/<sessionId>.json.
+ * - Collects results and saves a deterministic, redacted session file to .mantis/sessions/<sessionId>.json.
  */
 export async function runPlan(
   apiModel: ApiModel,
@@ -172,7 +172,7 @@ export async function runPlan(
   };
 
   // 5. Save session to disk with secret redaction
-  await saveSession(session, options.outputDir ?? '.devguard/sessions');
+  await saveSession(session, options.outputDir ?? '.mantis/sessions');
 
   return session;
 }

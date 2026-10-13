@@ -2,7 +2,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import readline from 'node:readline';
 import { promises as fs } from 'node:fs';
-import { scanProject } from '@devguard/adapter-express';
+import { scanProject } from '@mantis/adapter-express';
 import {
   type RunnerConfig,
   type AllowedEffect,
@@ -10,8 +10,8 @@ import {
   type Session,
   planTests,
   runTests,
-} from '@devguard/core';
-import { loadConfig, validateBaseUrl, createTestRunner, saveSession } from '@devguard/runner';
+} from '@mantis/core';
+import { loadConfig, validateBaseUrl, createTestRunner, saveSession } from '@mantis/runner';
 import { formatTestTerminal, formatTestBanner } from '../ui/formatters.js';
 import { generateHtmlReport } from '../ui/html-report.js';
 
@@ -44,7 +44,7 @@ async function promptDestructiveConfirmation(): Promise<boolean> {
 }
 
 /**
- * Executes the `devguard test [path]` command.
+ * Executes the `mantis test [path]` command.
  */
 export async function testCommand(
   targetPath?: string,
@@ -54,7 +54,7 @@ export async function testCommand(
 
   // 1. Resolve / Load configuration
   let config: RunnerConfig;
-  const configCandidate = options.config ?? 'devguard.config.json';
+  const configCandidate = options.config ?? 'mantis.config.json';
   let candidatePath = path.resolve(configCandidate);
 
   let hasConfigFile = false;
@@ -63,7 +63,7 @@ export async function testCommand(
     hasConfigFile = true;
   } catch {
     if (!options.config && resolvedTarget) {
-      const targetConfig = path.resolve(resolvedTarget, 'devguard.config.json');
+      const targetConfig = path.resolve(resolvedTarget, 'mantis.config.json');
       try {
         await fs.access(targetConfig);
         candidatePath = targetConfig;
@@ -100,7 +100,7 @@ export async function testCommand(
     };
   } else {
     console.error(
-      'Error: No configuration found. Run "devguard init" to create devguard.config.json or specify --base-url <url>.',
+      'Error: No configuration found. Run "mantis init" to create mantis.config.json or specify --base-url <url>.',
     );
     return 2;
   }
@@ -220,7 +220,7 @@ export async function testCommand(
   };
 
   try {
-    await saveSession(session, '.devguard/sessions');
+    await saveSession(session, '.mantis/sessions');
   } catch {
     // Non-fatal if session saving fails
   }

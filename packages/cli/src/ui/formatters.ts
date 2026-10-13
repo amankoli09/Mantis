@@ -1,11 +1,11 @@
-import type { ApiModel, Report, Session, Finding } from '@devguard/core';
+import type { ApiModel, Report, Session, Finding } from '@mantis/core';
 import { getColors } from './color.js';
 
 export function formatScanTerminal(model: ApiModel, options: { verbose?: boolean } = {}): string {
   const c = getColors();
   const lines: string[] = [];
 
-  lines.push(c.bold('DevGuard Scanner'));
+  lines.push(c.bold('Mantis Scanner'));
   const lang = model.project?.language ?? 'javascript';
   const root = model.project?.root ?? '.';
   lines.push(`${c.dim('Framework:')} Express (${lang}) | ${c.dim('Root:')} ${root}`);
@@ -174,7 +174,7 @@ export function formatSessionTerminal(session: Session, findings: Finding[]): st
   const c = getColors();
   const lines: string[] = [];
 
-  lines.push(c.bold('DevGuard Session Replay'));
+  lines.push(c.bold('Mantis Session Replay'));
   lines.push(
     `${c.dim('Session ID:')} ${session.meta.sessionId} | ` +
       `${c.dim('Target:')} ${session.meta.targetBaseUrl} | ` +

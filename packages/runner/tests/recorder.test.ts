@@ -2,14 +2,14 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import type { Session, ExecutionResult, SkipReason, RunnerConfig } from '@devguard/core';
+import type { Session, ExecutionResult, SkipReason, RunnerConfig } from '@mantis/core';
 import { redactHeaders, redactSecretValue, saveSession, loadSession, serializeDeterministicSession } from '../src/recorder.js';
 
 describe('Session Recorder & Redactor', () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-recorder-test-'));
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-recorder-test-'));
   });
 
   afterEach(async () => {
@@ -74,14 +74,14 @@ describe('Session Recorder & Redactor', () => {
       Authorization: 'Bearer secret123',
       COOKIE: 'sessionId=abc',
       'X-Api-Key': 'key999',
-      'User-Agent': 'DevGuard/0.1.0',
+      'User-Agent': 'Mantis/0.1.0',
     };
 
     const redacted = redactHeaders(headers, ['Authorization']);
     expect(redacted['Authorization']).toBe('[REDACTED]');
     expect(redacted['COOKIE']).toBe('[REDACTED]');
     expect(redacted['X-Api-Key']).toBe('[REDACTED]');
-    expect(redacted['User-Agent']).toBe('DevGuard/0.1.0');
+    expect(redacted['User-Agent']).toBe('Mantis/0.1.0');
   });
 
   it('redacts known secret strings from text content', () => {

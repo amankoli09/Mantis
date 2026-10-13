@@ -49,7 +49,7 @@ describe('CLI Color handling', () => {
     expect(isColorEnabled()).toBe(true);
 
     // Call CLI with --no-color
-    await runCli(['node', 'devguard', '--no-color', 'init', '--help']).catch(() => {});
+    await runCli(['node', 'mantis', '--no-color', 'init', '--help']).catch(() => {});
     expect(isColorEnabled()).toBe(false);
   });
 });

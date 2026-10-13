@@ -10,14 +10,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const FIXTURES_DIR = path.resolve(__dirname, '../../../fixtures');
 
-describe('devguard test', () => {
+describe('mantis test', () => {
   let tempDir: string;
   let originalCwd: string;
   let stdoutChunks: string[] = [];
   let stderrChunks: string[] = [];
 
   beforeEach(async () => {
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-test-cmd-'));
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-test-cmd-'));
     originalCwd = process.cwd();
     process.chdir(tempDir);
     stdoutChunks = [];
@@ -41,7 +41,7 @@ describe('devguard test', () => {
       const fixturePath = path.join(FIXTURES_DIR, 'simple');
       const exitCode = await runCli([
         'node',
-        'devguard',
+        'mantis',
         'test',
         fixturePath,
         '--dry-run',
@@ -60,7 +60,7 @@ describe('devguard test', () => {
       const fixturePath = path.join(FIXTURES_DIR, 'simple');
       const exitCode = await runCli([
         'node',
-        'devguard',
+        'mantis',
         'test',
         fixturePath,
         '--dry-run',
@@ -80,7 +80,7 @@ describe('devguard test', () => {
       const fixturePath = path.join(FIXTURES_DIR, 'simple');
       const exitCode = await runCli([
         'node',
-        'devguard',
+        'mantis',
         'test',
         fixturePath,
         '--base-url',
@@ -95,7 +95,7 @@ describe('devguard test', () => {
       const fixturePath = path.join(FIXTURES_DIR, 'simple');
       const exitCode = await runCli([
         'node',
-        'devguard',
+        'mantis',
         'test',
         fixturePath,
         '--base-url',
@@ -109,7 +109,7 @@ describe('devguard test', () => {
 
     it('fails with exit code 2 when no base-url and no config file exists', async () => {
       const fixturePath = path.join(FIXTURES_DIR, 'simple');
-      const exitCode = await runCli(['node', 'devguard', 'test', fixturePath]);
+      const exitCode = await runCli(['node', 'mantis', 'test', fixturePath]);
 
       expect(exitCode).toBe(2);
       expect(stderrChunks.join('\n')).toContain('No configuration found');
@@ -158,7 +158,7 @@ describe('devguard test', () => {
       const fixturePath = path.join(FIXTURES_DIR, 'simple');
       const exitCode = await runCli([
         'node',
-        'devguard',
+        'mantis',
         'test',
         fixturePath,
         '--base-url',
@@ -172,7 +172,7 @@ describe('devguard test', () => {
       expect(output).toContain('Summary:');
 
       // Verify session recording file was created
-      const sessionsDir = path.join(tempDir, '.devguard/sessions');
+      const sessionsDir = path.join(tempDir, '.mantis/sessions');
       const sessionFiles = await fs.readdir(sessionsDir).catch(() => []);
       expect(sessionFiles.length).toBeGreaterThan(0);
     });
@@ -183,7 +183,7 @@ describe('devguard test', () => {
 
       const exitCode = await runCli([
         'node',
-        'devguard',
+        'mantis',
         'test',
         fixturePath,
         '--base-url',
@@ -241,7 +241,7 @@ describe('devguard test', () => {
       const fixturePath = path.join(FIXTURES_DIR, 'simple');
       const exitCode = await runCli([
         'node',
-        'devguard',
+        'mantis',
         'test',
         fixturePath,
         '--base-url',
@@ -258,7 +258,7 @@ describe('devguard test', () => {
       const fixturePath = path.join(FIXTURES_DIR, 'simple');
       const exitCode = await runCli([
         'node',
-        'devguard',
+        'mantis',
         'test',
         fixturePath,
         '--base-url',

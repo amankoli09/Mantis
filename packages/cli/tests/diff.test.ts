@@ -2,17 +2,17 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import type { ApiModel, Report } from '@devguard/core';
+import type { ApiModel, Report } from '@mantis/core';
 import { runCli } from '../src/cli.js';
 
-describe('devguard diff', () => {
+describe('mantis diff', () => {
   let tempDir: string;
   let originalCwd: string;
   let stdoutChunks: string[] = [];
   let stderrChunks: string[] = [];
 
   beforeEach(async () => {
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'devguard-diff-test-'));
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mantis-diff-test-'));
     originalCwd = process.cwd();
     process.chdir(tempDir);
     stdoutChunks = [];
@@ -122,7 +122,7 @@ describe('devguard diff', () => {
     summary: { total: 6, passed: 5, failed: 1, skipped: 0 },
     findings: [
       {
-        ruleId: 'DG-ORACLE-001',
+        ruleId: 'MT-ORACLE-001',
         severity: 'error',
         endpointId: 'DELETE /users/:id',
         message: 'Endpoint returned 500 Internal Server Error',
@@ -143,7 +143,7 @@ describe('devguard diff', () => {
     await fs.writeFile(fileA, JSON.stringify(baseModel, null, 2), 'utf-8');
     await fs.writeFile(fileB, JSON.stringify(updatedModel, null, 2), 'utf-8');
 
-    const exitCode = await runCli(['node', 'devguard', 'diff', fileA, fileB]);
+    const exitCode = await runCli(['node', 'mantis', 'diff', fileA, fileB]);
     expect(exitCode).toBe(0);
 
     const out = stdoutChunks.join('\n');
@@ -163,7 +163,7 @@ describe('devguard diff', () => {
 
     const exitCode = await runCli([
       'node',
-      'devguard',
+      'mantis',
       'diff',
       fileA,
       fileB,
@@ -186,12 +186,12 @@ describe('devguard diff', () => {
     await fs.writeFile(reportA, JSON.stringify(baseReport, null, 2), 'utf-8');
     await fs.writeFile(reportB, JSON.stringify(regressedReport, null, 2), 'utf-8');
 
-    const exitCode = await runCli(['node', 'devguard', 'diff', reportA, reportB]);
+    const exitCode = await runCli(['node', 'mantis', 'diff', reportA, reportB]);
     expect(exitCode).toBe(1);
 
     const out = stdoutChunks.join('\n');
     expect(out).toContain('1 new');
-    expect(out).toContain('DG-ORACLE-001');
+    expect(out).toContain('MT-ORACLE-001');
     expect(out).toContain('DELETE /users/:id');
   });
 
@@ -201,7 +201,7 @@ describe('devguard diff', () => {
     await fs.writeFile(reportA, JSON.stringify(baseReport, null, 2), 'utf-8');
     await fs.writeFile(reportB, JSON.stringify(baseReport, null, 2), 'utf-8');
 
-    const exitCode = await runCli(['node', 'devguard', 'diff', reportA, reportB]);
+    const exitCode = await runCli(['node', 'mantis', 'diff', reportA, reportB]);
     expect(exitCode).toBe(0);
 
     const out = stdoutChunks.join('\n');
@@ -214,7 +214,7 @@ describe('devguard diff', () => {
     await fs.writeFile(fileA, JSON.stringify({ foo: 'bar' }), 'utf-8');
     await fs.writeFile(fileB, JSON.stringify({ baz: 'qux' }), 'utf-8');
 
-    const exitCode = await runCli(['node', 'devguard', 'diff', fileA, fileB]);
+    const exitCode = await runCli(['node', 'mantis', 'diff', fileA, fileB]);
     expect(exitCode).toBe(2);
     expect(stderrChunks.join('\n')).toContain('Error:');
   });
