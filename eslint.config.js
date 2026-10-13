@@ -10,6 +10,7 @@ export default tseslint.config(
       '**/coverage/**',
       '**/.turbo/**',
       '**/.kilo/**',
+      '**/.next/**',
       '**/*.d.ts',
       // Fixture app files are plain CJS JS (not TypeScript). Exclude them from
       // ESLint so undefined references and fixture code don't cause lint errors.

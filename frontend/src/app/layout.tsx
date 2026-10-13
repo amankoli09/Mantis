@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
+import 'lenis/dist/lenis.css';
 import '../styles/globals.css';
+import SmoothScroll from '@/components/SmoothScroll';
 
 export const metadata: Metadata = {
   title: 'Mantis — Spec-free API testing for Node.js and Express',
@@ -20,7 +22,9 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </head>
-      <body>{children}</body>
+      <body>
+        <SmoothScroll>{children}</SmoothScroll>
+      </body>
     </html>
   );
 }

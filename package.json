@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "pnpm -r run build",
+    "build": "pnpm --filter '@devguard/*' run build && pnpm --filter mantis-frontend build",
+    "build:frontend": "pnpm --filter mantis-frontend build",
+    "build:packages": "pnpm --filter '@devguard/*' run build",
     "gen:schema": "pnpm --filter @devguard/core run gen:schema",
     "test": "vitest run",
     "lint": "eslint .",

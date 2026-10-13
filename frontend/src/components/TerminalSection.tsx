@@ -42,7 +42,7 @@ export function TerminalSection() {
   };
 
   return (
-    <section className="terminal-section">
+    <section className="terminal-section" id="terminal">
       <div className="terminal-section-inner">
         {/* Section Heading & Subtitle matching reference */}
         <div className="terminal-heading-block">
