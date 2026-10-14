@@ -12,6 +12,7 @@ Mantis Core is an engine that statically analyzes Node.js + Express backend code
 - 💻 **[CLI Reference](docs/cli.md)**: Command reference, flags, exit codes, and CI integration guide.
 - 📅 **[Daily Progress Tracker](docs/daily-tracking.md)**: Dated log tracking daily activities, completed tasks, and testing results.
 - 📐 **[API Model Specification](docs/api-model.md)**: Details on every field in the versioned API Model schema (`v1.0.0`).
+- 🔬 **[Exit Check & Real-World Benchmarks](docs/exit-check.md)**: Empirical validation across 5 open-source Express repositories with precision and recall analysis.
 - 💡 **[Learning Log](docs/learning-log.md)**: Architectural and tooling decisions explained in plain language.
 
 ---
@@ -143,9 +144,16 @@ To measure the accuracy of Mantis's scanner in real-world scenarios, we benchmar
 | [node-todo](https://github.com/scotch-io/node-todo) (0fdb905) | Small API (Route Factory) | MIT | 4 | 4 | 100.0% | 100.0% | 0 | 0 |
 | [express-mongoose-es6-rest-api](https://github.com/kunalkapadia/express-mongoose-es6-rest-api) (247fedd) | ES6 / Babel REST API with subrouters | MIT | 8 | 8 | 100.0% | 100.0% | 0 | 10 |
 | [express-rest-es2017-boilerplate](https://github.com/danielfsousa/express-rest-es2017-boilerplate) (b8bed6d) | Modern ES2017 / ESM, MVC with controllers | MIT | 15 | 15 | 100.0% | 100.0% | 0 | 14 |
-| [node-express-boilerplate](https://github.com/hagopj13/node-express-boilerplate) (179ae84) | MVC with controllers, routes array loop, Joi validation | MIT | 14 | 15 | 0.0% | 0.0% | 14 | 20 |
+| [node-express-boilerplate](https://github.com/hagopj13/node-express-boilerplate) (179ae84) | MVC with controllers, routes array loop, Joi validation | MIT | 14 | 15 | 0.0% | 0.0% | 14 | 21 |
 | [realworld](https://github.com/gothinkster/node-express-realworld-example-app) (30b68e1) | TypeScript, barrel exports, subrouter root mount | MIT | 20 | 20 | 100.0% | 100.0% | 0 | 1 |
-| **Total / Overall** | **5 Repositories** | — | **61** | **62** | **75.8%** | **77.0%** | **14** | **45** |
+| **Total / Overall** | **5 Repositories** | — | **61** | **62** | **75.8%** | **77.0%** | **14** | **46** |
+
+Run the benchmarks with one command:
+```bash
+pnpm benchmark
+```
+
+See [docs/exit-check.md](docs/exit-check.md) for detailed evaluation, methodology, and architectural analysis.
 
 ### Benchmark Evaluation & Key Fixes
 
