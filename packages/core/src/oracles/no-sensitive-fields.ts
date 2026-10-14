@@ -21,26 +21,65 @@ function extractSemanticHeaders(headers?: Record<string, string>): Record<string
   return Object.keys(result).length > 0 ? result : undefined;
 }
 
-const DEFAULT_SENSITIVE_FIELD_NAMES = new Set([
+const STRICT_SENSITIVE_FIELD_NAMES = new Set([
   'password',
   'passwordhash',
-  'token',
+  'passwd',
   'secret',
-  '__v',
   'apikey',
-  'access_token',
-  'refresh_token',
-  'private_key',
+  'privatekey',
 ]);
 
-function isSensitiveKey(key: string): boolean {
+const AUTH_TOKEN_FIELD_NAMES = new Set([
+  'token',
+  'accesstoken',
+  'refreshtoken',
+  'authtoken',
+  'sessiontoken',
+  'bearer',
+  'bearertoken',
+]);
+
+const EXEMPT_TOKEN_FIELD_NAMES = new Set([
+  'csrftoken',
+  'xsrftoken',
+  'devicetoken',
+  'pagetoken',
+  'nextpagetoken',
+  'continuationtoken',
+  'fcmtoken',
+  'pushtoken',
+]);
+
+const AUTH_ENDPOINT_PATH_REGEX = /(?:auth|login|signin|signup|register|oauth|token|session)s?(?:[/?#]|$)/i;
+
+function isAuthEndpoint(endpoint: Endpoint): boolean {
+  return AUTH_ENDPOINT_PATH_REGEX.test(endpoint.path) || AUTH_ENDPOINT_PATH_REGEX.test(endpoint.id);
+}
+
+function isSensitiveKey(key: string, isAuthRoute: boolean): boolean {
   const normalized = key.toLowerCase().replace(/[-_]/g, '');
-  for (const pattern of DEFAULT_SENSITIVE_FIELD_NAMES) {
-    const normPattern = pattern.toLowerCase().replace(/[-_]/g, '');
-    if (normalized === normPattern || normalized.endsWith(normPattern)) {
+
+  if (EXEMPT_TOKEN_FIELD_NAMES.has(normalized)) {
+    return false;
+  }
+
+  if (STRICT_SENSITIVE_FIELD_NAMES.has(normalized)) {
+    return true;
+  }
+
+  // Auth tokens returned on auth endpoints are expected behavior, not a leak
+  if (AUTH_TOKEN_FIELD_NAMES.has(normalized)) {
+    return !isAuthRoute;
+  }
+
+  // Compound keys ending in strict sensitive patterns (e.g. user_password, client_secret)
+  for (const pattern of STRICT_SENSITIVE_FIELD_NAMES) {
+    if (normalized.endsWith(pattern)) {
       return true;
     }
   }
+
   return false;
 }
 
@@ -48,6 +87,7 @@ function findSensitivePathsAndRedact(
   val: unknown,
   currentPath: string,
   foundPaths: string[],
+  isAuthRoute: boolean,
 ): unknown {
   if (val === null || val === undefined || typeof val !== 'object') {
     return val;
@@ -55,7 +95,7 @@ function findSensitivePathsAndRedact(
 
   if (Array.isArray(val)) {
     return val.map((item, idx) =>
-      findSensitivePathsAndRedact(item, `${currentPath}[${idx}]`, foundPaths),
+      findSensitivePathsAndRedact(item, `${currentPath}[${idx}]`, foundPaths, isAuthRoute),
     );
   }
 
@@ -68,7 +108,7 @@ function findSensitivePathsAndRedact(
 
   for (const key of sortedKeys) {
     const nextPath = currentPath ? `${currentPath}.${key}` : key;
-    if (isSensitiveKey(key)) {
+    if (isSensitiveKey(key, isAuthRoute)) {
       foundPaths.push(nextPath);
       redactedObj[key] = '[REDACTED]';
     } else {
@@ -76,6 +116,7 @@ function findSensitivePathsAndRedact(
         record[key],
         nextPath,
         foundPaths,
+        isAuthRoute,
       );
     }
   }
@@ -99,8 +140,9 @@ export const noSensitiveFieldsOracle: OraclePlugin = {
       return [];
     }
 
+    const isAuthRoute = isAuthEndpoint(endpoint);
     const sensitivePaths: string[] = [];
-    const redactedBodyObj = findSensitivePathsAndRedact(parsed, '', sensitivePaths);
+    const redactedBodyObj = findSensitivePathsAndRedact(parsed, '', sensitivePaths, isAuthRoute);
 
     if (sensitivePaths.length === 0) {
       return [];
@@ -135,6 +177,7 @@ export const noSensitiveFieldsOracle: OraclePlugin = {
           line: endpoint.provenance.line,
         },
         confidence: 'high',
+        confidenceReason: `Response JSON exposed sensitive credential field at: ${sensitivePaths.join(', ')}`,
       },
     ];
   },

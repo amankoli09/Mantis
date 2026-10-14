@@ -116,6 +116,7 @@ export async function runCrossAnalysis(options: CrossAnalysisOptions): Promise<F
             line: endpoint.provenance.line,
           },
           confidence: 'high',
+          confidenceReason: `Endpoint "${endpoint.id}" statically defined in code returned 404 across all runtime probe executions`,
         });
       }
     }
@@ -171,6 +172,7 @@ export async function runCrossAnalysis(options: CrossAnalysisOptions): Promise<F
               line: 1,
             },
             confidence: 'high',
+            confidenceReason: `Live HTTP probe succeeded with HTTP ${probeResult.response.status}, but route pattern "${probePath}" is absent from static source model`,
           });
         }
       }
@@ -248,6 +250,7 @@ export async function runCrossAnalysis(options: CrossAnalysisOptions): Promise<F
                   line: ep.provenance.line,
                 },
                 confidence: 'medium',
+                confidenceReason: `Endpoint "${epId}" returned HTTP ${status} for ${genId}, differing from dominant HTTP ${dominantStatus} across sibling routes`,
               });
             }
           }
@@ -324,6 +327,7 @@ export async function runCrossAnalysis(options: CrossAnalysisOptions): Promise<F
                 line: ep.provenance.line,
               },
               confidence: 'medium',
+              confidenceReason: `Endpoint "${epId}" returned error response shape with keys [${shape}], differing from dominant shape [${dominantShape}] across the API`,
             });
           }
         }

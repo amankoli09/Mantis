@@ -78,8 +78,24 @@ export const FindingSchema = z.object({
   evidence: FindingEvidenceSchema,
   source: FindingSourceSchema,
   confidence: FindingConfidenceSchema,
+  confidenceReason: z.string().optional(),
 });
 export type Finding = z.infer<typeof FindingSchema>;
+
+export const CONFIDENCE_LEVEL_RANK: Record<FindingConfidence, number> = {
+  low: 1,
+  medium: 2,
+  high: 3,
+};
+
+export function filterFindingsByConfidence(
+  findings: Finding[],
+  minConfidence: FindingConfidence = 'medium',
+): Finding[] {
+  const minRank = CONFIDENCE_LEVEL_RANK[minConfidence] ?? 2;
+  return findings.filter((f) => (CONFIDENCE_LEVEL_RANK[f.confidence] ?? 1) >= minRank);
+}
+
 
 export const ReportSummarySchema = z.object({
   total: z.number().int().nonnegative(),

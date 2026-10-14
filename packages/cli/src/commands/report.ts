@@ -5,7 +5,9 @@ import {
   type Finding,
   type TestCase,
   type Report,
+  type FindingConfidence,
   validateReport,
+  filterFindingsByConfidence,
   BUILTIN_ORACLES,
 } from '@mantis/core';
 import { loadSession, resolveSafeOutputPath } from '@mantis/runner';
@@ -16,6 +18,7 @@ export interface ReportCliOptions {
   json?: boolean;
   html?: boolean;
   out?: string;
+  minConfidence?: FindingConfidence;
 }
 
 async function findLatestSession(sessionsDir: string): Promise<string | null> {
@@ -96,10 +99,16 @@ export async function reportCommand(
     return 2;
   }
 
+  const minConfidence = options.minConfidence ?? 'medium';
+
   // Check if target is a Report file (contains reportVersion)
   const reportValidation = validateReport(parsed);
   if (reportValidation.success && reportValidation.data) {
-    const report = reportValidation.data;
+    const rawReport = reportValidation.data;
+    const report: Report = {
+      ...rawReport,
+      findings: filterFindingsByConfidence(rawReport.findings, minConfidence),
+    };
     if (options.html) {
       const htmlOutput = generateHtmlReport(report);
       if (options.out) {
@@ -139,7 +148,7 @@ export async function reportCommand(
   }
 
   // Re-judge session requests using pure Oracles (0 network traffic)
-  const findings: Finding[] = [];
+  const rawFindings: Finding[] = [];
   for (const exec of session.requests) {
     const fakeTestCase: TestCase = {
       id: `${exec.endpointId}::replay`,
@@ -165,9 +174,11 @@ export async function reportCommand(
 
     for (const oracle of BUILTIN_ORACLES) {
       const result = oracle.judge(fakeTestCase, exec, fakeEndpoint);
-      findings.push(...result);
+      rawFindings.push(...result);
     }
   }
+
+  const findings = filterFindingsByConfidence(rawFindings, minConfidence);
 
   const report: Report = {
     reportVersion: '1.0.0',

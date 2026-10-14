@@ -1,6 +1,6 @@
 import type { ApiModel } from '../schema/model.js';
 import type { RunnerConfig } from '../schema/runner.js';
-import type { Report, TestResult, Finding } from '../schema/test-engine.js';
+import { filterFindingsByConfidence, type Report, type TestResult, type Finding, type FindingConfidence } from '../schema/test-engine.js';
 import type { GeneratorPlugin, OraclePlugin, TestRunnerEngine } from '../plugins/types.js';
 import { BUILTIN_GENERATORS } from '../generators/index.js';
 import { BUILTIN_ORACLES } from '../oracles/index.js';
@@ -13,6 +13,7 @@ export interface RunTestsOptions {
   runner: TestRunnerEngine;
   generators?: GeneratorPlugin[];
   oracles?: OraclePlugin[];
+  minConfidence?: FindingConfidence;
 }
 
 /**
@@ -95,12 +96,16 @@ export async function runTests(options: RunTestsOptions): Promise<Report> {
     }
   }
 
-  const findings = Array.from(findingMap.values()).sort((a, b) => {
+  const sortedFindings = Array.from(findingMap.values()).sort((a, b) => {
     if (a.endpointId !== b.endpointId) {
       return a.endpointId < b.endpointId ? -1 : 1;
     }
     return a.ruleId < b.ruleId ? -1 : a.ruleId > b.ruleId ? 1 : 0;
   });
+
+  const findings = options.minConfidence
+    ? filterFindingsByConfidence(sortedFindings, options.minConfidence)
+    : sortedFindings;
 
   const total = results.length;
   const passed = results.filter((r) => r.status === 'passed').length;

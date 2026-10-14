@@ -30,6 +30,11 @@ export const authEnforcedOracle: OraclePlugin = {
       return [];
     }
 
+    // If endpoint has optional authentication, unauthenticated access is permitted
+    if (endpoint.auth.details && /optional/i.test(endpoint.auth.details)) {
+      return [];
+    }
+
     // Check if the request was sent without credentials
     const authHeader =
       testCase.request.headers['authorization'] ||
@@ -49,6 +54,9 @@ export const authEnforcedOracle: OraclePlugin = {
 
     const requestHeaders = extractSemanticHeaders(testCase.request.headers);
     const responseHeaders = extractSemanticHeaders(result.response?.headers);
+
+    // If endpoint confidence is uncertain, report with medium confidence
+    const confidence = endpoint.confidence === 'uncertain' ? 'medium' : 'high';
 
     return [
       {
@@ -75,7 +83,8 @@ export const authEnforcedOracle: OraclePlugin = {
           file: endpoint.provenance.filePath,
           line: endpoint.provenance.line,
         },
-        confidence: 'high',
+        confidence,
+        confidenceReason: `Endpoint classified with ${endpoint.auth.type} authentication responded with HTTP ${status} without credentials`,
       },
     ];
   },

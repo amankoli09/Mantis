@@ -54,6 +54,7 @@ export function createCli(): Command {
     .option('--html', 'Output standalone HTML Report')
     .option('--out <file>', 'Write output to file')
     .option('--fail-on <severity>', 'Fail exit threshold (error, warning, info)')
+    .option('--min-confidence <level>', 'Minimum finding confidence to report (low, medium, high)', 'medium')
     .action(async (targetPath: string, options) => {
       const exitCode = await testCommand(targetPath, options);
       if (exitCode !== 0) {
@@ -68,6 +69,7 @@ export function createCli(): Command {
     .option('--json', 'Output Report JSON')
     .option('--html', 'Output standalone HTML Report')
     .option('--out <file>', 'Write output to file')
+    .option('--min-confidence <level>', 'Minimum finding confidence to report (low, medium, high)', 'medium')
     .action(async (sessionArg: string | undefined, options) => {
       const exitCode = await reportCommand(sessionArg, options);
       if (exitCode !== 0) {

@@ -76,6 +76,7 @@ export const no5xxOnBadInputOracle: OraclePlugin = {
             ...(fieldProvenance ? { fieldProvenance } : {}),
           },
           confidence: 'high',
+          confidenceReason: `Server returned HTTP ${status} for invalid input test case, violating 4xx client-error contract`,
         },
       ];
     }
@@ -96,6 +97,7 @@ export const no5xxOnBadInputOracle: OraclePlugin = {
           line: endpoint.provenance.line,
         },
         confidence: 'low',
+        confidenceReason: `Server returned HTTP ${status} on presumed valid baseline request, indicating an unhandled server failure`,
       },
     ];
   },

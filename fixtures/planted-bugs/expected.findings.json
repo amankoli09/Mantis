@@ -1,6 +1,7 @@
 [
   {
     "confidence": "high",
+    "confidenceReason": "Response body leaked execution stack trace frames indicating unhandled error disclosure",
     "endpointId": "GET /api/debug-error",
     "evidence": {
       "request": {
@@ -25,6 +26,7 @@
   },
   {
     "confidence": "low",
+    "confidenceReason": "Server returned HTTP 500 on presumed valid baseline request, indicating an unhandled server failure",
     "endpointId": "GET /api/internal-fail",
     "evidence": {
       "request": {
@@ -49,6 +51,7 @@
   },
   {
     "confidence": "high",
+    "confidenceReason": "Response JSON exposed sensitive credential field at: user.apiKey, user.passwordHash",
     "endpointId": "GET /api/profile",
     "evidence": {
       "request": {
@@ -73,6 +76,7 @@
   },
   {
     "confidence": "high",
+    "confidenceReason": "Server returned HTTP 500 for invalid input test case, violating 4xx client-error contract",
     "endpointId": "POST /api/users",
     "evidence": {
       "request": {

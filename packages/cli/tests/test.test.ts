@@ -284,7 +284,7 @@ describe('mantis test', () => {
       });
     });
 
-    it('exits with code 1 when server returns 500 and triggers oracles', async () => {
+    it('exits with code 1 when server returns 500 and reports finding under --min-confidence low', async () => {
       const fixturePath = path.join(FIXTURES_DIR, 'simple');
       const exitCode = await runCli([
         'node',
@@ -293,12 +293,15 @@ describe('mantis test', () => {
         fixturePath,
         '--base-url',
         errorBaseUrl,
+        '--min-confidence',
+        'low',
       ]);
 
       expect(exitCode).toBe(1);
       const output = stdoutChunks.join('\n');
       expect(output).toContain('Findings (1)');
       expect(output).toContain('server-error-on-valid-input');
+      expect(output).toContain('Confidence: low');
     });
 
     it('respects --fail-on error threshold', async () => {
@@ -315,6 +318,46 @@ describe('mantis test', () => {
       ]);
 
       expect(exitCode).toBe(1);
+    });
+
+    it('filters low-confidence findings under default --min-confidence medium', async () => {
+      const fixturePath = path.join(FIXTURES_DIR, 'simple');
+      const exitCode = await runCli([
+        'node',
+        'mantis',
+        'test',
+        fixturePath,
+        '--base-url',
+        errorBaseUrl,
+        '--json',
+      ]);
+
+      expect(exitCode).toBe(1);
+      const output = stdoutChunks.join('\n');
+      const parsed = JSON.parse(output);
+      // Low-confidence server-error-on-valid-input is filtered out under default medium confidence
+      expect(parsed.findings).toHaveLength(0);
+      expect(parsed.summary.failed).toBe(1);
+    });
+
+    it('filters findings according to --min-confidence high', async () => {
+      const fixturePath = path.join(FIXTURES_DIR, 'simple');
+      const exitCode = await runCli([
+        'node',
+        'mantis',
+        'test',
+        fixturePath,
+        '--base-url',
+        errorBaseUrl,
+        '--min-confidence',
+        'high',
+        '--json',
+      ]);
+
+      expect(exitCode).toBe(1);
+      const output = stdoutChunks.join('\n');
+      const parsed = JSON.parse(output);
+      expect(parsed.findings).toHaveLength(0);
     });
   });
 });

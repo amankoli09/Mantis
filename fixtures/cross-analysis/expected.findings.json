@@ -1,157 +1,163 @@
 [
   {
+    "confidence": "medium",
+    "confidenceReason": "Endpoint \"GET /api/dead-route\" returned error response shape with keys [non-json], differing from dominant shape [error] across the API",
+    "endpointId": "GET /api/dead-route",
+    "evidence": {
+      "request": {
+        "method": "GET",
+        "path": "/api/dead-route"
+      },
+      "response": {
+        "bodySnippet": "Not Found",
+        "headers": {
+          "content-type": "text/html; charset=utf-8"
+        },
+        "status": 404
+      }
+    },
+    "message": "Endpoint \"GET /api/dead-route\" returned error response shape with keys [non-json], differing from dominant shape [error] across the API",
     "ruleId": "consistency/error-response-shape",
     "severity": "info",
+    "source": {
+      "file": "fixtures/cross-analysis/app/app.js",
+      "line": 32
+    }
+  },
+  {
+    "confidence": "high",
+    "confidenceReason": "Endpoint \"GET /api/dead-route\" statically defined in code returned 404 across all runtime probe executions",
     "endpointId": "GET /api/dead-route",
-    "message": "Endpoint \"GET /api/dead-route\" returned error response shape with keys [non-json], differing from dominant shape [error] across the API",
     "evidence": {
       "request": {
         "method": "GET",
         "path": "/api/dead-route"
       },
       "response": {
-        "status": 404,
+        "bodySnippet": "Not Found",
         "headers": {
           "content-type": "text/html; charset=utf-8"
         },
-        "bodySnippet": "Not Found"
+        "status": 404
       }
     },
-    "source": {
-      "file": "fixtures/cross-analysis/app/app.js",
-      "line": 32
-    },
-    "confidence": "medium"
-  },
-  {
+    "message": "Endpoint \"GET /api/dead-route\" defined in code returned 404 Not Found at runtime",
     "ruleId": "route-in-code-404-live",
     "severity": "warning",
-    "endpointId": "GET /api/dead-route",
-    "message": "Endpoint \"GET /api/dead-route\" defined in code returned 404 Not Found at runtime",
-    "evidence": {
-      "request": {
-        "method": "GET",
-        "path": "/api/dead-route"
-      },
-      "response": {
-        "status": 404,
-        "headers": {
-          "content-type": "text/html; charset=utf-8"
-        },
-        "bodySnippet": "Not Found"
-      }
-    },
     "source": {
       "file": "fixtures/cross-analysis/app/app.js",
       "line": 32
-    },
-    "confidence": "high"
+    }
   },
   {
-    "ruleId": "auth-enforced",
-    "severity": "error",
+    "confidence": "high",
+    "confidenceReason": "Endpoint classified with bearer authentication responded with HTTP 200 without credentials",
     "endpointId": "GET /api/secure/profile",
-    "message": "Endpoint classified with bearer authentication responded with HTTP 200 without credentials",
     "evidence": {
       "request": {
         "method": "GET",
         "path": "/api/secure/profile"
       },
       "response": {
-        "status": 200,
+        "bodySnippet": "{\"username\":\"alice\"}",
         "headers": {
           "content-type": "application/json; charset=utf-8"
         },
-        "bodySnippet": "{\"username\":\"alice\"}"
+        "status": 200
       }
     },
+    "message": "Endpoint classified with bearer authentication responded with HTTP 200 without credentials",
+    "ruleId": "auth-enforced",
+    "severity": "error",
     "source": {
       "file": "fixtures/cross-analysis/app/app.js",
       "line": 22
-    },
-    "confidence": "high"
+    }
   },
   {
-    "ruleId": "live-route-not-in-code",
-    "severity": "warning",
+    "confidence": "high",
+    "confidenceReason": "Live HTTP probe succeeded with HTTP 200, but route pattern \"/healthz\" is absent from static source model",
     "endpointId": "GET /healthz",
-    "message": "Live route responded at \"/healthz\" (HTTP 200), but was not found in static code analysis",
     "evidence": {
       "request": {
-        "method": "GET",
-        "path": "/healthz",
         "headers": {
           "accept": "application/json, */*"
-        }
+        },
+        "method": "GET",
+        "path": "/healthz"
       },
       "response": {
-        "status": 200,
+        "bodySnippet": "{\"status\":\"ok\"}",
         "headers": {
           "content-type": "application/json; charset=utf-8"
         },
-        "bodySnippet": "{\"status\":\"ok\"}"
+        "status": 200
       }
     },
+    "message": "Live route responded at \"/healthz\" (HTTP 200), but was not found in static code analysis",
+    "ruleId": "live-route-not-in-code",
+    "severity": "warning",
     "source": {
       "file": "fixtures/cross-analysis/app",
       "line": 1
-    },
-    "confidence": "high"
+    }
   },
   {
+    "confidence": "medium",
+    "confidenceReason": "Endpoint \"POST /api/tickets\" returned error response shape with keys [message], differing from dominant shape [error] across the API",
+    "endpointId": "POST /api/tickets",
+    "evidence": {
+      "request": {
+        "body": "{}",
+        "headers": {
+          "content-type": "application/json"
+        },
+        "method": "POST",
+        "path": "/api/tickets"
+      },
+      "response": {
+        "bodySnippet": "{\"message\":\"Ticket payload invalid\"}",
+        "headers": {
+          "content-type": "application/json; charset=utf-8"
+        },
+        "status": 422
+      }
+    },
+    "message": "Endpoint \"POST /api/tickets\" returned error response shape with keys [message], differing from dominant shape [error] across the API",
     "ruleId": "consistency/error-response-shape",
     "severity": "info",
-    "endpointId": "POST /api/tickets",
-    "message": "Endpoint \"POST /api/tickets\" returned error response shape with keys [message], differing from dominant shape [error] across the API",
-    "evidence": {
-      "request": {
-        "method": "POST",
-        "path": "/api/tickets",
-        "headers": {
-          "content-type": "application/json"
-        },
-        "body": "{}"
-      },
-      "response": {
-        "status": 422,
-        "headers": {
-          "content-type": "application/json; charset=utf-8"
-        },
-        "bodySnippet": "{\"message\":\"Ticket payload invalid\"}"
-      }
-    },
     "source": {
       "file": "fixtures/cross-analysis/app/app.js",
       "line": 65
-    },
-    "confidence": "medium"
+    }
   },
   {
-    "ruleId": "consistency/status-code-deviation",
-    "severity": "info",
+    "confidence": "medium",
+    "confidenceReason": "Endpoint \"POST /api/tickets\" returned HTTP 422 for wrong-type, differing from dominant HTTP 400 across sibling routes",
     "endpointId": "POST /api/tickets",
-    "message": "Endpoint \"POST /api/tickets\" returned HTTP 422 for wrong-type, differing from dominant HTTP 400 across the API",
     "evidence": {
       "request": {
-        "method": "POST",
-        "path": "/api/tickets",
+        "body": "{\"title\":12345}",
         "headers": {
           "content-type": "application/json"
         },
-        "body": "{\"title\":12345}"
+        "method": "POST",
+        "path": "/api/tickets"
       },
       "response": {
-        "status": 422,
+        "bodySnippet": "{\"message\":\"Ticket payload invalid\"}",
         "headers": {
           "content-type": "application/json; charset=utf-8"
         },
-        "bodySnippet": "{\"message\":\"Ticket payload invalid\"}"
+        "status": 422
       }
     },
+    "message": "Endpoint \"POST /api/tickets\" returned HTTP 422 for wrong-type, differing from dominant HTTP 400 across the API",
+    "ruleId": "consistency/status-code-deviation",
+    "severity": "info",
     "source": {
       "file": "fixtures/cross-analysis/app/app.js",
       "line": 65
-    },
-    "confidence": "medium"
+    }
   }
 ]

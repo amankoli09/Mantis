@@ -35,7 +35,10 @@ export function generateHtmlReport(report: Report): string {
         <td><code>${escapeHtml(f.ruleId)}</code></td>
         <td><code>${escapeHtml(f.endpointId)}</code></td>
         <td>${escapeHtml(f.message)}</td>
-        <td><span class="badge ${confClass}">${escapeHtml(f.confidence)}</span></td>
+        <td>
+          <span class="badge ${confClass}">${escapeHtml(f.confidence)}</span>
+          ${f.confidenceReason ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">${escapeHtml(f.confidenceReason)}</div>` : ''}
+        </td>
         <td><span class="source-link">${escapeHtml(f.source.file)}:${f.source.line}</span></td>
         <td>
           <button class="details-btn" onclick="toggleDetails('f-det-${idx}')">Evidence</button>

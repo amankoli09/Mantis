@@ -24,7 +24,7 @@ function extractSemanticHeaders(headers?: Record<string, string>): Record<string
 const STACK_TRACE_PATTERNS = [
   /at\s+Object\.<anonymous>/i,
   /at\s+Module\._compile/i,
-  /node_modules\//i,
+  /(?:^|\n)\s*at\s+.*[\\/]node_modules[\\/]/i,
   /Error:[^\n]+\n\s+at\s+/i,
   /(?:^|\n)\s*at\s+[\w$./<>_-]+\s+\([^)]+:\d+:\d+\)/i,
   /<pre>(?:TypeError|ReferenceError|SyntaxError|Error):/i,
@@ -71,6 +71,8 @@ export const noStackTraceLeakOracle: OraclePlugin = {
           line: endpoint.provenance.line,
         },
         confidence: 'high',
+        confidenceReason:
+          'Response body leaked execution stack trace frames indicating unhandled error disclosure',
       },
     ];
   },

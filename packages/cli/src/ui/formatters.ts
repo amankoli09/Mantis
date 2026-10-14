@@ -99,7 +99,10 @@ export function formatFinding(f: Finding): string {
   if (f.source.fieldProvenance) {
     sourceStr += ` (field ${f.source.fieldProvenance.name ?? ''} at line ${f.source.fieldProvenance.line})`;
   }
-  lines.push(`  ${c.dim('Source:')}   ${sourceStr}`);
+  lines.push(`  ${c.dim('Source:')}     ${sourceStr}`);
+
+  const confReason = f.confidenceReason ? ` (${f.confidenceReason})` : '';
+  lines.push(`  ${c.dim('Confidence:')} ${f.confidence}${confReason}`);
 
   if (f.evidence.request || f.evidence.response) {
     const reqBody = f.evidence.request.body ? ` body: ${f.evidence.request.body}` : '';

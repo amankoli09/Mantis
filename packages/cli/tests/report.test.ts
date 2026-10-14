@@ -116,9 +116,9 @@ describe('mantis report', () => {
           status: 500,
           statusText: 'Internal Server Error',
           headers: { 'content-type': 'application/json' },
-          body: '{"error":"database crashed"}',
+          body: '{"error":"database crashed","stack":"Error: crash\\n    at Object.<anonymous> (/server.js:42:10)"}',
           truncated: false,
-          byteLength: 30,
+          byteLength: 80,
         },
       },
     ],
@@ -160,8 +160,20 @@ describe('mantis report', () => {
     const output = stdoutChunks.join('\n');
     expect(output).toContain('Mantis Session Replay');
     expect(output).toContain('session-bug-456');
-    expect(output).toContain('server-error-on-valid-input');
+    expect(output).toContain('no-stack-trace-leak');
     expect(output).toContain('Evaluated Findings (1):');
+  });
+
+  it('filters session findings based on --min-confidence', async () => {
+    const sessionFile = path.join(tempDir, 'bug-session.json');
+    await fs.writeFile(sessionFile, JSON.stringify(sampleBugSession, null, 2), 'utf-8');
+
+    stdoutChunks = [];
+    const exitCodeLow = await runCli(['node', 'mantis', 'report', sessionFile, '--min-confidence', 'low']);
+    expect(exitCodeLow).toBe(1);
+    const outputLow = stdoutChunks.join('\n');
+    expect(outputLow).toContain('server-error-on-valid-input');
+    expect(outputLow).toContain('no-stack-trace-leak');
   });
 
   it('automatically discovers latest session from .mantis/sessions/', async () => {

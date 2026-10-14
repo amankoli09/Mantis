@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import type { Endpoint, TestCase, ExecutionResult } from '../src/index.js';
+import type { Endpoint, TestCase, ExecutionResult, Finding } from '../src/index.js';
 import {
   no5xxOnBadInputOracle,
   noStackTraceLeakOracle,
   noSensitiveFieldsOracle,
   authEnforcedOracle,
+  filterFindingsByConfidence,
 } from '../src/index.js';
 
 const mockEndpoint: Endpoint = {
@@ -366,5 +367,281 @@ describe('authEnforcedOracle', () => {
 
     const findings = authEnforcedOracle.judge(authTestCase, result, protectedBearerEndpoint);
     expect(findings).toHaveLength(0);
+  });
+
+  it('produces 0 findings when endpoint specifies optional authentication', () => {
+    const optionalAuthEndpoint: Endpoint = {
+      ...protectedBearerEndpoint,
+      auth: { type: 'bearer', details: 'optional bearer token' },
+    };
+
+    const result: ExecutionResult = {
+      endpointId: 'GET /api/secure/profile',
+      request: unauthenticatedTestCase.request,
+      response: {
+        status: 200,
+        statusText: 'OK',
+        headers: { 'content-type': 'application/json' },
+        body: '{"articles":[]}',
+        truncated: false,
+        byteLength: 15,
+      },
+      durationMs: 10,
+    };
+
+    const findings = authEnforcedOracle.judge(unauthenticatedTestCase, result, optionalAuthEndpoint);
+    expect(findings).toHaveLength(0);
+  });
+
+  it('downgrades confidence to medium when endpoint classification is uncertain', () => {
+    const uncertainEndpoint: Endpoint = {
+      ...protectedBearerEndpoint,
+      confidence: 'uncertain',
+    };
+
+    const result: ExecutionResult = {
+      endpointId: 'GET /api/secure/profile',
+      request: unauthenticatedTestCase.request,
+      response: {
+        status: 200,
+        statusText: 'OK',
+        headers: { 'content-type': 'application/json' },
+        body: '{"data":123}',
+        truncated: false,
+        byteLength: 12,
+      },
+      durationMs: 10,
+    };
+
+    const findings = authEnforcedOracle.judge(unauthenticatedTestCase, result, uncertainEndpoint);
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.confidence).toBe('medium');
+    expect(findings[0]?.confidenceReason).toBeDefined();
+  });
+});
+
+describe('False-Positive Regression Canned-Response Tests', () => {
+  it('does NOT flag Mongoose internal __v document version key as sensitive field leak', () => {
+    const mongoosePayload = {
+      _id: '507f1f77bcf86cd799439011',
+      text: 'Complete Mantis validation',
+      done: true,
+      __v: 0,
+    };
+
+    const result: ExecutionResult = {
+      endpointId: 'GET /api/todos',
+      request: acceptTestCase.request,
+      response: {
+        status: 200,
+        statusText: 'OK',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(mongoosePayload),
+        truncated: false,
+        byteLength: 80,
+      },
+      durationMs: 5,
+    };
+
+    const findings = noSensitiveFieldsOracle.judge(acceptTestCase, result, mockEndpoint);
+    expect(findings).toHaveLength(0);
+  });
+
+  it('does NOT flag non-secret tokens (csrfToken, deviceToken, pageToken) as leaks', () => {
+    const tokenPayload = {
+      csrfToken: 'd3b07384d113edec49eaa6238ad5ff00',
+      deviceToken: 'fcm-device-token-12345',
+      pageToken: 'cursor_offset_100',
+      continuationToken: 'cont_abc',
+    };
+
+    const result: ExecutionResult = {
+      endpointId: 'GET /api/app-config',
+      request: acceptTestCase.request,
+      response: {
+        status: 200,
+        statusText: 'OK',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(tokenPayload),
+        truncated: false,
+        byteLength: 150,
+      },
+      durationMs: 5,
+    };
+
+    const findings = noSensitiveFieldsOracle.judge(acceptTestCase, result, mockEndpoint);
+    expect(findings).toHaveLength(0);
+  });
+
+  it('does NOT flag jwt tokens returned on authentication or login endpoints', () => {
+    const authEndpoint: Endpoint = {
+      ...mockEndpoint,
+      id: 'POST /api/auth/login',
+      path: '/api/auth/login',
+    };
+
+    const authLoginResponse = {
+      token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0',
+      accessToken: 'access_jwt_string',
+      refreshToken: 'refresh_jwt_string',
+      user: {
+        id: 1,
+        username: 'react_dev',
+      },
+    };
+
+    const result: ExecutionResult = {
+      endpointId: 'POST /api/auth/login',
+      request: acceptTestCase.request,
+      response: {
+        status: 200,
+        statusText: 'OK',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(authLoginResponse),
+        truncated: false,
+        byteLength: 200,
+      },
+      durationMs: 12,
+    };
+
+    const findings = noSensitiveFieldsOracle.judge(acceptTestCase, result, authEndpoint);
+    expect(findings).toHaveLength(0);
+  });
+
+  it('STILL flags password or secret leak even on auth endpoints', () => {
+    const authEndpoint: Endpoint = {
+      ...mockEndpoint,
+      id: 'POST /api/auth/login',
+      path: '/api/auth/login',
+    };
+
+    const leakyAuthResponse = {
+      token: 'valid_jwt_token',
+      user: {
+        id: 1,
+        username: 'react_dev',
+        passwordHash: '$2b$10$hashed_password_leak',
+      },
+    };
+
+    const result: ExecutionResult = {
+      endpointId: 'POST /api/auth/login',
+      request: acceptTestCase.request,
+      response: {
+        status: 200,
+        statusText: 'OK',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(leakyAuthResponse),
+        truncated: false,
+        byteLength: 150,
+      },
+      durationMs: 12,
+    };
+
+    const findings = noSensitiveFieldsOracle.judge(acceptTestCase, result, authEndpoint);
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.message).toContain('user.passwordHash');
+    expect(findings[0]?.confidenceReason).toContain('user.passwordHash');
+  });
+
+  it('does NOT flag bare benign node_modules string in documentation or asset responses', () => {
+    const benignDocResponse = {
+      status: 'ok',
+      message: 'Static fonts are bundled from /vendor/node_modules/font-awesome/fonts',
+      path: 'node_modules/sample/asset.png',
+    };
+
+    const result: ExecutionResult = {
+      endpointId: 'GET /api/docs',
+      request: acceptTestCase.request,
+      response: {
+        status: 200,
+        statusText: 'OK',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(benignDocResponse),
+        truncated: false,
+        byteLength: 100,
+      },
+      durationMs: 5,
+    };
+
+    const findings = noStackTraceLeakOracle.judge(acceptTestCase, result, mockEndpoint);
+    expect(findings).toHaveLength(0);
+  });
+
+  it('flags real Node.js stack trace with high confidence and provides confidenceReason', () => {
+    const stackTraceBody =
+      'TypeError: Cannot read property of undefined\n' +
+      '    at Object.<anonymous> (/app/server.js:14:10)\n' +
+      '    at Module._compile (node_modules/v8-compile-cache/loader.js:20:5)';
+
+    const result: ExecutionResult = {
+      endpointId: 'GET /api/crash',
+      request: acceptTestCase.request,
+      response: {
+        status: 500,
+        statusText: 'Internal Server Error',
+        headers: { 'content-type': 'text/plain' },
+        body: stackTraceBody,
+        truncated: false,
+        byteLength: 200,
+      },
+      durationMs: 8,
+    };
+
+    const findings = noStackTraceLeakOracle.judge(acceptTestCase, result, mockEndpoint);
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.confidence).toBe('high');
+    expect(findings[0]?.confidenceReason).toContain('execution stack trace frames');
+  });
+});
+
+describe('filterFindingsByConfidence', () => {
+  const dummyFindings: Finding[] = [
+    {
+      ruleId: 'high-rule',
+      severity: 'error',
+      endpointId: 'POST /api/high',
+      message: 'High finding',
+      evidence: { request: { method: 'POST', path: '/api/high' }, response: { status: 500 } },
+      source: { file: 'app.js', line: 10 },
+      confidence: 'high',
+      confidenceReason: 'High reason',
+    },
+    {
+      ruleId: 'med-rule',
+      severity: 'warning',
+      endpointId: 'POST /api/med',
+      message: 'Medium finding',
+      evidence: { request: { method: 'POST', path: '/api/med' }, response: { status: 422 } },
+      source: { file: 'app.js', line: 20 },
+      confidence: 'medium',
+      confidenceReason: 'Medium reason',
+    },
+    {
+      ruleId: 'low-rule',
+      severity: 'info',
+      endpointId: 'POST /api/low',
+      message: 'Low finding',
+      evidence: { request: { method: 'POST', path: '/api/low' }, response: { status: 500 } },
+      source: { file: 'app.js', line: 30 },
+      confidence: 'low',
+      confidenceReason: 'Low reason',
+    },
+  ];
+
+  it('filters to high only when minConfidence is high', () => {
+    const filtered = filterFindingsByConfidence(dummyFindings, 'high');
+    expect(filtered.map((f) => f.ruleId)).toEqual(['high-rule']);
+  });
+
+  it('filters to medium and high when minConfidence is medium', () => {
+    const filtered = filterFindingsByConfidence(dummyFindings, 'medium');
+    expect(filtered.map((f) => f.ruleId)).toEqual(['high-rule', 'med-rule']);
+  });
+
+  it('preserves all findings when minConfidence is low', () => {
+    const filtered = filterFindingsByConfidence(dummyFindings, 'low');
+    expect(filtered.map((f) => f.ruleId)).toEqual(['high-rule', 'med-rule', 'low-rule']);
   });
 });

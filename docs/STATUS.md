@@ -37,6 +37,10 @@ Phase 1 focuses on Node.js/Express backends, parsing JavaScript ASTs to extract 
 | **Step 13** | Benchmark on real open-source Express repos, precision/recall evaluation, top failure fixes (`benchmarks/`) | **Done** | PR #10 (`10-issue-7-benchmark-on-real-open-source-express-repos-step-13`) |
 | **Phase 1.5** | OpenAPI 3.0 export (`--openapi`), GitHub Action & CI recipes, Diff mode (`mantis diff`), HTML test reports (`--html`), FileSystem abstraction, `MT-R004` split, ADRs 0001-0006 | **Done** | Issue #14 |
 | **Phase 1 Exit Check** | CLI binary execution fix (shebang dedup, root `pnpm mantis` script, built dist tests) | **Done** | Exit Check Day 1 |
+| **M1-02** | Rebranding to Mantis (packages, CLI binary, config, diagnostics `MT-`, schemas, docs, CI check) | **Done** | Issue #24 |
+| **M1-03** | Real-world open-source Express benchmark validation (5 repos, ground truth, precision/recall) | **Done** | Issue #25 |
+| **M1-04** | Safety red-team hardening (threat model, localhost validation, DNS pin, traversal, secrets check) | **Done** | Issue #26 |
+| **M1-05** | False-positive review & oracle tuning (`--min-confidence`, `confidenceReason`, canned unit tests) | **Done** | Issue #27 |
 
 ---
 

@@ -34,6 +34,7 @@ export interface TestCliOptions {
   html?: boolean;
   out?: string;
   failOn?: 'error' | 'warning' | 'info';
+  minConfidence?: 'low' | 'medium' | 'high';
 }
 
 async function promptDestructiveConfirmation(): Promise<boolean> {
@@ -222,7 +223,8 @@ export async function testCommand(
 
   // 8. Live Execution
   const runner = createTestRunner(config);
-  const report: Report = await runTests({ model, config, runner });
+  const minConfidence = options.minConfidence ?? 'medium';
+  const report: Report = await runTests({ model, config, runner, minConfidence });
 
   // 9. Save session recording
   const session: Session = {
