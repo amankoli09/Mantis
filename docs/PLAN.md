@@ -45,7 +45,7 @@ We are not competing with Postman or spec-based tools. These are the ideas that 
 | Lint/format          | **ESLint + Prettier**                                    | Standard                                       |
 | Commits/versioning   | **Conventional Commits + Changesets**                    | Clean history and releases                     |
 | CI                   | **GitHub Actions**                                       | Run tests and fixture goldens on every push    |
-| Storage              | **JSON files** (in `.mantis/`)                         | No database in Phase 1                         |
+| Storage              | **JSON files** (in `.mantis/`)                           | No database in Phase 1                         |
 
 ---
 
@@ -310,3 +310,14 @@ Complete each step, with tests passing, before starting the next. Every step end
 - Precision and recall are measured on real projects and published
 
 **First milestone:** a developer points Mantis at a Node.js + Express backend, and it discovers the endpoints and tests them safely, with findings linked to source lines.
+
+---
+
+## 9. Phase 1 Hardening & Release Readiness (Completed)
+
+- **M1-01**: Phase 1 Exit Check & binary execution verification.
+- **M1-02**: Comprehensive rebranding to Mantis (packages, CLI binary, config, diagnostics `MT-`, schemas, docs, CI check).
+- **M1-03**: Real-world open-source Express benchmark validation across 5 repositories with precision and recall measurements.
+- **M1-04**: Safety red-team hardening: threat model, Host Guard, localhost pinning, DNS validation, secret redaction, and path traversal defense.
+- **M1-05**: False-positive review & oracle tuning (`--min-confidence`, `confidenceReason`, canned unit tests).
+- **M1-06**: Documentation and release readiness: README pitch & quick-start, comprehensive docs catalog, ADR 0007-0008, CHANGELOG, and `pnpm docs:check` in CI.

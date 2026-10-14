@@ -1,6 +1,6 @@
 # Mantis Status Report
 
-_Status as of October 8, 2026._
+_Status as of October 14, 2026._
 
 ---
 
@@ -14,33 +14,34 @@ Phase 1 focuses on Node.js/Express backends, parsing JavaScript ASTs to extract 
 
 ## 2. Steps Completed
 
-| Step        | Scope                                                                                                                       |  Status  | Commit / Reference                 |
-| :---------- | :-------------------------------------------------------------------------------------------------------------------------- | :------: | :--------------------------------- |
-| **Step 1**  | Monorepo setup, tooling (pnpm, tsup, vitest, eslint, typescript), directory layout                                          | **Done** | `223c316`                          |
-| **Step 2**  | API Model specification & Zod schemas (`@mantis/core`)                                                                    | **Done** | `dd9559c`                          |
-| **Step 3**  | Fixture creation: simple single-file Express app                                                                            | **Done** | `b01ee3e`                          |
-| **Step 4**  | AST parsing pipeline, deterministic file walker, and Express detector                                                       | **Done** | `8ebfdb4`                          |
-| **Step 5**  | Direct route extraction (`app.get`, `app.post`, etc.)                                                                       | **Done** | `4b71946`                          |
-| **Step 6**  | Router-level routes & local mounts (`express.Router()`, `app.use()`, `router.use()`)                                        | **Done** | `687dfba`                          |
-| **Step 7a** | Cross-file imports & module graph resolution (`require`, `import`)                                                          | **Done** | `029705a`                          |
-| **Step 7b** | Nested routers, deep mounts (`app.use -> router.use -> subrouter`), and route chaining (`app.route()`)                      | **Done** | `2ec27ff`                          |
-| **Step 7c** | Constant propagation (literal strings, templates, binary `+`, path arrays, cyclic guard)                                    | **Done** | `2ca4f41`                          |
-| **Step 7d** | Uncertain expressions, placeholder normalization (`<EXPRESSION>`), line-level provenance checks                             | **Done** | `3cf5f84`                          |
-| **Step 8a** | Parameter & body-field inference (`req.params`, `req.query`, `req.body`), `MT-I001` unresolvable handler                    | **Done** | PR #4 (`4c71850`)                  |
-| **Step 8b** | Middleware chain order & authentication detection (`bearer`, `apiKey`, `cookie`, `custom`), `MT-I002` unresolved middleware | **Done** | PR #6 (`8c03227`)                  |
-| **Step 8c** | Effect refinement from handler bodies (Prisma, Mongoose, Sequelize, Knex, pg, fs, fetch, monotonic risk rule)              | **Done** | Issue #11                          |
-| **Step 8d** | Zod validation extraction (handler `parse`/`safeParse`, `validate(schema)` middleware, field constraints, resolved provenance, targeted test generators) | **Done** | Issue #12                          |
-| **Step 9**  | Config file, safe HTTP runner, host guard, limits, secret redaction, session recording (`@mantis/runner`)                 | **Done** | PR #15 (`c9d0603`)                 |
-| **Step 10** | Test planner, input generators, response oracles, planted-bugs fixture, Report schema (`@mantis/core`)                    | **Done** | PR #8 (`feat-test-engine-step-10`) |
-| **Step 11** | Cross-analysis static vs runtime (404 in code, live unmodeled routes, error consistency, auth-enforced oracle)               | **Done** | Issue #13                          |
-| **Step 12** | CLI `mantis scan`, `test`, `report`, and `init` commands with terminal formatting & JSON output (`@mantis/cli`)         | **Done** | PR #9 (`feat-cli-step-12`)         |
-| **Step 13** | Benchmark on real open-source Express repos, precision/recall evaluation, top failure fixes (`benchmarks/`) | **Done** | PR #10 (`10-issue-7-benchmark-on-real-open-source-express-repos-step-13`) |
-| **Phase 1.5** | OpenAPI 3.0 export (`--openapi`), GitHub Action & CI recipes, Diff mode (`mantis diff`), HTML test reports (`--html`), FileSystem abstraction, `MT-R004` split, ADRs 0001-0006 | **Done** | Issue #14 |
-| **Phase 1 Exit Check** | CLI binary execution fix (shebang dedup, root `pnpm mantis` script, built dist tests) | **Done** | Exit Check Day 1 |
-| **M1-02** | Rebranding to Mantis (packages, CLI binary, config, diagnostics `MT-`, schemas, docs, CI check) | **Done** | Issue #24 |
-| **M1-03** | Real-world open-source Express benchmark validation (5 repos, ground truth, precision/recall) | **Done** | Issue #25 |
-| **M1-04** | Safety red-team hardening (threat model, localhost validation, DNS pin, traversal, secrets check) | **Done** | Issue #26 |
-| **M1-05** | False-positive review & oracle tuning (`--min-confidence`, `confidenceReason`, canned unit tests) | **Done** | Issue #27 |
+| Step                   | Scope                                                                                                                                                                          |  Status  | Commit / Reference                                                        |
+| :--------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------: | :------------------------------------------------------------------------ |
+| **Step 1**             | Monorepo setup, tooling (pnpm, tsup, vitest, eslint, typescript), directory layout                                                                                             | **Done** | `223c316`                                                                 |
+| **Step 2**             | API Model specification & Zod schemas (`@mantis/core`)                                                                                                                         | **Done** | `dd9559c`                                                                 |
+| **Step 3**             | Fixture creation: simple single-file Express app                                                                                                                               | **Done** | `b01ee3e`                                                                 |
+| **Step 4**             | AST parsing pipeline, deterministic file walker, and Express detector                                                                                                          | **Done** | `8ebfdb4`                                                                 |
+| **Step 5**             | Direct route extraction (`app.get`, `app.post`, etc.)                                                                                                                          | **Done** | `4b71946`                                                                 |
+| **Step 6**             | Router-level routes & local mounts (`express.Router()`, `app.use()`, `router.use()`)                                                                                           | **Done** | `687dfba`                                                                 |
+| **Step 7a**            | Cross-file imports & module graph resolution (`require`, `import`)                                                                                                             | **Done** | `029705a`                                                                 |
+| **Step 7b**            | Nested routers, deep mounts (`app.use -> router.use -> subrouter`), and route chaining (`app.route()`)                                                                         | **Done** | `2ec27ff`                                                                 |
+| **Step 7c**            | Constant propagation (literal strings, templates, binary `+`, path arrays, cyclic guard)                                                                                       | **Done** | `2ca4f41`                                                                 |
+| **Step 7d**            | Uncertain expressions, placeholder normalization (`<EXPRESSION>`), line-level provenance checks                                                                                | **Done** | `3cf5f84`                                                                 |
+| **Step 8a**            | Parameter & body-field inference (`req.params`, `req.query`, `req.body`), `MT-I001` unresolvable handler                                                                       | **Done** | PR #4 (`4c71850`)                                                         |
+| **Step 8b**            | Middleware chain order & authentication detection (`bearer`, `apiKey`, `cookie`, `custom`), `MT-I002` unresolved middleware                                                    | **Done** | PR #6 (`8c03227`)                                                         |
+| **Step 8c**            | Effect refinement from handler bodies (Prisma, Mongoose, Sequelize, Knex, pg, fs, fetch, monotonic risk rule)                                                                  | **Done** | Issue #11                                                                 |
+| **Step 8d**            | Zod validation extraction (handler `parse`/`safeParse`, `validate(schema)` middleware, field constraints, resolved provenance, targeted test generators)                       | **Done** | Issue #12                                                                 |
+| **Step 9**             | Config file, safe HTTP runner, host guard, limits, secret redaction, session recording (`@mantis/runner`)                                                                      | **Done** | PR #15 (`c9d0603`)                                                        |
+| **Step 10**            | Test planner, input generators, response oracles, planted-bugs fixture, Report schema (`@mantis/core`)                                                                         | **Done** | PR #8 (`feat-test-engine-step-10`)                                        |
+| **Step 11**            | Cross-analysis static vs runtime (404 in code, live unmodeled routes, error consistency, auth-enforced oracle)                                                                 | **Done** | Issue #13                                                                 |
+| **Step 12**            | CLI `mantis scan`, `test`, `report`, and `init` commands with terminal formatting & JSON output (`@mantis/cli`)                                                                | **Done** | PR #9 (`feat-cli-step-12`)                                                |
+| **Step 13**            | Benchmark on real open-source Express repos, precision/recall evaluation, top failure fixes (`benchmarks/`)                                                                    | **Done** | PR #10 (`10-issue-7-benchmark-on-real-open-source-express-repos-step-13`) |
+| **Phase 1.5**          | OpenAPI 3.0 export (`--openapi`), GitHub Action & CI recipes, Diff mode (`mantis diff`), HTML test reports (`--html`), FileSystem abstraction, `MT-R004` split, ADRs 0001-0006 | **Done** | Issue #14                                                                 |
+| **Phase 1 Exit Check** | CLI binary execution fix (shebang dedup, root `pnpm mantis` script, built dist tests)                                                                                          | **Done** | Exit Check Day 1                                                          |
+| **M1-02**              | Rebranding to Mantis (packages, CLI binary, config, diagnostics `MT-`, schemas, docs, CI check)                                                                                | **Done** | Issue #24                                                                 |
+| **M1-03**              | Real-world open-source Express benchmark validation (5 repos, ground truth, precision/recall)                                                                                  | **Done** | Issue #25                                                                 |
+| **M1-04**              | Safety red-team hardening (threat model, localhost validation, DNS pin, traversal, secrets check)                                                                              | **Done** | Issue #26                                                                 |
+| **M1-05**              | False-positive review & oracle tuning (`--min-confidence`, `confidenceReason`, canned unit tests)                                                                              | **Done** | Issue #27                                                                 |
+| **M1-06**              | Documentation and release readiness (README, ADRs 0007-0008, CHANGELOG, pnpm docs:check in CI, stability promise)                                                              | **Done** | Issue #28                                                                 |
 
 ---
 

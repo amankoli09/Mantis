@@ -45,3 +45,6 @@ jobs:
 
       - name: Verify secret leak prevention
         run: pnpm check:secrets
+
+      - name: Verify documentation and quick start commands
+        run: pnpm docs:check

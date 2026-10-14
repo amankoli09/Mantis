@@ -8,21 +8,22 @@ Diagnostics report non-fatal syntax problems, unresolved module references, dyna
 
 ## Diagnostic Codes Summary
 
-| Code      | Title                     | Severity  | Emitted When                                                                                     | Impact on API Model                                                         |
-| :-------- | :------------------------ | :-------: | :----------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------- |
-| `MT-P001` | Parse Error               |  `error`  | A source file contains invalid syntax and cannot be parsed into an AST.                          | File is skipped; valid routes in other project files continue to be scanned. |
-| `MT-R001` | Unresolved Import         | `warning` | An imported router or controller file path cannot be resolved on disk within the module graph.   | Dependent router mounts or handlers cannot be resolved.                    |
-| `MT-R002` | Unresolved Router Mount   | `warning` | An `app.use()` or `router.use()` mounts an unresolved identifier or a cyclic mount is detected. | Sub-routes attached to that router cannot be confirmed.                     |
-| `MT-R003` | Dynamic Path              |  `info`   | A route path uses a runtime dynamic expression (variable, function call, template, or regex).    | Endpoint is marked `confidence: "uncertain"`; dynamic segments use `<EXPRESSION>`. |
-| `MT-R004` | Unmounted Router          | `warning` | An Express router is defined with routes but is never mounted to the application or root graph.  | Routes are emitted with `confidence: "uncertain"` and root path prefix.     |
-| `MT-I001` | Unresolved Handler        |  `info`   | A route handler cannot be statically resolved (e.g., dynamic factory, multi-hop re-export).       | Route is still extracted with confirmed path/method; inferred params remain empty. |
-| `MT-I002` | Unresolved Middleware     |  `info`   | A middleware expression cannot be statically resolved (e.g., dynamic require, unknown factory).   | Middleware is recorded as `<unresolved>`; endpoint authentication remains `unknown`. |
+| Code      | Title                   | Severity  | Emitted When                                                                                    | Impact on API Model                                                                  |
+| :-------- | :---------------------- | :-------: | :---------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------- |
+| `MT-P001` | Parse Error             |  `error`  | A source file contains invalid syntax and cannot be parsed into an AST.                         | File is skipped; valid routes in other project files continue to be scanned.         |
+| `MT-R001` | Unresolved Import       | `warning` | An imported router or controller file path cannot be resolved on disk within the module graph.  | Dependent router mounts or handlers cannot be resolved.                              |
+| `MT-R002` | Unresolved Router Mount | `warning` | An `app.use()` or `router.use()` mounts an unresolved identifier or a cyclic mount is detected. | Sub-routes attached to that router cannot be confirmed.                              |
+| `MT-R003` | Dynamic Path            |  `info`   | A route path uses a runtime dynamic expression (variable, function call, template, or regex).   | Endpoint is marked `confidence: "uncertain"`; dynamic segments use `<EXPRESSION>`.   |
+| `MT-R004` | Unmounted Router        | `warning` | An Express router is defined with routes but is never mounted to the application or root graph. | Routes are emitted with `confidence: "uncertain"` and root path prefix.              |
+| `MT-I001` | Unresolved Handler      |  `info`   | A route handler cannot be statically resolved (e.g., dynamic factory, multi-hop re-export).     | Route is still extracted with confirmed path/method; inferred params remain empty.   |
+| `MT-I002` | Unresolved Middleware   |  `info`   | A middleware expression cannot be statically resolved (e.g., dynamic require, unknown factory). | Middleware is recorded as `<unresolved>`; endpoint authentication remains `unknown`. |
 
 ---
 
 ## Detailed Code Reference
 
 ### `MT-P001`: Parse Error
+
 - **Default Severity**: `error`
 - **Template**: `Failed to parse file "<file>": <reason>`
 - **When Emitted**:
@@ -33,6 +34,7 @@ Diagnostics report non-fatal syntax problems, unresolved module references, dyna
 ---
 
 ### `MT-R001`: Unresolved Import
+
 - **Default Severity**: `warning`
 - **Template**: `Could not resolve import "<importPath>" from "<sourceFile>"`
 - **When Emitted**:
@@ -43,6 +45,7 @@ Diagnostics report non-fatal syntax problems, unresolved module references, dyna
 ---
 
 ### `MT-R002`: Unresolved Router Mount
+
 - **Default Severity**: `warning`
 - **Template**: `Could not resolve router mounted at "<mountPath>" [for identifier "<routerIdentifier>"]`
 - **When Emitted**:
@@ -55,6 +58,7 @@ Diagnostics report non-fatal syntax problems, unresolved module references, dyna
 ---
 
 ### `MT-R003`: Dynamic Path (Severity Review Rationale)
+
 - **Default Severity**: `info`
 - **Template**: `Route path uses dynamic runtime expression: <rawExpression>`
 - **Severity Review Rationale**:
@@ -72,6 +76,7 @@ Diagnostics report non-fatal syntax problems, unresolved module references, dyna
 ---
 
 ### `MT-R004`: Unmounted Router
+
 - **Default Severity**: `warning`
 - **Template**: `Router declared in "<file>" has routes but is never mounted to an application`
 - **When Emitted**:
@@ -87,6 +92,7 @@ Diagnostics report non-fatal syntax problems, unresolved module references, dyna
 ---
 
 ### `MT-I001`: Unresolved Handler
+
 - **Default Severity**: `info`
 - **Template**: `Route handler could not be statically resolved[: <handlerName>] [(<reason>)]`
 - **When Emitted**:
@@ -103,6 +109,7 @@ Diagnostics report non-fatal syntax problems, unresolved module references, dyna
 ---
 
 ### `MT-I002`: Unresolved Middleware
+
 - **Default Severity**: `info`
 - **Template**: `Middleware could not be statically resolved[: <middlewareName>] [(<reason>)]`
 - **When Emitted**:
@@ -114,3 +121,99 @@ Diagnostics report non-fatal syntax problems, unresolved module references, dyna
   - The middleware is recorded in the endpoint's `middleware` array with `name: "<unresolved>"` and `provenance.kind = "unresolved"`.
   - The diagnostic is appended to `diagnostics[]` with the middleware registration file and line number.
   - Scan continues safely; the endpoint's authentication classification remains `'unknown'` unless other positive auth evidence exists.
+
+---
+
+## 🛠️ Troubleshooting Guide
+
+### 1. File Skipped Due to Parse Error (`MT-P001`)
+
+- **Symptom**: `Failed to parse file "src/legacy.js": SyntaxError`
+- **Cause**: The file contains non-standard JavaScript or JSX syntax unsupported by standard Babel parser presets without plugins.
+- **Solution**:
+  1. Verify the file compiles with Node.js or your project's build tool.
+  2. If the file is a build artifact, test script, or utility outside your API route tree, exclude it or keep it unreferenced by Express route entrypoints.
+  3. Mantis continues scanning all other valid files in the project.
+
+### 2. Missing Sub-Routes from Unresolved Import (`MT-R001`)
+
+- **Symptom**: Subrouters mounted in `app.js` are missing endpoints; diagnostic reports `Could not resolve import "./routes/v1"`.
+- **Cause**: Import path omits file extensions, references a non-standard path alias (e.g. `@/routes`), or uses directory imports without an explicit `index.js`.
+- **Solution**:
+  1. Ensure imported router files exist within the target repository directory.
+  2. Check whether path aliases are used; ensure entrypoints reference relative file paths.
+
+### 3. Sub-Routes Missing Mount Prefix (`MT-R002`)
+
+- **Symptom**: Endpoints are extracted with root paths (e.g. `/users` instead of `/api/v1/users`).
+- **Cause**: The mount expression `app.use(mountPrefix, router)` could not statically bind `router` to its definition file (e.g., dynamically selected router or factory invocation).
+- **Solution**:
+  1. Inspect the mount statement reported in the diagnostic.
+  2. If router is instantiated via a factory function, ensure it returns an Express `Router()` instance directly.
+
+### 4. Dynamic Path Warning (`MT-R003`)
+
+- **Symptom**: Route appears in report with placeholder `<EXPRESSION>` and confidence `uncertain`.
+- **Cause**: Route path uses runtime variables, template strings, or environment variables (e.g., `app.get(\`${API_PREFIX}/users\`)`).
+- **Solution**:
+  1. If `API_PREFIX` is a constant string defined in the same or imported module, Mantis resolves it automatically via constant propagation.
+  2. If the path depends on runtime environment variables, Mantis safely extracts the route with normalized `<EXPRESSION>` and continues testing.
+
+### 5. Orphan Router Warning (`MT-R004`)
+
+- **Symptom**: `Router declared in "routes/admin.js" has routes but is never mounted`.
+- **Cause**: A router file defines routes, but `app.use(adminRouter)` is missing, commented out, or conditionally mounted at runtime.
+- **Solution**:
+  1. If the router is dead code, remove it from the codebase.
+  2. If it is meant to be active, mount it in your application entrypoint using standard `app.use('/prefix', router)`.
+
+---
+
+## 🚧 Known Limitations (Empirical Findings from M1-03)
+
+Empirical validation on real-world open-source Express repositories (benchmarked in `M1-03`) identified specific architectural patterns that represent current static analysis boundaries:
+
+### 1. Dynamic Route Array Loops (e.g. `node-express-boilerplate`)
+
+- **Pattern**:
+  ```javascript
+  const defaultRoutes = [
+    { path: '/auth', route: authRoute },
+    { path: '/users', route: userRoute },
+  ];
+  defaultRoutes.forEach((route) => {
+    router.use(route.path, route.route);
+  });
+  ```
+- **Limitation**:
+  Mantis performs static AST analysis without evaluating JavaScript runtime execution. It does not execute `Array.prototype.forEach()` loops or iterate object collections at scan time.
+- **Observed Impact**:
+  Subrouters (`authRoute`, `userRoute`) cannot be bound to their loop-mounted prefixes. The subrouters are extracted with root paths tagged as `confidence: "uncertain"` with diagnostics `MT-R002` and `MT-R004`.
+- **Remediation**:
+  Explicit, declarative mounts (`router.use('/auth', authRoute); router.use('/users', userRoute);`) allow 100% confirmed static extraction.
+
+### 2. Dynamic Barrel Re-exports & Computed Exports
+
+- **Pattern**:
+  ```javascript
+  // routes/index.js
+  fs.readdirSync(__dirname).forEach((file) => {
+    if (file !== 'index.js') app.use('/' + file.replace('.js', ''), require('./' + file));
+  });
+  ```
+- **Limitation**:
+  Filesystem-driven dynamic `require()` calls and computed export objects cannot be traversed statically.
+- **Observed Impact**:
+  Router files are extracted as unmounted (`MT-R004`) and paths remain relative or uncertain.
+
+### 3. Non-Express Frameworks
+
+- **Limitation**:
+  Phase 1 exclusively supports **Express.js** applications. Other frameworks (Fastify, NestJS, Koa, Hono) are not yet supported and are planned for subsequent phases via pluggable adapters.
+
+### 4. Relational Database Fixture Generation
+
+- **Limitation**:
+  Mantis synthesizes baseline and boundary request payloads purely from static AST parameter accesses and Zod validation schemas. It does not inspect live relational databases, seed mock databases, or synthesize relational foreign keys (e.g., an existing `:userId` in a foreign database table).
+- **Observed Impact**:
+  Baseline requests that require pre-existing relational database state may return `500` or `404`. For this reason, `server-error-on-valid-input` is calibrated with `low` confidence and suppressed by default under `--min-confidence medium`.

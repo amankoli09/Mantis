@@ -17,6 +17,7 @@
     "mantis": "node packages/cli/dist/index.js",
     "check:branding": "node scripts/check-branding.js",
     "check:secrets": "node scripts/check-secret-leak.js",
+    "docs:check": "node scripts/check-docs.js",
     "benchmark": "tsx scripts/run-benchmarks.ts"
   },
   "devDependencies": {
