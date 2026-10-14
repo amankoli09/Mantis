@@ -29,5 +29,8 @@
     "@mantis/core": "workspace:*",
     "undici": "^8.11.2",
     "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@mantis/adapter-express": "workspace:*"
   }
 }

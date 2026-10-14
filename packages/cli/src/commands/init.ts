@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
+import { resolveSafeOutputPath } from '@mantis/runner';
 
 const DEFAULT_CONFIG_TEMPLATE = `{
   "$schema": "https://raw.githubusercontent.com/amankoli1206/Mantis/main/packages/runner/config.schema.json",
@@ -23,7 +24,13 @@ const DEFAULT_CONFIG_TEMPLATE = `{
 `;
 
 export async function initCommand(options: { out?: string } = {}): Promise<number> {
-  const targetFile = path.resolve(options.out ?? 'mantis.config.json');
+  let targetFile: string;
+  try {
+    targetFile = resolveSafeOutputPath(options.out ?? 'mantis.config.json');
+  } catch (err) {
+    console.error(`Safety Error: ${(err as Error).message}`);
+    return 2;
+  }
 
   try {
     // Flag 'wx' ensures atomic failure if file already exists

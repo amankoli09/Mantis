@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { validateModel, validateReport } from '@mantis/core';
+import { resolveSafeOutputPath } from '@mantis/runner';
 import {
   diffApiModels,
   diffReports,
@@ -18,6 +19,15 @@ export async function diffCommand(
   fileB: string,
   options: DiffCliOptions = {},
 ): Promise<number> {
+  let safeOutPath: string | undefined;
+  if (options.out) {
+    try {
+      safeOutPath = resolveSafeOutputPath(options.out);
+    } catch (err) {
+      console.error(`Safety Error: ${(err as Error).message}`);
+      return 2;
+    }
+  }
   const pathA = path.resolve(fileA);
   const pathB = path.resolve(fileB);
 
@@ -64,7 +74,7 @@ export async function diffCommand(
     if (options.json) {
       const output = JSON.stringify(diff, null, 2);
       if (options.out) {
-        await fs.writeFile(path.resolve(options.out), output, 'utf-8');
+        await fs.writeFile(safeOutPath!, output, 'utf-8');
         console.log(`Diff report written to ${options.out}`);
       } else {
         console.log(output);
@@ -72,7 +82,7 @@ export async function diffCommand(
     } else {
       const formatted = formatReportDiffTerminal(diff, fileA, fileB);
       if (options.out) {
-        await fs.writeFile(path.resolve(options.out), formatted, 'utf-8');
+        await fs.writeFile(safeOutPath!, formatted, 'utf-8');
         console.log(`Diff report written to ${options.out}`);
       } else {
         console.log(formatted);
@@ -94,7 +104,7 @@ export async function diffCommand(
     if (options.json) {
       const output = JSON.stringify(diff, null, 2);
       if (options.out) {
-        await fs.writeFile(path.resolve(options.out), output, 'utf-8');
+        await fs.writeFile(safeOutPath!, output, 'utf-8');
         console.log(`Diff report written to ${options.out}`);
       } else {
         console.log(output);
@@ -102,7 +112,7 @@ export async function diffCommand(
     } else {
       const formatted = formatApiModelDiffTerminal(diff, fileA, fileB);
       if (options.out) {
-        await fs.writeFile(path.resolve(options.out), formatted, 'utf-8');
+        await fs.writeFile(safeOutPath!, formatted, 'utf-8');
         console.log(`Diff report written to ${options.out}`);
       } else {
         console.log(formatted);

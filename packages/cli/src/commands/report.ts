@@ -8,7 +8,7 @@ import {
   validateReport,
   BUILTIN_ORACLES,
 } from '@mantis/core';
-import { loadSession } from '@mantis/runner';
+import { loadSession, resolveSafeOutputPath } from '@mantis/runner';
 import { formatSessionTerminal, formatTestTerminal } from '../ui/formatters.js';
 import { generateHtmlReport } from '../ui/html-report.js';
 
@@ -50,6 +50,16 @@ export async function reportCommand(
   targetArg?: string,
   options: ReportCliOptions = {},
 ): Promise<number> {
+  let safeOutPath: string | undefined;
+  if (options.out) {
+    try {
+      safeOutPath = resolveSafeOutputPath(options.out);
+    } catch (err) {
+      console.error(`Safety Error: ${(err as Error).message}`);
+      return 2;
+    }
+  }
+
   const sessionsDir = path.resolve('.mantis/sessions');
 
   let filePath: string;
@@ -93,7 +103,7 @@ export async function reportCommand(
     if (options.html) {
       const htmlOutput = generateHtmlReport(report);
       if (options.out) {
-        await fs.writeFile(path.resolve(options.out), htmlOutput, 'utf-8');
+        await fs.writeFile(safeOutPath!, htmlOutput, 'utf-8');
         console.log(`Report written to ${options.out}`);
       } else {
         console.log(htmlOutput);
@@ -101,7 +111,7 @@ export async function reportCommand(
     } else if (options.json) {
       const jsonOutput = JSON.stringify(report, null, 2);
       if (options.out) {
-        await fs.writeFile(path.resolve(options.out), jsonOutput, 'utf-8');
+        await fs.writeFile(safeOutPath!, jsonOutput, 'utf-8');
         console.log(`Report written to ${options.out}`);
       } else {
         console.log(jsonOutput);
@@ -109,7 +119,7 @@ export async function reportCommand(
     } else {
       const formatted = formatTestTerminal(report);
       if (options.out) {
-        await fs.writeFile(path.resolve(options.out), formatted, 'utf-8');
+        await fs.writeFile(safeOutPath!, formatted, 'utf-8');
         console.log(`Report written to ${options.out}`);
       } else {
         console.log(formatted);
@@ -190,7 +200,7 @@ export async function reportCommand(
   if (options.html) {
     const htmlOutput = generateHtmlReport(report);
     if (options.out) {
-      await fs.writeFile(path.resolve(options.out), htmlOutput, 'utf-8');
+      await fs.writeFile(safeOutPath!, htmlOutput, 'utf-8');
       console.log(`Report written to ${options.out}`);
     } else {
       console.log(htmlOutput);
@@ -198,7 +208,7 @@ export async function reportCommand(
   } else if (options.json) {
     const output = JSON.stringify({ session, findings }, null, 2);
     if (options.out) {
-      await fs.writeFile(path.resolve(options.out), output, 'utf-8');
+      await fs.writeFile(safeOutPath!, output, 'utf-8');
       console.log(`Report written to ${options.out}`);
     } else {
       console.log(output);
@@ -206,7 +216,7 @@ export async function reportCommand(
   } else {
     const formatted = formatSessionTerminal(session, findings);
     if (options.out) {
-      await fs.writeFile(path.resolve(options.out), formatted, 'utf-8');
+      await fs.writeFile(safeOutPath!, formatted, 'utf-8');
       console.log(`Report written to ${options.out}`);
     } else {
       console.log(formatted);

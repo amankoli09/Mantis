@@ -7,6 +7,7 @@ export const PACKAGE_NAME = '@mantis/cli';
 
 export * from './ui/color.js';
 export * from './ui/formatters.js';
+export * from './ui/html-report.js';
 export * from './commands/scan.js';
 export * from './commands/test.js';
 export * from './commands/report.js';

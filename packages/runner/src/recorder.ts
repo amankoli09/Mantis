@@ -81,6 +81,11 @@ export function redactExecutionResult(result: ExecutionResult, secret?: string, 
     }
   }
 
+  const redactedError = result.error ? { ...result.error } : undefined;
+  if (redactedError && secret) {
+    redactedError.message = redactSecretValue(redactedError.message, secret);
+  }
+
   const redactedResult: ExecutionResult = {
     endpointId: result.endpointId,
     durationMs: result.durationMs,
@@ -90,7 +95,7 @@ export function redactExecutionResult(result: ExecutionResult, secret?: string, 
       headers: reqHeaders,
       ...(reqBody !== undefined ? { body: reqBody } : {}),
     },
-    ...(result.error ? { error: { ...result.error } } : {}),
+    ...(redactedError ? { error: redactedError } : {}),
   };
 
   if (result.response) {
@@ -120,6 +125,7 @@ export function redactSession(session: Session): Session {
 
   const redactedConfig = {
     ...session.config,
+    baseUrl: secret ? redactSecretValue(session.config.baseUrl, secret) : session.config.baseUrl,
     auth: session.config.auth
       ? {
           ...session.config.auth,

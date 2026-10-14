@@ -1,0 +1,9 @@
+{
+  "name": "safety-malicious-code",
+  "version": "1.0.0",
+  "description": "Fixture with top-level side-effects to prove Mantis never executes target code during scan",
+  "main": "app.js",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

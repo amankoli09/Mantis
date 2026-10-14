@@ -1,6 +1,7 @@
 import type { Report, Finding, TestResult } from '@mantis/core';
 
 function escapeHtml(str: string): string {
+  if (!str || typeof str !== 'string') return '';
   return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

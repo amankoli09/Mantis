@@ -2,6 +2,7 @@ import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { exportOpenApi } from '@mantis/core';
 import { detectExpress, scanProject } from '@mantis/adapter-express';
+import { resolveSafeOutputPath } from '@mantis/runner';
 import { formatScanTerminal } from '../ui/formatters.js';
 
 export interface ScanCliOptions {
@@ -22,6 +23,16 @@ export async function scanCommand(
   targetPath: string,
   options: ScanCliOptions = {},
 ): Promise<number> {
+  let safeOutPath: string | undefined;
+  if (options.out) {
+    try {
+      safeOutPath = resolveSafeOutputPath(options.out);
+    } catch (err) {
+      console.error(`Safety Error: ${(err as Error).message}`);
+      return 2;
+    }
+  }
+
   const resolvedPath = path.resolve(targetPath);
 
   // 1. Check directory existence and detect Express
@@ -52,7 +63,7 @@ export async function scanCommand(
     const openApiSpec = exportOpenApi(model);
     const jsonOutput = JSON.stringify(openApiSpec, null, 2);
     if (options.out) {
-      await fs.writeFile(path.resolve(options.out), jsonOutput, 'utf-8');
+      await fs.writeFile(safeOutPath!, jsonOutput, 'utf-8');
       console.log(`OpenAPI specification written to ${options.out}`);
     } else {
       console.log(jsonOutput);
@@ -63,7 +74,7 @@ export async function scanCommand(
   if (options.json) {
     const jsonOutput = JSON.stringify(model, null, 2);
     if (options.out) {
-      await fs.writeFile(path.resolve(options.out), jsonOutput, 'utf-8');
+      await fs.writeFile(safeOutPath!, jsonOutput, 'utf-8');
       console.log(`API Model written to ${options.out}`);
     } else {
       console.log(jsonOutput);
@@ -73,7 +84,7 @@ export async function scanCommand(
 
   const formatted = formatScanTerminal(model, { verbose: options.verbose });
   if (options.out) {
-    await fs.writeFile(path.resolve(options.out), formatted, 'utf-8');
+    await fs.writeFile(safeOutPath!, formatted, 'utf-8');
     console.log(`Scan summary written to ${options.out}`);
   } else {
     console.log(formatted);

@@ -114,6 +114,53 @@ describe('mantis test', () => {
       expect(exitCode).toBe(2);
       expect(stderrChunks.join('\n')).toContain('No configuration found');
     });
+
+    it('refuses allowedEffects with destructive in config file when --allow-destructive CLI flag is missing', async () => {
+      const fixturePath = path.join(FIXTURES_DIR, 'simple');
+      const tempConfigFile = path.join(tempDir, 'mantis.config.json');
+      await fs.writeFile(
+        tempConfigFile,
+        JSON.stringify({
+          baseUrl: 'http://127.0.0.1:3000',
+          allowedEffects: ['read', 'destructive'],
+          skip: [],
+          pathParamSamples: {},
+          limits: { timeoutMs: 5000, maxResponseBytes: 1048576, maxRequests: 50, concurrency: 5, retries: 0 },
+        }),
+        'utf-8',
+      );
+
+      const exitCode = await runCli([
+        'node',
+        'mantis',
+        'test',
+        fixturePath,
+        '--config',
+        tempConfigFile,
+      ]);
+
+      expect(exitCode).toBe(2);
+      expect(stderrChunks.join('\n')).toContain('--allow-destructive');
+    });
+
+    it('refuses path traversal in --out outside target folder', async () => {
+      const fixturePath = path.join(FIXTURES_DIR, 'simple');
+      const exitCode = await runCli([
+        'node',
+        'mantis',
+        'test',
+        fixturePath,
+        '--base-url',
+        'http://127.0.0.1:3000',
+        '--dry-run',
+        '--json',
+        '--out',
+        '../evil-escape.json',
+      ]);
+
+      expect(exitCode).toBe(2);
+      expect(stderrChunks.join('\n')).toContain('Safety Error');
+    });
   });
 
   describe('live execution against ephemeral server', () => {

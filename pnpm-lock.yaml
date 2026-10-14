@@ -134,6 +134,10 @@ importers:
       zod:
         specifier: ^3.25.76
         version: 3.25.76
+    devDependencies:
+      '@mantis/adapter-express':
+        specifier: workspace:*
+        version: link:../adapter-express
 
 packages:
 

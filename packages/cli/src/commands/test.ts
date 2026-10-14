@@ -11,7 +11,14 @@ import {
   planTests,
   runTests,
 } from '@mantis/core';
-import { loadConfig, validateBaseUrl, createTestRunner, saveSession } from '@mantis/runner';
+import {
+  loadConfig,
+  validateBaseUrl,
+  assertHostResolvesToLocal,
+  resolveSafeOutputPath,
+  createTestRunner,
+  saveSession,
+} from '@mantis/runner';
 import { formatTestTerminal, formatTestBanner } from '../ui/formatters.js';
 import { generateHtmlReport } from '../ui/html-report.js';
 
@@ -113,6 +120,14 @@ export async function testCommand(
     config.allowRemote = options.allowRemote;
   }
 
+  // Safety check: allowedEffects containing 'destructive' in config without CLI flag is refused
+  if (config.allowedEffects.includes('destructive') && !options.allowDestructive) {
+    console.error(
+      'Error: Refusing execution. Configuration specifies allowedEffects containing "destructive", but --allow-destructive CLI flag was not provided.',
+    );
+    return 2;
+  }
+
   const effects = new Set<AllowedEffect>(config.allowedEffects);
   if (options.allowWrite) {
     effects.add('write');
@@ -122,9 +137,23 @@ export async function testCommand(
   }
   config.allowedEffects = Array.from(effects);
 
+  // Safety check: safe output path
+  let safeOutPath: string | undefined;
+  if (options.out) {
+    try {
+      safeOutPath = resolveSafeOutputPath(options.out);
+    } catch (err) {
+      console.error(`Safety Error: ${(err as Error).message}`);
+      return 2;
+    }
+  }
+
   // 3. Safety Check: Host Guard
   try {
-    validateBaseUrl(config.baseUrl, config.allowRemote);
+    const parsedUrl = validateBaseUrl(config.baseUrl, config.allowRemote);
+    if (!config.allowRemote) {
+      await assertHostResolvesToLocal(parsedUrl.hostname);
+    }
   } catch (err) {
     console.error(`Host Guard Error: ${(err as Error).message}`);
     return 2;
@@ -174,7 +203,7 @@ export async function testCommand(
     if (options.json) {
       const output = JSON.stringify({ banner, testCases }, null, 2);
       if (options.out) {
-        await fs.writeFile(path.resolve(options.out), output, 'utf-8');
+        await fs.writeFile(safeOutPath!, output, 'utf-8');
       } else {
         console.log(output);
       }
@@ -229,7 +258,7 @@ export async function testCommand(
   if (options.html) {
     const htmlOutput = generateHtmlReport(report);
     if (options.out) {
-      await fs.writeFile(path.resolve(options.out), htmlOutput, 'utf-8');
+      await fs.writeFile(safeOutPath!, htmlOutput, 'utf-8');
       console.log(`Report written to ${options.out}`);
     } else {
       console.log(htmlOutput);
@@ -237,7 +266,7 @@ export async function testCommand(
   } else if (options.json) {
     const jsonOutput = JSON.stringify(report, null, 2);
     if (options.out) {
-      await fs.writeFile(path.resolve(options.out), jsonOutput, 'utf-8');
+      await fs.writeFile(safeOutPath!, jsonOutput, 'utf-8');
       console.log(`Report written to ${options.out}`);
     } else {
       console.log(jsonOutput);
@@ -245,7 +274,7 @@ export async function testCommand(
   } else {
     const formatted = formatTestTerminal(report, banner);
     if (options.out) {
-      await fs.writeFile(path.resolve(options.out), formatted, 'utf-8');
+      await fs.writeFile(safeOutPath!, formatted, 'utf-8');
       console.log(`Report written to ${options.out}`);
     } else {
       console.log(formatted);

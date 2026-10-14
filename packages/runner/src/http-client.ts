@@ -1,5 +1,11 @@
-import { request } from 'undici';
+import { Agent, request } from 'undici';
 import type { RequestPlan, ExecutionResult, RunnerLimits } from '@mantis/core';
+
+// Dedicated undici Agent connecting directly to sockets, bypassing ambient HTTP_PROXY/HTTPS_PROXY env vars
+const directAgent = new Agent({
+  keepAliveTimeout: 10_000,
+  keepAliveMaxTimeout: 10_000,
+});
 
 export interface ExecuteRequestOptions {
   plan: RequestPlan;
@@ -128,6 +134,7 @@ export async function executeRequest(options: ExecuteRequestOptions): Promise<Ex
           headers: plan.headers,
           body: plan.body,
           signal: abortController.signal,
+          dispatcher: directAgent,
         });
 
         clearTimeout(timeoutId);

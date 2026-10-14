@@ -42,3 +42,6 @@ jobs:
 
       - name: Verify repository branding
         run: pnpm check:branding
+
+      - name: Verify secret leak prevention
+        run: pnpm check:secrets
