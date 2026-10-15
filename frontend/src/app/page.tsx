@@ -25,7 +25,7 @@ export default function HomePage() {
             </Link>
 
             <Link
-              href="https://github.com/amankoli1206/Mantis"
+              href="https://github.com/amankoli09/Mantis"
               target="_blank"
               rel="noopener noreferrer"
               className="nav-link"

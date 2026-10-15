@@ -3,7 +3,7 @@ import { promises as fs } from 'node:fs';
 import { resolveSafeOutputPath } from '@mantis/runner';
 
 const DEFAULT_CONFIG_TEMPLATE = `{
-  "$schema": "https://raw.githubusercontent.com/amankoli1206/Mantis/main/packages/runner/config.schema.json",
+  "$schema": "https://raw.githubusercontent.com/amankoli09/Mantis/main/packages/runner/config.schema.json",
   "baseUrl": "http://127.0.0.1:3000",
   "allowedEffects": ["read"],
   "skip": [],

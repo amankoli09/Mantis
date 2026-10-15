@@ -5,12 +5,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/amankoli1206/Mantis.git"
+    "url": "git+https://github.com/amankoli09/Mantis.git"
   },
   "bugs": {
-    "url": "https://github.com/amankoli1206/Mantis/issues"
+    "url": "https://github.com/amankoli09/Mantis/issues"
   },
-  "homepage": "https://github.com/amankoli1206/Mantis#readme",
+  "homepage": "https://github.com/amankoli09/Mantis#readme",
   "keywords": [
     "api",
     "contract-testing",

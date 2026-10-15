@@ -15,7 +15,7 @@ By default, the runner operates under **safe mode invariants**:
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/amankoli1206/Mantis/main/packages/runner/config.schema.json",
+  "$schema": "https://raw.githubusercontent.com/amankoli09/Mantis/main/packages/runner/config.schema.json",
   "baseUrl": "http://127.0.0.1:3000",
   "auth": {
     "header": "Authorization",

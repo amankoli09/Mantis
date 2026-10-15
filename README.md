@@ -123,6 +123,6 @@ Read the full threat model and test verification in [docs/safety.md](docs/safety
 
 If you encounter a bug, false positive, or unsupported Express pattern:
 
-1. Open an issue on GitHub: **[amankoli1206/Mantis/issues](https://github.com/amankoli1206/Mantis/issues)**
+1. Open an issue on GitHub: **[amankoli09/Mantis/issues](https://github.com/amankoli09/Mantis/issues)**
 2. Include the output of `pnpm mantis scan <path> --verbose` or the relevant `MT-` diagnostic code.
 3. For false-positive findings, attach the sanitized report generated with `--json`.

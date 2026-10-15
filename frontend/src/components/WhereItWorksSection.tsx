@@ -222,7 +222,7 @@ Line provenance: routes/user.js:20`,
     role: 'Transparent & Extensible',
     description:
       'Mantis is 100% open source under the MIT license. Check out the source code, contribute adapters, and audit our AST engine on GitHub.',
-    codeSnippet: `git clone https://github.com/amankoli1206/Mantis.git
+    codeSnippet: `git clone https://github.com/amankoli09/Mantis.git
 cd Mantis && pnpm install
 pnpm mantis --help`,
   },

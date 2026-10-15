@@ -28,7 +28,7 @@ export function FooterSection() {
 
             {/* View / Star on GitHub Pill Button */}
             <Link
-              href="https://github.com/amankoli1206/Mantis"
+              href="https://github.com/amankoli09/Mantis"
               target="_blank"
               rel="noopener noreferrer"
               className="footer-star-btn"
@@ -68,7 +68,7 @@ export function FooterSection() {
               <ul className="footer-link-list">
                 <li>
                   <Link
-                    href="https://github.com/amankoli1206/Mantis"
+                    href="https://github.com/amankoli09/Mantis"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="footer-nav-link"
@@ -78,7 +78,7 @@ export function FooterSection() {
                 </li>
                 <li>
                   <Link
-                    href="https://github.com/amankoli1206/Mantis"
+                    href="https://github.com/amankoli09/Mantis"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="footer-nav-link"
@@ -100,7 +100,7 @@ export function FooterSection() {
               <ul className="footer-link-list">
                 <li>
                   <Link
-                    href="https://github.com/amankoli1206/Mantis/blob/main/LICENSE"
+                    href="https://github.com/amankoli09/Mantis/blob/main/LICENSE"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="footer-nav-link"
@@ -129,7 +129,7 @@ export function FooterSection() {
 
           <div className="footer-social-row">
             <Link
-              href="https://github.com/amankoli1206/Mantis"
+              href="https://github.com/amankoli09/Mantis"
               target="_blank"
               rel="noopener noreferrer"
               className="footer-icon-btn"
