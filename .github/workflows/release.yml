@@ -1,0 +1,70 @@
+name: Release (Dry Run)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'npm dist-tag (e.g., alpha, beta, latest)'
+        required: true
+        default: 'alpha'
+        type: string
+      dry_run:
+        description: 'Perform dry run only (uncheck only for manual release with approval)'
+        required: true
+        default: true
+        type: boolean
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  dry-run-publish:
+    name: Build, Smoke Test, and Dry-Run Publish
+    runs-on: ubuntu-latest
+    # Requires manual approval environment configured in GitHub repository settings
+    environment: production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.24.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org/'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run linter and typecheck
+        run: |
+          pnpm lint
+          pnpm typecheck
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Run packaging smoke test
+        run: pnpm pack:smoke
+
+      - name: Validate tarball publishing (dry run)
+        run: |
+          echo "Executing npm publish dry-run with provenance verification..."
+          cd packages/cli
+          npm publish --dry-run --provenance --access public --tag ${{ inputs.tag }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

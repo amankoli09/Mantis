@@ -48,3 +48,7 @@ jobs:
 
       - name: Verify documentation and quick start commands
         run: pnpm docs:check
+
+      - name: Run packaging smoke test and tarball check
+        run: pnpm pack:smoke
+

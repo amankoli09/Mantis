@@ -5,5 +5,15 @@ export default defineConfig({
   format: ['esm', 'cjs'],
   dts: true,
   clean: true,
-  sourcemap: true,
+  sourcemap: false,
+  noExternal: ['@mantis/core', '@mantis/adapter-express', '@mantis/runner'],
+  external: [
+    '@babel/parser',
+    '@babel/traverse',
+    '@babel/types',
+    'commander',
+    'picocolors',
+    'undici',
+    'zod',
+  ],
 });

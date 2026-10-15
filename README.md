@@ -101,7 +101,8 @@ Read the full threat model and test verification in [docs/safety.md](docs/safety
 - ⚠️ **[Diagnostic Codes Reference](docs/diagnostics.md)**: `MT-` diagnostic codes, troubleshooting guide, and known limitations.
 - 📐 **[API Model Specification](docs/api-model.md)**: Data schema specification (`v1.2.0`) and the **1.x Stability Promise**.
 - 🛡️ **[Safety Architecture](docs/safety.md)**: Comprehensive threat model and attack verification matrix.
-- 🏛️ **[Architecture Decisions (ADRs)](docs/decisions/README.md)**: Record of architectural design decisions (ADR 0001 through 0008).
+- 🏛️ **[Architecture Decisions (ADRs)](docs/decisions/README.md)**: Record of architectural design decisions (ADR 0001 through 0009).
+- 🚀 **[Packaging & Releasing](docs/releasing.md)**: Monorepo bundling architecture, smoke testing, and owner's manual publishing checklist.
 - 📜 **[Changelog](CHANGELOG.md)**: Release history and version updates.
 
 ---
@@ -110,10 +111,10 @@ Read the full threat model and test verification in [docs/safety.md](docs/safety
 
 | Package                   | Path                       | Purpose                                                                                |
 | :------------------------ | :------------------------- | :------------------------------------------------------------------------------------- |
+| `mantis`                  | `packages/cli`             | Public standalone CLI binary and orchestrator (bundles core, adapter, runner)          |
 | `@mantis/core`            | `packages/core`            | API Model schemas, Zod validators, response oracles, test planners, and cross-analysis |
 | `@mantis/adapter-express` | `packages/adapter-express` | Express.js static AST parser, module graph resolver, and route extractor               |
 | `@mantis/runner`          | `packages/runner`          | Safety-first HTTP runner, Host Guard, and session recorder                             |
-| `@mantis/cli`             | `packages/cli`             | Unified `mantis` command-line orchestrator and terminal / HTML formatters              |
 
 ---
 

@@ -1,7 +1,31 @@
 {
-  "name": "@mantis/cli",
-  "version": "0.1.0",
+  "name": "mantis",
+  "version": "0.1.0-alpha.0",
+  "description": "Safe, static-first API contract testing and vulnerability scanner for Express.js",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amankoli1206/Mantis.git"
+  },
+  "bugs": {
+    "url": "https://github.com/amankoli1206/Mantis/issues"
+  },
+  "homepage": "https://github.com/amankoli1206/Mantis#readme",
+  "keywords": [
+    "api",
+    "contract-testing",
+    "express",
+    "ast",
+    "security",
+    "static-analysis",
+    "rest-api",
+    "testing"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "type": "module",
+  "sideEffects": false,
   "bin": {
     "mantis": "./dist/index.js"
   },
@@ -18,10 +42,14 @@
         "types": "./dist/index.d.cts",
         "default": "./dist/index.cjs"
       }
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "tsup",
@@ -30,10 +58,17 @@
     "mantis": "node ./dist/index.js"
   },
   "dependencies": {
+    "@babel/parser": "^7.29.9",
+    "@babel/traverse": "^7.29.8",
+    "@babel/types": "^7.29.8",
+    "commander": "^13.1.0",
+    "picocolors": "^1.1.1",
+    "undici": "^8.11.2",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
     "@mantis/adapter-express": "workspace:*",
     "@mantis/core": "workspace:*",
-    "@mantis/runner": "workspace:*",
-    "commander": "^13.1.0",
-    "picocolors": "^1.1.1"
+    "@mantis/runner": "workspace:*"
   }
 }

@@ -16,7 +16,7 @@ describe('built CLI binary (dist verification)', () => {
   beforeAll(() => {
     // Ensure built artifacts exist on a fresh clone when running plain `pnpm test`
     if (!fs.existsSync(distJsPath) || !fs.existsSync(distCjsPath)) {
-      execSync('pnpm --filter @mantis/cli build', {
+      execSync('pnpm --filter mantis build', {
         cwd: repoRoot,
         stdio: 'pipe',
       });

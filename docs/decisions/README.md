@@ -12,3 +12,5 @@ This directory documents the key architectural decisions shaping Mantis's design
 | [0006](0006-diagnostic-splitting-and-severity-review.md) | [Diagnostic Splitting (MT-R004) and MT-R003 Severity Review](0006-diagnostic-splitting-and-severity-review.md) | Accepted | Phase 1.5         |
 |        [0007](0007-runner-safety-threat-model.md)        | [Runner Safety Threat Model & Host Guard Defenses](0007-runner-safety-threat-model.md)                         | Accepted | Phase 1 (M1-04)   |
 |  [0008](0008-oracle-tuning-and-confidence-filtering.md)  | [Response Oracle Tuning & Confidence Filtering](0008-oracle-tuning-and-confidence-filtering.md)                | Accepted | Phase 1 (M1-05)   |
+| [0009](0009-single-public-package-distribution.md) | [Single Public Package Distribution (`mantis`) and Monorepo Packaging](0009-single-public-package-distribution.md) | Accepted | Phase 1 (M2-01)   |
+

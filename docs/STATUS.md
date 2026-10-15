@@ -42,6 +42,9 @@ Phase 1 focuses on Node.js/Express backends, parsing JavaScript ASTs to extract 
 | **M1-04**              | Safety red-team hardening (threat model, localhost validation, DNS pin, traversal, secrets check)                                                                              | **Done** | Issue #26                                                                 |
 | **M1-05**              | False-positive review & oracle tuning (`--min-confidence`, `confidenceReason`, canned unit tests)                                                                              | **Done** | Issue #27                                                                 |
 | **M1-06**              | Documentation and release readiness (README, ADRs 0007-0008, CHANGELOG, pnpm docs:check in CI, stability promise)                                                              | **Done** | Issue #28                                                                 |
+| **M1-07**              | Tag v0.1.0 pre-release on GitHub, fresh clone verification in `docs/exit-check.md`, changelog text                                                                               | **Done** | Issue #29                                                                 |
+| **M2-01**              | Packaging and npm release dry-run (single `mantis` public package, tsup bundling, `pnpm pack:smoke`, publint/attw, ADR 0009, releasing.md)                                      | **Done** | Issue #30                                                                 |
+
 
 ---
 

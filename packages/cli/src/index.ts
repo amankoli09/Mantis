@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runCli } from './cli.js';
 
-export const PACKAGE_NAME = '@mantis/cli';
+export const PACKAGE_NAME = 'mantis';
 
 export * from './ui/color.js';
 export * from './ui/formatters.js';
