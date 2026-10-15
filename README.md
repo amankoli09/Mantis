@@ -1,4 +1,5 @@
-<img width="1429" height="804" alt="Banner" src="https://github.com/user-attachments/assets/9b349b86-0d58-41d4-b383-4666c4c8e837" />
+<img width="1429" height="804" alt="Banner" src="https://github.com/user-attachments/assets/eba3c94a-7555-4eb0-bfd2-4427220f2760" />
+
 
 # Mantis
 
