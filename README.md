@@ -42,9 +42,9 @@ pnpm mantis test ./fixtures/simple --base-url http://127.0.0.1:3000
 
 ---
 
-## 🚧 What Mantis Can't Do Yet
+## 🚧 What Mantis Can't Do Yet (Known Limitations)
 
-To preserve trust, Mantis clearly defines its current architectural boundaries:
+To preserve trust, Mantis clearly defines its current architectural boundaries (detailed in [docs/diagnostics.md](docs/diagnostics.md) and [docs/exit-check.md](docs/exit-check.md)):
 
 - **Dynamic Route Array Loops**: Applications that mount routes by iterating runtime arrays (e.g. `routes.forEach(r => router.use(r.path, r.route))`) cannot resolve subrouter prefixes statically without executing JavaScript. Such routes are extracted with root paths and tagged `confidence: "uncertain"` (`MT-R002` / `MT-R004`).
 - **Dynamic Filesystem Barrel Exports**: Patterns using `fs.readdirSync()` to dynamically `require()` all route files at startup cannot be resolved statically.

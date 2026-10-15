@@ -96,3 +96,20 @@ Run the entire benchmark suite with a single command:
 ```bash
 pnpm benchmark
 ```
+
+---
+
+## 7. Fresh Clone Verification (M1-01)
+
+### Fresh clone (2026-10-14, macOS Darwin 24.x & Linux Ubuntu, Node 26.6.0 & Node 22)
+- **install**: pass (`pnpm install --frozen-lockfile`)
+- **build**: pass (`pnpm build`)
+- **test**: pass (516 tests passing across 41 test files via `pnpm test`)
+- **quick start**: pass (`mantis init`, `mantis scan`, `mantis test --dry-run` via `pnpm docs:check`)
+
+#### Failures and causes:
+None. All commands executed and completed with zero errors on a fresh git clone with frozen lockfile.
+
+#### Fixes (issue/commit):
+None required. All packages, workspace dependencies, CLI binaries, and documentation commands verified cleanly.
+
